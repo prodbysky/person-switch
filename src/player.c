@@ -50,4 +50,5 @@ void player_update(Player *player) {
 
     player->rect.x += player->velocity.x * GetFrameTime();
     player->rect.y += player->velocity.y * GetFrameTime();
+    player->rect.x = Clamp(player->rect.x, 0, WINDOW_W - player->rect.width);
 }
