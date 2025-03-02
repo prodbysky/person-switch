@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-I extern/raylib/src/]
+  Add: [-Iextern/raylib/src/]

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <raylib.h>
+#include "stage.h"
 
 #define PLAYER_CLASS_SWITCH_COOLDOWN 20.0
 
@@ -26,5 +27,5 @@ typedef struct {
 } Player;
 
 Player player_new();
-void player_update(Player *player);
+void player_update(Player *player, const Stage *stage);
 #endif
