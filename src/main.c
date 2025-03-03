@@ -1,4 +1,5 @@
 #include "arena.h"
+#include "enemy.h"
 #include "player.h"
 #include "stage.h"
 #include "static_config.h"
@@ -35,12 +36,15 @@ int main() {
     SetTargetFPS(120);
 
     GameState state = game_state_init();
+    ECSEnemy test = ecs_enemy_new((Vector2){100, 100}, (Vector2){64, 64}, 20);
 
     while (!WindowShouldClose()) {
         ecs_player_update(&state.player, &state.stage);
+        ecs_enemy_update(&test, &state.stage, &state.player.collider);
         BeginDrawing();
         ClearBackground(GetColor(0x181818ff));
         DrawRectangleRec(state.player.collider.rect, WHITE);
+        DrawRectangleRec(test.collider.rect, BLUE);
         draw_stage(&state.stage);
         EndDrawing();
     }
