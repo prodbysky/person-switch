@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <raylib.h>
 #include "stage.h"
+#include "ecs.h"
 
 #define PLAYER_CLASS_SWITCH_COOLDOWN 20.0
 
@@ -19,14 +20,19 @@ typedef enum {
     PS_COUNT
 } PlayerClass;
 
-typedef struct {
-    Rectangle rect;
-    Vector2 velocity;
+typedef struct  {
     PlayerClass current_class;
     double last_switched;
-    bool grounded;
-} Player;
+} PlayerStateComp;
 
-Player player_new();
-void player_update(Player *player, const Stage *stage);
+typedef struct {
+    TransformComp transform;
+    ColliderComp collider;
+    PhysicsComp physics;
+    PlayerStateComp state;
+} ECSPlayer;
+
+ECSPlayer ecs_player_new();
+void player_input_system(PlayerStateComp* state, PhysicsComp* physics, const ColliderComp* collider); 
+void ecs_player_update(ECSPlayer* player, const Stage* stage);
 #endif

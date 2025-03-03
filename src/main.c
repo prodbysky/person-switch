@@ -10,14 +10,14 @@ Stage default_stage(Arena *arena);
 
 typedef struct {
     Arena allocator;
-    Player player;
+    ECSPlayer player;
     Stage stage;
 } GameState;
 
 GameState game_state_init() {
     Arena global_game_allocator = arena_new(1024 * 4);
     Stage st = default_stage(&global_game_allocator);
-    Player player = player_new();
+    ECSPlayer player = ecs_player_new();
 
     return (GameState){
         .allocator = global_game_allocator,
@@ -37,10 +37,10 @@ int main() {
     GameState state = game_state_init();
 
     while (!WindowShouldClose()) {
-        player_update(&state.player, &state.stage);
+        ecs_player_update(&state.player, &state.stage);
         BeginDrawing();
         ClearBackground(GetColor(0x181818ff));
-        DrawRectangleRec(state.player.rect, WHITE);
+        DrawRectangleRec(state.player.collider.rect, WHITE);
         draw_stage(&state.stage);
         EndDrawing();
     }
@@ -50,7 +50,7 @@ int main() {
 
 Stage default_stage(Arena *arena) {
     Stage st;
-    st.count = 2;
+    st.count = 3;
     st.platforms = arena_alloc(arena, sizeof(Platform) * 3);
     st.platforms[0] = (Platform){
         .x = 100,
@@ -62,6 +62,12 @@ Stage default_stage(Arena *arena) {
         .x = 600,
         .y = 500,
         .width = 128,
+        .height = 32,
+    };
+    st.platforms[2] = (Platform){
+        .x = 0,
+        .y = 550,
+        .width = 800,
         .height = 32,
     };
 
