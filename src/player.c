@@ -2,7 +2,6 @@
 #include "raylib.h"
 #include "stage.h"
 #include "static_config.h"
-#include <math.h>
 #include <raymath.h>
 
 static const PlayerStat PLAYER_STATES[] = {
@@ -23,7 +22,7 @@ Player player_new() {
 
 void player_update(Player *player, const Stage *stage) {
     if (IsKeyPressed(KEY_F) && GetTime() - player->last_switched > PLAYER_CLASS_SWITCH_COOLDOWN) {
-        player->current_class = (player->current_class + 1) % (PS_DAMAGE + 1);
+        player->current_class = (player->current_class + 1) % (PS_COUNT);
         player->last_switched = GetTime();
     }
 
@@ -72,16 +71,15 @@ void player_update(Player *player, const Stage *stage) {
             const bool from_right = next_pos.x + player->rect.width > platform->x;
             const bool from_bottom = next_pos.y + player->rect.height > platform->y;
 
-            if (from_left && player->velocity.x < 0) {
-                player->velocity.x = 0;
-            } else if (from_right && player->velocity.x > 0) {
-                player->velocity.x = 0;
-            }
             if (from_bottom && player->velocity.y > 0) {
                 player->velocity.y = 0;
                 player->grounded = true;
                 player->rect.y = platform->y - player->rect.height;
                 on_any_platform = true;
+            } else if (from_left && player->velocity.x < 0) {
+                player->velocity.x = 0;
+            } else if (from_right && player->velocity.x > 0) {
+                player->velocity.x = 0;
             }
         }
     }

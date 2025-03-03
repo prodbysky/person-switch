@@ -15,7 +15,8 @@ typedef struct {
 typedef enum {
     PS_TANK = 0,
     PS_MOVE = 1,
-    PS_DAMAGE = 2
+    PS_DAMAGE = 2,
+    PS_COUNT
 } PlayerClass;
 
 typedef struct {

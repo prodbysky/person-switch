@@ -8,21 +8,44 @@
 
 Stage default_stage(Arena *arena);
 
+typedef struct {
+    Arena allocator;
+    Player player;
+    Stage stage;
+} GameState;
+
+GameState game_state_init() {
+    Arena global_game_allocator = arena_new(1024 * 4);
+    Stage st = default_stage(&global_game_allocator);
+    Player player = player_new();
+
+    return (GameState){
+        .allocator = global_game_allocator,
+        .player = player,
+        .stage = st,
+    };
+}
+
+void game_state_destroy(GameState *state) {
+    arena_free(&state->allocator);
+}
+
 int main() {
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     SetTargetFPS(120);
-    Arena stage_allocator = arena_new(1024 * 4);
-    Stage st = default_stage(&stage_allocator);
-    Player player = player_new();
+
+    GameState state = game_state_init();
+
     while (!WindowShouldClose()) {
-        player_update(&player, &st);
+        player_update(&state.player, &state.stage);
         BeginDrawing();
         ClearBackground(GetColor(0x181818ff));
-        DrawRectangleRec(player.rect, WHITE);
-        draw_stage(&st);
+        DrawRectangleRec(state.player.rect, WHITE);
+        draw_stage(&state.stage);
         EndDrawing();
     }
     CloseWindow();
+    game_state_destroy(&state);
 }
 
 Stage default_stage(Arena *arena) {
