@@ -5,9 +5,9 @@
 #include <raymath.h>
 
 static const PlayerStat PLAYER_STATES[] = {
-    [PS_TANK] = {.jump_power = 300, .speed_x = 40},
-    [PS_MOVE] = {.jump_power = 600, .speed_x = 70},
-    [PS_DAMAGE] = {.jump_power = 400, .speed_x = 50},
+    [PS_TANK] = {.jump_power = 300, .speed_x = 200},
+    [PS_MOVE] = {.jump_power = 600, .speed_x = 350},
+    [PS_DAMAGE] = {.jump_power = 400, .speed_x = 250},
 };
 
 Player player_new() {
@@ -27,11 +27,12 @@ void player_update(Player *player, const Stage *stage) {
     }
 
     if (IsKeyDown(KEY_A)) {
-        player->velocity.x -= PLAYER_STATES[player->current_class].speed_x;
+        player->velocity.x = -PLAYER_STATES[player->current_class].speed_x;
     }
     if (IsKeyDown(KEY_D)) {
-        player->velocity.x += PLAYER_STATES[player->current_class].speed_x;
+        player->velocity.x = PLAYER_STATES[player->current_class].speed_x;
     }
+
     player->velocity.x /= 1.2;
 
     if (player->rect.y + player->rect.height > WINDOW_H) {
