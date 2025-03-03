@@ -39,9 +39,15 @@ int main() {
     ECSEnemy test = ecs_enemy_new((Vector2){100, 100}, (Vector2){64, 64}, 20);
 
     while (!WindowShouldClose()) {
+        double before_update = GetTime() * 10000;
         ecs_player_update(&state.player, &state.stage);
         ecs_enemy_update(&test, &state.stage, &state.player.collider);
+        double after_update = GetTime() * 10000;
         BeginDrawing();
+        DrawFPS(10, 10);
+        DrawText(TextFormat("Update time: %.2f (ms * 10).", after_update - before_update), 10, 40, 20, WHITE);
+        DrawText(TextFormat("Heap usage: %u bytes used", state.allocator.used), 10, 70, 20, WHITE);
+
         ClearBackground(GetColor(0x181818ff));
         DrawRectangleRec(state.player.collider.rect, WHITE);
         DrawRectangleRec(test.collider.rect, BLUE);
