@@ -99,7 +99,6 @@ void game_state_frame_system(const GameState *state) {
                          GetColor(0x00000055));
         game_state_draw_debug_stats(state);
         DrawText("The game is paused", 200, 350, 32, WHITE);
-
         break;
     }
 
