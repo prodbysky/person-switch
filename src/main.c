@@ -43,8 +43,11 @@ int main() {
         BeginDrawing();
         ClearBackground(GetColor(0x181818ff));
         DrawFPS(10, 10);
-        DrawText(TextFormat("Update time: %.2f (ms * 10).", after_update - before_update), 10, 40, 20, WHITE);
-        DrawText(TextFormat("Heap usage: %u bytes used", state.allocator.used), 10, 70, 20, WHITE);
+        DrawText(TextFormat("Update time: %.2f (ms * 10).", after_update - before_update), 10, 40, 20,
+                 GetColor(0x009900ff));
+        DrawText(TextFormat("Heap usage: %u/%u (%.2f%) Bytes", state.allocator.used, state.allocator.cap,
+                            ((float)state.allocator.used * 100.0) / state.allocator.cap),
+                 10, 70, 20, GetColor(0x009900ff));
 
         DrawRectangleRec(state.player.transform.rect, WHITE);
         DrawRectangleRec(state.test_enemy.transform.rect, BLUE);
