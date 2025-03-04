@@ -1,6 +1,5 @@
 #include "arena.h"
-#include <raylib.h>
-#include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 
 Arena arena_new(size_t size) {

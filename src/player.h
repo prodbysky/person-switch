@@ -2,8 +2,6 @@
 #define PLAYER_H
 
 #include <stdint.h>
-#include <raylib.h>
-#include "stage.h"
 #include "ecs.h"
 
 #define PLAYER_CLASS_SWITCH_COOLDOWN 20.0

@@ -1,9 +1,5 @@
 #include "player.h"
-#include "ecs.h"
-#include "raylib.h"
-#include "stage.h"
 #include "static_config.h"
-#include <raymath.h>
 
 static const PlayerStat PLAYER_STATES[] = {
     [PS_TANK] = {.jump_power = 150, .speed_x = 200},

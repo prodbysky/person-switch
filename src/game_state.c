@@ -47,6 +47,7 @@ void game_state_destroy(GameState *state) {
     arena_free(&state->allocator);
     CloseWindow();
 }
+
 Stage default_stage(Arena *arena) {
     Stage st;
     st.count = 3;

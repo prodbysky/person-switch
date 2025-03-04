@@ -1,7 +1,4 @@
 #include "enemy.h"
-#include "ecs.h"
-#include "raylib.h"
-#include <math.h>
 #include <raymath.h>
 
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed) {

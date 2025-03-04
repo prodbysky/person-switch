@@ -1,8 +1,6 @@
 #ifndef ECS_H
 #define ECS_H
 
-#include <raylib.h>
-#include <stddef.h>
 #include "stage.h"
 
 // Base Components

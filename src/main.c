@@ -1,7 +1,4 @@
 #include "game_state.h"
-#include <raylib.h>
-#include <raymath.h>
-#include <stdint.h>
 
 int main() {
     GameState state = game_state_init_system();

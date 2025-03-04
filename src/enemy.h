@@ -3,7 +3,7 @@
 
 
 #include "ecs.h"
-#include <raylib.h>
+
 typedef struct {
     size_t speed;
 } EnemyConfigComp;
