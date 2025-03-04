@@ -1,10 +1,11 @@
 #include "enemy.h"
+#include "ecs.h"
 #include <raymath.h>
 
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed) {
     return (ECSEnemy){
-        .physics = {.grounded = false, .velocity = Vector2Zero()},
-        .transform = {.rect = {.x = pos.x, .y = pos.y, .width = size.x, .height = size.y}},
+        .physics = DEFAULT_PHYSICS(),
+        .transform = TRANSFORM(pos.y, pos.y, size.x, size.y),
         .enemy_conf = {.speed = speed},
     };
 }

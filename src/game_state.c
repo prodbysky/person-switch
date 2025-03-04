@@ -92,27 +92,27 @@ EnemyWave default_wave() {
         .enemies =
             {
                 (ECSEnemy){
-                    .transform = {.rect = {.x = 150, .y = 300, .width = 64, .height = 32}},
+                    .transform = TRANSFORM(150, 300, 64, 32),
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
                     .enemy_conf = {.speed = 5},
                 },
                 (ECSEnemy){
-                    .transform = {.rect = {.x = 250, .y = 300, .width = 64, .height = 64}},
+                    .transform = TRANSFORM(250, 300, 64, 64),
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
                     .enemy_conf = {.speed = 10},
                 },
                 (ECSEnemy){
-                    .transform = {.rect = {.x = 350, .y = 300, .width = 32, .height = 64}},
+                    .transform = TRANSFORM(350, 300, 32, 64),
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
                     .enemy_conf = {.speed = 15},
                 },
                 (ECSEnemy){
-                    .transform = {.rect = {.x = 450, .y = 300, .width = 64, .height = 32}},
+                    .transform = TRANSFORM(450, 300, 64, 32),
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
                     .enemy_conf = {.speed = 8},
                 },
                 (ECSEnemy){
-                    .transform = {.rect = {.x = 550, .y = 300, .width = 64, .height = 32}},
+                    .transform = TRANSFORM(550, 300, 64, 32),
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
                     .enemy_conf = {.speed = 2},
                 },

@@ -1,4 +1,5 @@
 #include "player.h"
+#include "ecs.h"
 #include "enemy.h"
 #include "raylib.h"
 #include "static_config.h"
@@ -12,15 +13,14 @@ static const PlayerStat PLAYER_STATES[] = {
 #define INVULNERABILITY_TIME 1.0
 
 ECSPlayer ecs_player_new() {
-    ECSPlayer p = {
-        .transform = {.rect = {.width = 32, .height = 96, .x = (WINDOW_W / 2.0f) + 16, .y = (WINDOW_H / 2.0f) + 48}},
-        .state = {
-            .current_class = PS_MOVE,
-            .last_switched = GetTime(),
-            .health = 5,
-            .last_hit = 0.0,
-            .dead = false,
-        }};
+    ECSPlayer p = {.transform = TRANSFORM((WINDOW_W / 2.0) + 16, (WINDOW_H / 2.0) + 48, 32, 96),
+                   .state = {
+                       .current_class = PS_MOVE,
+                       .last_switched = GetTime(),
+                       .health = 5,
+                       .last_hit = 0.0,
+                       .dead = false,
+                   }};
     return p;
 }
 
