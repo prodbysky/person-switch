@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "ecs.h"
+#include "enemy.h"
 
 #define PLAYER_CLASS_SWITCH_COOLDOWN 20.0
 
@@ -21,6 +22,9 @@ typedef enum {
 typedef struct  {
     PlayerClass current_class;
     double last_switched;
+    double last_hit;
+    size_t health;
+    bool dead;
 } PlayerStateComp;
 
 typedef struct {
@@ -31,5 +35,6 @@ typedef struct {
 
 ECSPlayer ecs_player_new();
 void player_input_system(PlayerStateComp* state, PhysicsComp* physics, const TransformComp* transform); 
-void ecs_player_update(ECSPlayer* player, const Stage* stage);
+void ecs_player_update(ECSPlayer *player, const Stage *stage, const ECSEnemy *enemy);
+void player_enemy_interaction_system(ECSPlayer *player, const ECSEnemy *enemy);
 #endif

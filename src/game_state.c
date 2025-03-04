@@ -1,4 +1,5 @@
 #include "game_state.h"
+#include "raylib.h"
 #include "static_config.h"
 
 GameState game_state_init_system() {
@@ -13,7 +14,7 @@ GameState game_state_init_system() {
 }
 
 void game_state_update_system(GameState *state) {
-    ecs_player_update(&state->player, &state->stage);
+    ecs_player_update(&state->player, &state->stage, &state->test_enemy);
     ecs_enemy_update(&state->test_enemy, &state->stage, &state->player.transform);
 }
 
@@ -25,7 +26,12 @@ void game_state_draw_debug_stats(const GameState *state) {
 }
 
 void game_state_draw_playfield_system(const GameState *state) {
-    DrawRectangleRec(state->player.transform.rect, WHITE);
+    if (!state->player.state.dead) {
+        DrawRectangleRec(state->player.transform.rect, WHITE);
+    } else {
+        DrawText("YOU DIED", 300, 350, 32, WHITE);
+        DrawRectangleRec(state->player.transform.rect, BLACK);
+    }
     DrawRectangleRec(state->test_enemy.transform.rect, BLUE);
     draw_stage(&state->stage);
 }
