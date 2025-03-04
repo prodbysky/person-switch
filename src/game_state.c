@@ -94,27 +94,27 @@ EnemyWave default_wave() {
                 (ECSEnemy){
                     .transform = {.rect = {.x = 150, .y = 300, .width = 64, .height = 32}},
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
-                    .enemy_conf = {.speed = 20},
+                    .enemy_conf = {.speed = 5},
                 },
                 (ECSEnemy){
                     .transform = {.rect = {.x = 250, .y = 300, .width = 64, .height = 64}},
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
-                    .enemy_conf = {.speed = 20},
+                    .enemy_conf = {.speed = 10},
                 },
                 (ECSEnemy){
                     .transform = {.rect = {.x = 350, .y = 300, .width = 32, .height = 64}},
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
-                    .enemy_conf = {.speed = 20},
+                    .enemy_conf = {.speed = 15},
                 },
                 (ECSEnemy){
                     .transform = {.rect = {.x = 450, .y = 300, .width = 64, .height = 32}},
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
-                    .enemy_conf = {.speed = 20},
+                    .enemy_conf = {.speed = 8},
                 },
                 (ECSEnemy){
                     .transform = {.rect = {.x = 550, .y = 300, .width = 64, .height = 32}},
                     .physics = {.velocity = Vector2Zero(), .grounded = false},
-                    .enemy_conf = {.speed = 20},
+                    .enemy_conf = {.speed = 2},
                 },
             },
         .count = 5,
