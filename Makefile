@@ -22,6 +22,7 @@ ecs: src/ecs.c src/ecs.h
 enemy: src/enemy.c src/enemy.h
 	gcc src/enemy.c -c -o build/enemy.o $(CFLAGS)
 
+
 raylib:
 	make -C extern/raylib/src
 

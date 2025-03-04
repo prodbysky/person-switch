@@ -5,7 +5,7 @@
 typedef Rectangle Platform;
 
 typedef struct {
-    Platform *platforms;
+    Platform platforms[50];
     size_t count;
 } Stage;
 

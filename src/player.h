@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "ecs.h"
 #include "enemy.h"
+#include "wave.h"
 
 #define PLAYER_CLASS_SWITCH_COOLDOWN 20.0
 
@@ -35,6 +36,6 @@ typedef struct {
 
 ECSPlayer ecs_player_new();
 void player_input_system(PlayerStateComp* state, PhysicsComp* physics, const TransformComp* transform); 
-void ecs_player_update(ECSPlayer *player, const Stage *stage, const ECSEnemy *enemy);
-void player_enemy_interaction_system(ECSPlayer *player, const ECSEnemy *enemy);
+void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave);
+void player_enemy_interaction_system(ECSPlayer *player, const EnemyWave *wave);
 #endif

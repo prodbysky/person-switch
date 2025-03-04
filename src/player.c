@@ -24,7 +24,7 @@ ECSPlayer ecs_player_new() {
     return p;
 }
 
-void ecs_player_update(ECSPlayer *player, const Stage *stage, const ECSEnemy *enemy) {
+void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave) {
     if (player->state.dead) {
         return;
     }
@@ -33,17 +33,20 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const ECSEnemy *en
     player_input_system(&player->state, &player->physics, &player->transform);
     physics_system(&player->physics, dt);
     collision_system(&player->transform, &player->physics, stage, dt);
-    player_enemy_interaction_system(player, enemy);
+    player_enemy_interaction_system(player, wave);
     if (player->state.health <= 0) {
         player->state.dead = true;
     }
 }
 
-void player_enemy_interaction_system(ECSPlayer *player, const ECSEnemy *enemy) {
-    if (CheckCollisionRecs(player->transform.rect, enemy->transform.rect) &&
-        GetTime() - player->state.last_hit > INVULNERABILITY_TIME) {
-        player->state.last_hit = GetTime();
-        player->state.health--;
+void player_enemy_interaction_system(ECSPlayer *player, const EnemyWave *wave) {
+    for (int i = 0; i < wave->count; i++) {
+        if (CheckCollisionRecs(player->transform.rect, wave->enemies[i].transform.rect) &&
+            GetTime() - player->state.last_hit > INVULNERABILITY_TIME) {
+            player->state.last_hit = GetTime();
+            player->state.health--;
+            return;
+        }
     }
 }
 

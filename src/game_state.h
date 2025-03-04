@@ -3,15 +3,16 @@
 
 #include "arena.h"
 #include "player.h"
-#include "enemy.h"
+#include "wave.h"
 
-Stage default_stage(Arena *arena);
+Stage default_stage();
+EnemyWave default_wave();
 
 typedef struct {
     Arena allocator;
     ECSPlayer player;
     Stage stage;
-    ECSEnemy test_enemy;
+    EnemyWave current_wave;
 } GameState;
 
 GameState game_state_init_system(); 
