@@ -8,12 +8,8 @@
 // Base Components
 
 typedef struct {
-    Vector2 position;
-} TransformComp;
-
-typedef struct {
     Rectangle rect;
-} ColliderComp;
+} TransformComp;
 
 typedef struct {
     Vector2 velocity;
@@ -22,7 +18,7 @@ typedef struct {
 
 void physics_system(PhysicsComp* physics, float dt); 
 
-void collision_system(TransformComp* transform, PhysicsComp* physics, ColliderComp* collider, 
+void collision_system(TransformComp* transform, PhysicsComp* physics, 
                     const Stage* stage, float dt); 
 
 #endif

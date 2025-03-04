@@ -12,26 +12,20 @@ static const PlayerStat PLAYER_STATES[] = {
 };
 
 ECSPlayer ecs_player_new() {
-    ECSPlayer p = {.collider = {.rect = {.width = 32, .height = 96}},
-                   .transform = {.position = {(WINDOW_W / 2.0f) + 16, (WINDOW_H / 2.0f) + 48}},
-                   .state = {.current_class = PS_MOVE, .last_switched = GetTime()}};
-    p.collider.rect.x = p.transform.position.x;
-    p.collider.rect.y = p.transform.position.y;
+    ECSPlayer p = {
+        .transform = {.rect = {.width = 32, .height = 96, .x = (WINDOW_W / 2.0f) + 16, .y = (WINDOW_H / 2.0f) + 48}},
+        .state = {.current_class = PS_MOVE, .last_switched = GetTime()}};
     return p;
 }
 
 void ecs_player_update(ECSPlayer *player, const Stage *stage) {
     float dt = GetFrameTime();
 
-    player_input_system(&player->state, &player->physics, &player->collider);
+    player_input_system(&player->state, &player->physics, &player->transform);
     physics_system(&player->physics, dt);
-    collision_system(&player->transform, &player->physics, &player->collider, stage, dt);
-
-    // Sync Rectangle position
-    player->collider.rect.x = player->transform.position.x;
-    player->collider.rect.y = player->transform.position.y;
+    collision_system(&player->transform, &player->physics, stage, dt);
 }
-void player_input_system(PlayerStateComp *state, PhysicsComp *physics, const ColliderComp *collider) {
+void player_input_system(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform) {
     if (IsKeyPressed(KEY_F) && GetTime() - state->last_switched > PLAYER_CLASS_SWITCH_COOLDOWN) {
         state->current_class = (state->current_class + 1) % PS_COUNT;
         state->last_switched = GetTime();

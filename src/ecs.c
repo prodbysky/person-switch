@@ -13,13 +13,11 @@ void physics_system(PhysicsComp *physics, float dt) {
     }
 }
 
-void collision_system(TransformComp *transform, PhysicsComp *physics, ColliderComp *collider, const Stage *stage,
-                      float dt) {
-    Vector2 next_pos = {transform->position.x + physics->velocity.x * dt,
-                        transform->position.y + physics->velocity.y * dt};
+void collision_system(TransformComp *transform, PhysicsComp *physics, const Stage *stage, float dt) {
+    Vector2 next_pos = {transform->rect.x + physics->velocity.x * dt, transform->rect.y + physics->velocity.y * dt};
 
     bool on_any_platform = false;
-    Rectangle next_rect = {next_pos.x, next_pos.y, collider->rect.width, collider->rect.height};
+    Rectangle next_rect = {next_pos.x, next_pos.y, transform->rect.width, transform->rect.height};
 
     for (int i = 0; i < stage->count; i++) {
         if (CheckCollisionRecs(next_rect, stage->platforms[i])) {
@@ -31,7 +29,7 @@ void collision_system(TransformComp *transform, PhysicsComp *physics, ColliderCo
             if (from_bottom && physics->velocity.y > 0) {
                 physics->velocity.y = 0;
                 physics->grounded = true;
-                collider->rect.y = platform->y - collider->rect.height;
+                transform->rect.y = platform->y - transform->rect.height;
                 on_any_platform = true;
             } else if (from_left && physics->velocity.x < 0) {
                 physics->velocity.x = 0;
@@ -44,10 +42,10 @@ void collision_system(TransformComp *transform, PhysicsComp *physics, ColliderCo
         bool above_platform = false;
         for (int i = 0; i < stage->count; i++) {
             const Platform *platform = &stage->platforms[i];
-            if (collider->rect.x + collider->rect.width > platform->x &&
-                collider->rect.x < platform->x + platform->width &&
-                collider->rect.y + collider->rect.height <= platform->y &&
-                collider->rect.y + collider->rect.height + 1 >= platform->y) {
+            if (transform->rect.x + transform->rect.width > platform->x &&
+                transform->rect.x < platform->x + platform->width &&
+                transform->rect.y + transform->rect.height <= platform->y &&
+                transform->rect.y + transform->rect.height + 1 >= platform->y) {
                 above_platform = true;
                 break;
             }
@@ -59,13 +57,12 @@ void collision_system(TransformComp *transform, PhysicsComp *physics, ColliderCo
     }
 
     next_pos = (Vector2){
-        .x = collider->rect.x + physics->velocity.x * GetFrameTime(),
-        .y = collider->rect.y + physics->velocity.y * GetFrameTime(),
+        .x = transform->rect.x + physics->velocity.x * GetFrameTime(),
+        .y = transform->rect.y + physics->velocity.y * GetFrameTime(),
     };
 
-    transform->position = next_pos;
-    collider->rect.x = next_pos.x;
-    collider->rect.y = next_pos.y;
+    transform->rect.x = next_pos.x;
+    transform->rect.y = next_pos.y;
 
-    collider->rect.x = Clamp(collider->rect.x, 0, WINDOW_W - collider->rect.width);
+    transform->rect.x = Clamp(transform->rect.x, 0, WINDOW_W - transform->rect.width);
 }

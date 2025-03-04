@@ -27,12 +27,11 @@ typedef struct  {
 
 typedef struct {
     TransformComp transform;
-    ColliderComp collider;
     PhysicsComp physics;
     PlayerStateComp state;
 } ECSPlayer;
 
 ECSPlayer ecs_player_new();
-void player_input_system(PlayerStateComp* state, PhysicsComp* physics, const ColliderComp* collider); 
+void player_input_system(PlayerStateComp* state, PhysicsComp* physics, const TransformComp* transform); 
 void ecs_player_update(ECSPlayer* player, const Stage* stage);
 #endif

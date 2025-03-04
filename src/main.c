@@ -13,18 +13,16 @@ typedef struct {
     Arena allocator;
     ECSPlayer player;
     Stage stage;
+    ECSEnemy test_enemy;
 } GameState;
 
 GameState game_state_init() {
     Arena global_game_allocator = arena_new(1024 * 4);
     Stage st = default_stage(&global_game_allocator);
     ECSPlayer player = ecs_player_new();
+    ECSEnemy test_enemy = ecs_enemy_new((Vector2){100, 100}, (Vector2){64, 64}, 20);
 
-    return (GameState){
-        .allocator = global_game_allocator,
-        .player = player,
-        .stage = st,
-    };
+    return (GameState){.allocator = global_game_allocator, .player = player, .stage = st, .test_enemy = test_enemy};
 }
 
 void game_state_destroy(GameState *state) {
@@ -36,21 +34,20 @@ int main() {
     SetTargetFPS(120);
 
     GameState state = game_state_init();
-    ECSEnemy test = ecs_enemy_new((Vector2){100, 100}, (Vector2){64, 64}, 20);
 
     while (!WindowShouldClose()) {
         double before_update = GetTime() * 10000;
         ecs_player_update(&state.player, &state.stage);
-        ecs_enemy_update(&test, &state.stage, &state.player.collider);
+        ecs_enemy_update(&state.test_enemy, &state.stage, &state.player.transform);
         double after_update = GetTime() * 10000;
         BeginDrawing();
+        ClearBackground(GetColor(0x181818ff));
         DrawFPS(10, 10);
         DrawText(TextFormat("Update time: %.2f (ms * 10).", after_update - before_update), 10, 40, 20, WHITE);
         DrawText(TextFormat("Heap usage: %u bytes used", state.allocator.used), 10, 70, 20, WHITE);
 
-        ClearBackground(GetColor(0x181818ff));
-        DrawRectangleRec(state.player.collider.rect, WHITE);
-        DrawRectangleRec(test.collider.rect, BLUE);
+        DrawRectangleRec(state.player.transform.rect, WHITE);
+        DrawRectangleRec(state.test_enemy.transform.rect, BLUE);
         draw_stage(&state.stage);
         EndDrawing();
     }
