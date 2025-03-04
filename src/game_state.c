@@ -14,14 +14,48 @@ GameState game_state_init_system() {
     st.stage = default_stage();
     st.player = ecs_player_new();
     st.current_wave = default_wave();
+    st.phase = GP_STARTMENU;
     return st;
 }
 
 void game_state_update_system(GameState *state) {
-    for (int i = 0; i < state->current_wave.count; i++) {
-        ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform);
+    switch (state->phase) {
+    case GP_MAIN:
+        if (IsKeyReleased(KEY_P)) {
+            state->phase = GP_PAUSED;
+            return;
+        }
+        for (int i = 0; i < state->current_wave.count; i++) {
+            ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform);
+        }
+        ecs_player_update(&state->player, &state->stage, &state->current_wave);
+        if (state->player.state.dead) {
+            state->phase = GP_DEAD;
+        }
+        break;
+
+    case GP_STARTMENU:
+        if (IsKeyReleased(KEY_SPACE)) {
+            state->phase = GP_MAIN;
+        }
+        break;
+
+    case GP_DEAD:
+        if (IsKeyReleased(KEY_SPACE)) {
+            state->phase = GP_MAIN;
+            state->player = ecs_player_new();
+            state->stage = default_stage();
+            state->current_wave = default_wave();
+        }
+        break;
+
+    case GP_PAUSED:
+        if (IsKeyReleased(KEY_P)) {
+            state->phase = GP_MAIN;
+            return;
+        }
+        break;
     }
-    ecs_player_update(&state->player, &state->stage, &state->current_wave);
 }
 
 void game_state_draw_debug_stats(const GameState *state) {
@@ -35,7 +69,6 @@ void game_state_draw_playfield_system(const GameState *state) {
     if (!state->player.state.dead) {
         DrawRectangleRec(state->player.transform.rect, WHITE);
     } else {
-        DrawText("YOU DIED", 300, 350, 32, WHITE);
         DrawRectangleRec(state->player.transform.rect, BLACK);
     }
     for (int i = 0; i < state->current_wave.count; i++) {
@@ -47,8 +80,29 @@ void game_state_draw_playfield_system(const GameState *state) {
 void game_state_frame_system(const GameState *state) {
     BeginDrawing();
     ClearBackground(GetColor(0x181818ff));
-    game_state_draw_debug_stats(state);
-    game_state_draw_playfield_system(state);
+    switch (state->phase) {
+    case GP_MAIN:
+        game_state_draw_debug_stats(state);
+        game_state_draw_playfield_system(state);
+        break;
+    case GP_STARTMENU:
+        ClearBackground(GetColor(0x8a8a8aff));
+        DrawText("Press the space bar to \nstart the game!", 200, 350, 32, WHITE);
+        break;
+
+    case GP_DEAD:
+        DrawText("YOU DIED", 300, 350, 32, WHITE);
+        break;
+    case GP_PAUSED:
+        game_state_draw_playfield_system(state);
+        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
+                         GetColor(0x00000055));
+        game_state_draw_debug_stats(state);
+        DrawText("The game is paused", 200, 350, 32, WHITE);
+
+        break;
+    }
+
     EndDrawing();
 }
 

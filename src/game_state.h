@@ -8,12 +8,21 @@
 Stage default_stage();
 EnemyWave default_wave();
 
+typedef enum {
+    GP_STARTMENU = 0,
+    GP_MAIN,
+    GP_DEAD,
+    GP_PAUSED,
+} GamePhase;
+
 typedef struct {
     Arena allocator;
     ECSPlayer player;
     Stage stage;
     EnemyWave current_wave;
+    GamePhase phase;
 } GameState;
+
 
 GameState game_state_init_system(); 
 void game_state_destroy(GameState *state); 
