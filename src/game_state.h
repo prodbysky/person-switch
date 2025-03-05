@@ -33,6 +33,6 @@ void game_state_destroy(GameState *state);
 void game_state_system(GameState *state); 
 void game_state_update_system(GameState *state);
 void game_state_frame_system(const GameState *state); 
-void game_state_draw_debug_stats(const GameState *state); 
+void game_state_draw_debug_stats(const GameState *state);
 void game_state_draw_playfield_system(const GameState *state); 
 #endif

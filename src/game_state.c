@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static double update_took = 0;
+
 GameState game_state_init_system() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
@@ -68,10 +70,11 @@ void game_state_update_system(GameState *state) {
 
 void game_state_draw_debug_stats(const GameState *state) {
     DrawTextEx(state->font, TextFormat("FPS: %d", GetFPS()), (Vector2){10, 10}, 32, 0, WHITE);
+    DrawTextEx(state->font, TextFormat("Update took: %f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0, WHITE);
     DrawTextEx(state->font,
                TextFormat("Heap usage: %u/%u (%.2f%) Bytes", state->allocator.used, state->allocator.cap,
                           ((float)state->allocator.used * 100.0) / state->allocator.cap),
-               (Vector2){10, 40}, 32, 0, WHITE);
+               (Vector2){10, 70}, 32, 0, WHITE);
 }
 
 void game_state_draw_playfield_system(const GameState *state) {
@@ -134,7 +137,10 @@ void game_state_frame_system(const GameState *state) {
 }
 
 void game_state_system(GameState *state) {
+    double pre_update = GetTime();
     game_state_update_system(state);
+    double post_update = GetTime();
+    update_took = post_update - pre_update;
     game_state_frame_system(state);
 }
 
