@@ -12,7 +12,7 @@
 GameState game_state_init_system() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
-    /*SetTargetFPS(120);*/
+    SetTargetFPS(120);
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
