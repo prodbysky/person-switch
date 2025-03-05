@@ -96,7 +96,14 @@ void game_state_frame_system(const GameState *state) {
         break;
     case GP_STARTMENU:
         ClearBackground(GetColor(0x8a8a8aff));
-        DrawTextEx(state->font, "Press `space` to start\nthe game!", (Vector2){200, 350}, 32, 0, WHITE);
+        DrawTextEx(state->font, "Press `space` to start\nthe game!", (Vector2){10, 10}, 32, 0, WHITE);
+        DrawTextEx(state->font, "Controls:", (Vector2){10, 90}, 32, 0, WHITE);
+        DrawTextEx(state->font, "A: Move left", (Vector2){30, 120}, 32, 0, WHITE);
+        DrawTextEx(state->font, "D: Move right", (Vector2){30, 150}, 32, 0, WHITE);
+        DrawTextEx(state->font, "Space: Jump", (Vector2){30, 180}, 32, 0, WHITE);
+        DrawTextEx(state->font, "Left arrow: Shoot to the left", (Vector2){30, 210}, 32, 0, WHITE);
+        DrawTextEx(state->font, "Right arrow: Shoot to the right", (Vector2){30, 240}, 32, 0, WHITE);
+        DrawTextEx(state->font, "P: Pause the game", (Vector2){30, 270}, 32, 0, WHITE);
         break;
 
     case GP_DEAD:
