@@ -6,6 +6,7 @@
 #include "wave.h"
 #include <raylib.h>
 #include <raymath.h>
+#include <string.h>
 
 GameState game_state_init_system() {
     GameState st;
@@ -16,6 +17,7 @@ GameState game_state_init_system() {
     st.player = ecs_player_new();
     st.current_wave = default_wave();
     st.phase = GP_STARTMENU;
+    st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 32, NULL, 255);
     return st;
 }
 
@@ -64,13 +66,16 @@ void game_state_draw_debug_stats(const GameState *state) {
     DrawText(TextFormat("Heap usage: %u/%u (%.2f%) Bytes", state->allocator.used, state->allocator.cap,
                         ((float)state->allocator.used * 100.0) / state->allocator.cap),
              10, 30, 20, GetColor(0x009900ff));
+    DrawTextEx(state->font, TextFormat("FPS: %d", GetFPS()), (Vector2){10, 10}, 32, 0, WHITE);
+    DrawTextEx(state->font,
+               TextFormat("Heap usage: %u/%u (%.2f%) Bytes", state->allocator.used, state->allocator.cap,
+                          ((float)state->allocator.used * 100.0) / state->allocator.cap),
+               (Vector2){10, 40}, 32, 0, WHITE);
 }
 
 void game_state_draw_playfield_system(const GameState *state) {
     if (!state->player.state.dead) {
         DrawRectangleRec(state->player.transform.rect, WHITE);
-    } else {
-        DrawRectangleRec(state->player.transform.rect, BLACK);
     }
     for (int i = 0; i < state->current_wave.count; i++) {
         DrawRectangleRec(state->current_wave.enemies[i].transform.rect, BLUE);
@@ -88,18 +93,18 @@ void game_state_frame_system(const GameState *state) {
         break;
     case GP_STARTMENU:
         ClearBackground(GetColor(0x8a8a8aff));
-        DrawText("Press the space bar to \nstart the game!", 200, 350, 32, WHITE);
+        DrawTextEx(state->font, "Press `space` to start\nthe game!", (Vector2){200, 350}, 32, 0, WHITE);
         break;
 
     case GP_DEAD:
-        DrawText("YOU DIED", 300, 350, 32, WHITE);
+        DrawTextEx(state->font, "You died!", (Vector2){300, 350}, 32, 0, WHITE);
         break;
     case GP_PAUSED:
         game_state_draw_playfield_system(state);
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
         game_state_draw_debug_stats(state);
-        DrawText("The game is paused", 200, 350, 32, WHITE);
+        DrawTextEx(state->font, "The game is paused", (Vector2){200, 350}, 32, 0, WHITE);
         break;
     }
 
@@ -113,6 +118,7 @@ void game_state_system(GameState *state) {
 
 void game_state_destroy(GameState *state) {
     arena_free(&state->allocator);
+    UnloadFont(state->font);
     CloseWindow();
 }
 

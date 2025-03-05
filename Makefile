@@ -1,6 +1,7 @@
 CFLAGS = -ggdb -Wall -Werror -Lextern/raylib/src/ -Iextern/raylib/src/
 LIBS = -lm -l:libraylib.a
 
+
 main.c: src/main.c raylib player arena stage ecs enemy game_state
 	gcc src/main.c -o build/persona $(CFLAGS) $(LIBS) build/player.o build/arena.o build/stage.o build/ecs.o build/enemy.o build/game_state.o
 
