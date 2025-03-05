@@ -10,18 +10,19 @@ static const PlayerStat PLAYER_STATES[] = {
     [PS_DAMAGE] = {.jump_power = 200, .speed_x = 250},
 };
 
-#define INVULNERABILITY_TIME 1.0
-
 ECSPlayer ecs_player_new() {
-    ECSPlayer p = {.transform = TRANSFORM((WINDOW_W / 2.0) + 16, (WINDOW_H / 2.0) + 48, 32, 96),
-                   .state = {
-                       .current_class = PS_MOVE,
-                       .last_switched = 0.0,
-                       .health = 5,
-                       .last_hit = 0.0,
-                       .last_shot = 0.0,
-                       .dead = false,
-                   }};
+    ECSPlayer p = {
+        .transform = TRANSFORM((WINDOW_W / 2.0) + 16, (WINDOW_H / 2.0) + 48, 32, 96),
+        .state =
+            {
+                .current_class = PS_MOVE,
+                .last_switched = 0.0,
+                .health = 5,
+                .last_hit = 0.0,
+                .last_shot = 0.0,
+                .dead = false,
+            },
+    };
     return p;
 }
 
@@ -42,6 +43,9 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
 
 void player_enemy_interaction_system(ECSPlayer *player, const EnemyWave *wave) {
     for (int i = 0; i < wave->count; i++) {
+        if (wave->enemies[i].dead) {
+            continue;
+        }
         if (CheckCollisionRecs(player->transform.rect, wave->enemies[i].transform.rect) &&
             GetTime() - player->state.last_hit > INVULNERABILITY_TIME) {
             player->state.last_hit = GetTime();
@@ -82,35 +86,5 @@ void player_input_system(PlayerStateComp *state, PhysicsComp *physics, const Tra
     if (physics->grounded && IsKeyPressed(KEY_SPACE)) {
         physics->velocity.y = -PLAYER_STATES[state->current_class].jump_power;
         physics->grounded = false;
-    }
-}
-
-void bullets_spawn_bullet_system(const TransformComp *player_transform, Bullets *bullets, BulletDirection dir) {
-    const float x = player_transform->rect.x + (player_transform->rect.width / 2.0);
-    const float y = player_transform->rect.y + (player_transform->rect.height / 2.0);
-    bullets->bullets[bullets->current] = (ECSPlayerBullet){
-        .dir = dir,
-        .creation_time = GetTime(),
-        .transform = TRANSFORM(x, y, 32, 32),
-    };
-    bullets->current = (bullets->current + 1) % 100;
-}
-
-void bullets_update_system(Bullets *bullets, float dt) {
-    for (int i = 0; i < 100; i++) {
-        if (GetTime() - bullets->bullets[i].creation_time < 2) {
-            if (bullets->bullets[i].dir == BD_RIGHT) {
-                bullets->bullets[i].transform.rect.x += 500 * dt;
-            } else {
-                bullets->bullets[i].transform.rect.x -= 500 * dt;
-            }
-        }
-    }
-}
-void bullets_draw_system(const Bullets *bullets) {
-    for (int i = 0; i < 100; i++) {
-        if (GetTime() - bullets->bullets[i].creation_time < 2) {
-            DrawRectangleRec(bullets->bullets[i].transform.rect, PURPLE);
-        }
     }
 }

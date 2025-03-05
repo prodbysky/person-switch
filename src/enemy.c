@@ -1,13 +1,19 @@
 #include "enemy.h"
+#include "bullet.h"
 #include "ecs.h"
+#include "raylib.h"
+#include "static_config.h"
+#include <math.h>
 #include <raymath.h>
+#include <stdlib.h>
 
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed) {
-    return (ECSEnemy){
-        .physics = DEFAULT_PHYSICS(),
-        .transform = TRANSFORM(pos.y, pos.y, size.x, size.y),
-        .enemy_conf = {.speed = speed},
-    };
+    return (ECSEnemy){.physics = DEFAULT_PHYSICS(),
+                      .transform = TRANSFORM(pos.x, pos.y, size.x, size.y),
+                      .enemy_conf = {.speed = speed},
+                      .health = 5,
+                      .last_hit = 0.0,
+                      .dead = false};
 }
 void enemy_ai_system(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
                      const TransformComp *player_transform) {
@@ -29,9 +35,37 @@ void enemy_ai_system(const EnemyConfigComp *conf, const TransformComp *transform
         physics->velocity.x += conf->speed;
     }
 }
-void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform) {
+void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets) {
     float dt = GetFrameTime();
+    if (enemy->dead) {
+        return;
+    }
+    if (enemy->health <= 0) {
+        enemy->dead = true;
+        return;
+    }
     physics_system(&enemy->physics, dt);
     enemy_ai_system(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);
     collision_system(&enemy->transform, &enemy->physics, stage, dt);
+    enemy_bullet_interaction_system(&enemy->transform, &enemy->health, bullets, &enemy->last_hit);
+}
+
+void enemy_bullet_interaction_system(const TransformComp *transform, size_t *health, Bullets *bullets,
+                                     double *last_hit) {
+    if ((*health) <= 0) {
+        return;
+    }
+    if (GetTime() - (*last_hit) < INVULNERABILITY_TIME) {
+        return;
+    }
+    for (int i = 0; i < MAX_BULLETS; i++) {
+        if (GetTime() - bullets->bullets[i].creation_time < 2) {
+            if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
+                (*health)--;
+                bullets->bullets[i].creation_time = INFINITY;
+                *last_hit = GetTime();
+                return;
+            }
+        }
+    }
 }

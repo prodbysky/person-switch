@@ -6,12 +6,13 @@
 #include "wave.h"
 #include <raylib.h>
 #include <raymath.h>
+#include <stdlib.h>
 #include <string.h>
 
 GameState game_state_init_system() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
-    SetTargetFPS(120);
+    /*SetTargetFPS(120);*/
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
@@ -31,7 +32,7 @@ void game_state_update_system(GameState *state) {
             return;
         }
         for (int i = 0; i < state->current_wave.count; i++) {
-            ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform);
+            ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets);
         bullets_update_system(&state->bullets, dt);
@@ -77,7 +78,9 @@ void game_state_draw_playfield_system(const GameState *state) {
         DrawRectangleRec(state->player.transform.rect, WHITE);
     }
     for (int i = 0; i < state->current_wave.count; i++) {
-        DrawRectangleRec(state->current_wave.enemies[i].transform.rect, BLUE);
+        if (!state->current_wave.enemies[i].dead) {
+            DrawRectangleRec(state->current_wave.enemies[i].transform.rect, BLUE);
+        }
     }
     draw_stage(&state->stage);
     bullets_draw_system(&state->bullets);
@@ -139,11 +142,12 @@ EnemyWave default_wave() {
     return (EnemyWave){
         .enemies =
             {
-                (ECSEnemy){
-                    .transform = TRANSFORM(150, 300, 64, 32),
-                    .physics = DEFAULT_PHYSICS(),
-                    .enemy_conf = {.speed = 5},
-                },
+                (ECSEnemy){.transform = TRANSFORM(150, 300, 64, 32),
+                           .physics = DEFAULT_PHYSICS(),
+                           .enemy_conf = {.speed = 5},
+                           .health = 5,
+                           .last_hit = 0.0,
+                           .dead = false},
             },
         .count = 1,
     };

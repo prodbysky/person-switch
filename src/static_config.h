@@ -5,5 +5,6 @@
 #define WINDOW_H 600
 
 #define G 500
+#define INVULNERABILITY_TIME 1.0
 
 #endif

@@ -5,29 +5,11 @@
 #include <stdint.h>
 #include "ecs.h"
 #include "wave.h"
+#include "bullet.h"
 
 #define PLAYER_CLASS_SWITCH_COOLDOWN 20.0
 
 
-typedef enum {
-    BD_LEFT,
-    BD_RIGHT,
-} BulletDirection;
-
-typedef struct {
-    TransformComp transform;
-    BulletDirection dir;
-    double creation_time;
-} ECSPlayerBullet;
-
-typedef struct {
-    ECSPlayerBullet bullets[100];
-    size_t current;
-} Bullets;
-
-void bullets_spawn_bullet_system(const TransformComp* player_transform, Bullets *bullets, BulletDirection dir);
-void bullets_update_system(Bullets *bullets, float dt);
-void bullets_draw_system(const Bullets *bullets);
 
 typedef struct {
     uint16_t speed_x;

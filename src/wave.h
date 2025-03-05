@@ -6,7 +6,7 @@
 
 #include "enemy.h"
 typedef struct {
-    ECSEnemy enemies[50];
+    ECSEnemy enemies[MAX_WAVE_POPULATION];
     size_t count;
 } EnemyWave;
 
