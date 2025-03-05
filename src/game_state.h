@@ -23,6 +23,8 @@ typedef struct {
     Stage stage;
     EnemyWave current_wave;
     GamePhase phase;
+    Bullets bullets;
+    Font font;
 } GameState;
 
 

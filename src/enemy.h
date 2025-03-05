@@ -1,7 +1,6 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-
 #include "ecs.h"
 
 typedef struct {
