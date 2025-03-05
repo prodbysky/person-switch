@@ -18,7 +18,8 @@ GameState game_state_init_system() {
     st.player = ecs_player_new();
     st.current_wave = default_wave();
     st.phase = GP_STARTMENU;
-    st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 32, NULL, 255);
+    st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
+    SetTextureFilter(st.font.texture, TEXTURE_FILTER_BILINEAR);
     st.bullets = (Bullets){0};
     return st;
 }
@@ -96,14 +97,25 @@ void game_state_frame_system(const GameState *state) {
         break;
     case GP_STARTMENU:
         ClearBackground(GetColor(0x8a8a8aff));
-        DrawTextEx(state->font, "Press `space` to start\nthe game!", (Vector2){10, 10}, 32, 0, WHITE);
-        DrawTextEx(state->font, "Controls:", (Vector2){10, 90}, 32, 0, WHITE);
-        DrawTextEx(state->font, "A: Move left", (Vector2){30, 120}, 32, 0, WHITE);
-        DrawTextEx(state->font, "D: Move right", (Vector2){30, 150}, 32, 0, WHITE);
-        DrawTextEx(state->font, "Space: Jump", (Vector2){30, 180}, 32, 0, WHITE);
-        DrawTextEx(state->font, "Left arrow: Shoot to the left", (Vector2){30, 210}, 32, 0, WHITE);
-        DrawTextEx(state->font, "Right arrow: Shoot to the right", (Vector2){30, 240}, 32, 0, WHITE);
-        DrawTextEx(state->font, "P: Pause the game", (Vector2){30, 270}, 32, 0, WHITE);
+        Vector2 font_24_size = MeasureTextEx(state->font, "A", 24, 0);
+        const float line_spacing = font_24_size.y;
+        Vector2 ui_cursor = {.x = 10, .y = 10};
+        DrawTextEx(state->font, "Press `space` to start\nthe game!", ui_cursor, 32, 0, WHITE);
+        ui_cursor.y = 90;
+        DrawTextEx(state->font, "Controls:", ui_cursor, 24, 0, WHITE);
+        ui_cursor.x += 10;
+        ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "A: Move left", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "D: Move right", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "Space: Jump", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "Left arrow: Shoot to the left", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "Right arrow: Shoot to the right", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "P: Pause the game", ui_cursor, 24, 0, WHITE);
         break;
 
     case GP_DEAD:
@@ -114,7 +126,7 @@ void game_state_frame_system(const GameState *state) {
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
         game_state_draw_debug_stats(state);
-        DrawTextEx(state->font, "The game is paused", (Vector2){200, 350}, 32, 0, WHITE);
+        DrawTextEx(state->font, "The game is paused", (Vector2){200, 350}, 48, 0, WHITE);
         break;
     }
 
