@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include "ecs.h"
-#include "enemy.h"
 #include "wave.h"
 
 #define PLAYER_CLASS_SWITCH_COOLDOWN 20.0

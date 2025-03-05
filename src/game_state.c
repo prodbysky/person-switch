@@ -1,4 +1,5 @@
 #include "game_state.h"
+#include "ecs.h"
 #include "enemy.h"
 #include "player.h"
 #include "static_config.h"
@@ -146,27 +147,27 @@ EnemyWave default_wave() {
             {
                 (ECSEnemy){
                     .transform = TRANSFORM(150, 300, 64, 32),
-                    .physics = {.velocity = Vector2Zero(), .grounded = false},
+                    .physics = DEFAULT_PHYSICS(),
                     .enemy_conf = {.speed = 5},
                 },
                 (ECSEnemy){
                     .transform = TRANSFORM(250, 300, 64, 64),
-                    .physics = {.velocity = Vector2Zero(), .grounded = false},
+                    .physics = DEFAULT_PHYSICS(),
                     .enemy_conf = {.speed = 10},
                 },
                 (ECSEnemy){
                     .transform = TRANSFORM(350, 300, 32, 64),
-                    .physics = {.velocity = Vector2Zero(), .grounded = false},
+                    .physics = DEFAULT_PHYSICS(),
                     .enemy_conf = {.speed = 15},
                 },
                 (ECSEnemy){
                     .transform = TRANSFORM(450, 300, 64, 32),
-                    .physics = {.velocity = Vector2Zero(), .grounded = false},
+                    .physics = DEFAULT_PHYSICS(),
                     .enemy_conf = {.speed = 8},
                 },
                 (ECSEnemy){
                     .transform = TRANSFORM(550, 300, 64, 32),
-                    .physics = {.velocity = Vector2Zero(), .grounded = false},
+                    .physics = DEFAULT_PHYSICS(),
                     .enemy_conf = {.speed = 2},
                 },
             },

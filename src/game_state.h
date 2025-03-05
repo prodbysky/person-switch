@@ -15,7 +15,9 @@ typedef enum {
     GP_PAUSED,
 } GamePhase;
 
+// The entire game state, sort of a `god` object
 typedef struct {
+    // Internal arena allocator which will store all internal allocations for the game
     Arena allocator;
     ECSPlayer player;
     Stage stage;
