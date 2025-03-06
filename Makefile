@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -ggdb -Wall -Werror -Iextern/raylib/src/
-LDFLAGS = -Lextern/raylib/src/
+CFLAGS = -ggdb -Wall -Werror -Iextern/raylib/src/ -Iextern/
+LDFLAGS = -Lextern/raylib/src/ 
 LIBS = -lm -l:libraylib.a
 
 SRC_DIR = src
