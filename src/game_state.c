@@ -57,7 +57,7 @@ void game_state_update(GameState *state) {
         }
         for (int i = 0; i < state->current_wave.count; i++) {
             ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets,
-                             &state->enemy_hit_sound);
+                             &state->enemy_hit_sound, PLAYER_STATES[state->player.state.current_class].damage);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
                           &state->player_jump_sound, &state->player_shoot_sound);
@@ -222,8 +222,11 @@ void game_state_frame(const GameState *state) {
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
         DrawRectangle(275, 200, 256, 64, WHITE);
+        DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, GRAY);
         DrawRectangle(275, 300, 256, 64, WHITE);
+        DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, GRAY);
         DrawRectangle(275, 400, 256, 64, WHITE);
+        DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
 
 #ifndef RELEASE
         game_state_draw_debug_stats(state);

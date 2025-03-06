@@ -13,7 +13,7 @@ typedef struct {
     TransformComp transform;
     PhysicsComp physics;
     Color c;
-    size_t health;
+    int health;
     double last_hit;
     bool dead;
 } ECSEnemy;
@@ -21,7 +21,8 @@ typedef struct {
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health);
 void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
                      const TransformComp *player_transform);
-void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets, const Sound* hit_sound);
-void enemy_bullet_interaction(const TransformComp *transform, size_t *health, Bullets *bullets,
-                                     double *last_hit, const Sound* hit_sound);
+void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets,
+                      const Sound *hit_sound, size_t dmg);
+void enemy_bullet_interaction(const TransformComp *transform, int *health, Bullets *bullets, double *last_hit,
+                              const Sound *hit_sound, size_t dmg) ;
 #endif

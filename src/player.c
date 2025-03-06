@@ -4,12 +4,6 @@
 #include "static_config.h"
 #include <raylib.h>
 
-static const PlayerStat PLAYER_STATES[] = {
-    [PS_TANK] = {.jump_power = 150, .speed_x = 200},
-    [PS_MOVE] = {.jump_power = 300, .speed_x = 350},
-    [PS_DAMAGE] = {.jump_power = 200, .speed_x = 250},
-};
-
 ECSPlayer ecs_player_new() {
     ECSPlayer p = {
         .transform = TRANSFORM((WINDOW_W / 2.0) + 16, (WINDOW_H / 2.0) + 48, 32, 96),

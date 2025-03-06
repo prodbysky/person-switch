@@ -10,6 +10,7 @@
 typedef struct {
     uint16_t speed_x;
     uint16_t jump_power;
+    uint16_t damage;
 } PlayerStat;
 
 typedef enum {

@@ -38,7 +38,7 @@ void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, Physi
     }
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets,
-                      const Sound *hit_sound) {
+                      const Sound *hit_sound, size_t dmg) {
     float dt = GetFrameTime();
     if (enemy->dead) {
         return;
@@ -56,11 +56,11 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     physics(&enemy->physics, dt);
     enemy_ai(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);
     collision(&enemy->transform, &enemy->physics, stage, dt);
-    enemy_bullet_interaction(&enemy->transform, &enemy->health, bullets, &enemy->last_hit, hit_sound);
+    enemy_bullet_interaction(&enemy->transform, &enemy->health, bullets, &enemy->last_hit, hit_sound, dmg);
 }
 
-void enemy_bullet_interaction(const TransformComp *transform, size_t *health, Bullets *bullets, double *last_hit,
-                              const Sound *hit_sound) {
+void enemy_bullet_interaction(const TransformComp *transform, int *health, Bullets *bullets, double *last_hit,
+                              const Sound *hit_sound, size_t dmg) {
     if ((*health) <= 0) {
         return;
     }
@@ -70,7 +70,7 @@ void enemy_bullet_interaction(const TransformComp *transform, size_t *health, Bu
     for (int i = 0; i < MAX_BULLETS; i++) {
         if (GetTime() - bullets->bullets[i].creation_time < 2) {
             if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
-                (*health)--;
+                (*health) -= dmg;
                 bullets->bullets[i].creation_time = INFINITY;
                 *last_hit = GetTime();
                 PlaySound(*hit_sound);
