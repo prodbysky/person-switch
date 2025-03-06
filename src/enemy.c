@@ -7,11 +7,11 @@
 #include <raymath.h>
 #include <stdlib.h>
 
-ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed) {
+ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health) {
     return (ECSEnemy){.physics = DEFAULT_PHYSICS(),
                       .transform = TRANSFORM(pos.x, pos.y, size.x, size.y),
                       .enemy_conf = {.speed = speed},
-                      .health = 5,
+                      .health = health,
                       .last_hit = 0.0,
                       .dead = false,
                       .c = BLUE};

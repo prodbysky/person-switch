@@ -245,12 +245,15 @@ Stage default_stage() {
     return st;
 }
 
+#define FAST_WEAK_ENEMY(x, y) ecs_enemy_new((Vector2){(x), (y)}, (Vector2){32, 64}, 40, 3)
+#define SLOW_STRONG_ENEMY(x, y) ecs_enemy_new((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
+
 EnemyWave default_wave() {
     return (EnemyWave){
         .enemies =
             {
-                ecs_enemy_new((Vector2){150, 300}, (Vector2){64, 64}, 10),
-                ecs_enemy_new((Vector2){250, 500}, (Vector2){64, 64}, 20),
+                FAST_WEAK_ENEMY(300, 300),
+                SLOW_STRONG_ENEMY(500, 200),
             },
         .count = 2,
     };
