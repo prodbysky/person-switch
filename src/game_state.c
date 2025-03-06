@@ -100,16 +100,16 @@ void game_state_draw_debug_stats(const GameState *state) {
 }
 
 void game_state_draw_playfield(const GameState *state) {
-    if (!state->player.state.dead) {
-        DrawRectangleRec(state->player.transform.rect, state->player.c);
-    }
+    draw_stage(&state->stage);
     for (int i = 0; i < state->current_wave.count; i++) {
         if (!state->current_wave.enemies[i].dead) {
             DrawRectangleRec(state->current_wave.enemies[i].transform.rect, state->current_wave.enemies[i].c);
         }
     }
-    draw_stage(&state->stage);
     bullets_draw(&state->bullets);
+    if (!state->player.state.dead) {
+        DrawRectangleRec(state->player.transform.rect, state->player.c);
+    }
 }
 
 void game_state_frame(const GameState *state) {
@@ -202,8 +202,8 @@ EnemyWave default_wave() {
     return (EnemyWave){
         .enemies =
             {
-                ecs_enemy_new((Vector2){150, 300}, (Vector2){64, 32}, 10),
-                ecs_enemy_new((Vector2){250, 500}, (Vector2){64, 32}, 20),
+                ecs_enemy_new((Vector2){150, 300}, (Vector2){64, 64}, 10),
+                ecs_enemy_new((Vector2){250, 500}, (Vector2){64, 64}, 20),
             },
         .count = 2,
     };

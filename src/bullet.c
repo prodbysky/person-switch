@@ -6,7 +6,7 @@ void bullets_spawn_bullet(const TransformComp *player_transform, Bullets *bullet
     bullets->bullets[bullets->current] = (ECSPlayerBullet){
         .dir = dir,
         .creation_time = GetTime(),
-        .transform = TRANSFORM(x, y, 32, 32),
+        .transform = TRANSFORM(x, y, 16, 8),
     };
     bullets->current = (bullets->current + 1) % MAX_BULLETS;
 }
