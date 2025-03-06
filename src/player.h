@@ -39,8 +39,8 @@ typedef struct {
 } ECSPlayer;
 
 ECSPlayer ecs_player_new();
-void player_input_system(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform,
+void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform,
                          Bullets *bullets);
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets);
-void player_enemy_interaction_system(ECSPlayer *player, const EnemyWave *wave);
+void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave);
 #endif

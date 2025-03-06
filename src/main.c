@@ -1,10 +1,10 @@
 #include "game_state.h"
 
 int main() {
-    GameState state = game_state_init_system();
+    GameState state = game_state_init();
 
     while (!WindowShouldClose()) {
-        game_state_system(&state);
+        game_state(&state);
     }
     game_state_destroy(&state);
 }

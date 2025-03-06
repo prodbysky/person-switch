@@ -32,16 +32,16 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
     }
     float dt = GetFrameTime();
 
-    player_input_system(&player->state, &player->physics, &player->transform, bullets);
-    physics_system(&player->physics, dt);
-    collision_system(&player->transform, &player->physics, stage, dt);
-    player_enemy_interaction_system(player, wave);
+    player_input(&player->state, &player->physics, &player->transform, bullets);
+    physics(&player->physics, dt);
+    collision(&player->transform, &player->physics, stage, dt);
+    player_enemy_interaction(player, wave);
     if (player->state.health <= 0) {
         player->state.dead = true;
     }
 }
 
-void player_enemy_interaction_system(ECSPlayer *player, const EnemyWave *wave) {
+void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
     for (int i = 0; i < wave->count; i++) {
         if (wave->enemies[i].dead) {
             continue;
@@ -55,17 +55,16 @@ void player_enemy_interaction_system(ECSPlayer *player, const EnemyWave *wave) {
     }
 }
 
-void player_input_system(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform,
-                         Bullets *bullets) {
+void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets) {
 
     if (GetTime() - state->last_shot > 0.25) {
         if (IsKeyPressed(KEY_LEFT)) {
-            bullets_spawn_bullet_system(transform, bullets, BD_LEFT);
+            bullets_spawn_bullet(transform, bullets, BD_LEFT);
             state->last_shot = GetTime();
         }
 
         if (IsKeyPressed(KEY_RIGHT)) {
-            bullets_spawn_bullet_system(transform, bullets, BD_RIGHT);
+            bullets_spawn_bullet(transform, bullets, BD_RIGHT);
             state->last_shot = GetTime();
         }
     }

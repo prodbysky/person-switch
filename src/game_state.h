@@ -28,11 +28,11 @@ typedef struct {
 } GameState;
 
 
-GameState game_state_init_system(); 
+GameState game_state_init(); 
 void game_state_destroy(GameState *state); 
-void game_state_system(GameState *state); 
-void game_state_update_system(GameState *state);
-void game_state_frame_system(const GameState *state); 
+void game_state(GameState *state); 
+void game_state_update(GameState *state);
+void game_state_frame(const GameState *state); 
 void game_state_draw_debug_stats(const GameState *state);
-void game_state_draw_playfield_system(const GameState *state); 
+void game_state_draw_playfield(const GameState *state); 
 #endif

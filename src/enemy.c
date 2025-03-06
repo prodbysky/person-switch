@@ -15,8 +15,9 @@ ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed) {
                       .last_hit = 0.0,
                       .dead = false};
 }
-void enemy_ai_system(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
-                     const TransformComp *player_transform) {
+
+void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
+              const TransformComp *player_transform) {
     float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
                              (player_transform->rect.x + (player_transform->rect.width / 2.0)));
 
@@ -44,14 +45,13 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
         enemy->dead = true;
         return;
     }
-    physics_system(&enemy->physics, dt);
-    enemy_ai_system(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);
-    collision_system(&enemy->transform, &enemy->physics, stage, dt);
-    enemy_bullet_interaction_system(&enemy->transform, &enemy->health, bullets, &enemy->last_hit);
+    physics(&enemy->physics, dt);
+    enemy_ai(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);
+    collision(&enemy->transform, &enemy->physics, stage, dt);
+    enemy_bullet_interaction(&enemy->transform, &enemy->health, bullets, &enemy->last_hit);
 }
 
-void enemy_bullet_interaction_system(const TransformComp *transform, size_t *health, Bullets *bullets,
-                                     double *last_hit) {
+void enemy_bullet_interaction(const TransformComp *transform, size_t *health, Bullets *bullets, double *last_hit) {
     if ((*health) <= 0) {
         return;
     }

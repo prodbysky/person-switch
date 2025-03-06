@@ -11,7 +11,7 @@
 
 static double update_took = 0;
 
-GameState game_state_init_system() {
+GameState game_state_init() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     SetTargetFPS(120);
@@ -26,7 +26,7 @@ GameState game_state_init_system() {
     return st;
 }
 
-void game_state_update_system(GameState *state) {
+void game_state_update(GameState *state) {
     float dt = GetFrameTime();
     switch (state->phase) {
     case GP_MAIN:
@@ -38,7 +38,7 @@ void game_state_update_system(GameState *state) {
             ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets);
-        bullets_update_system(&state->bullets, dt);
+        bullets_update(&state->bullets, dt);
         if (state->player.state.dead) {
             state->phase = GP_DEAD;
         }
@@ -77,7 +77,7 @@ void game_state_draw_debug_stats(const GameState *state) {
                (Vector2){10, 70}, 32, 0, WHITE);
 }
 
-void game_state_draw_playfield_system(const GameState *state) {
+void game_state_draw_playfield(const GameState *state) {
     if (!state->player.state.dead) {
         DrawRectangleRec(state->player.transform.rect, WHITE);
     }
@@ -87,16 +87,16 @@ void game_state_draw_playfield_system(const GameState *state) {
         }
     }
     draw_stage(&state->stage);
-    bullets_draw_system(&state->bullets);
+    bullets_draw(&state->bullets);
 }
 
-void game_state_frame_system(const GameState *state) {
+void game_state_frame(const GameState *state) {
     BeginDrawing();
     ClearBackground(GetColor(0x181818ff));
     switch (state->phase) {
     case GP_MAIN:
         game_state_draw_debug_stats(state);
-        game_state_draw_playfield_system(state);
+        game_state_draw_playfield(state);
         break;
     case GP_STARTMENU:
         ClearBackground(GetColor(0x8a8a8aff));
@@ -125,7 +125,7 @@ void game_state_frame_system(const GameState *state) {
         DrawTextEx(state->font, "You died!", (Vector2){300, 350}, 32, 0, WHITE);
         break;
     case GP_PAUSED:
-        game_state_draw_playfield_system(state);
+        game_state_draw_playfield(state);
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
         game_state_draw_debug_stats(state);
@@ -136,12 +136,12 @@ void game_state_frame_system(const GameState *state) {
     EndDrawing();
 }
 
-void game_state_system(GameState *state) {
+void game_state(GameState *state) {
     double pre_update = GetTime();
-    game_state_update_system(state);
+    game_state_update(state);
     double post_update = GetTime();
     update_took = post_update - pre_update;
-    game_state_frame_system(state);
+    game_state_frame(state);
 }
 
 void game_state_destroy(GameState *state) {

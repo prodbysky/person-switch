@@ -2,7 +2,7 @@
 #include "static_config.h"
 #include <raymath.h>
 
-void physics_system(PhysicsComp *physics, float dt) {
+void physics(PhysicsComp *physics, float dt) {
     physics->velocity.x /= 1.2f;
 
     if (!physics->grounded) {
@@ -13,7 +13,7 @@ void physics_system(PhysicsComp *physics, float dt) {
     }
 }
 
-void collision_system(TransformComp *transform, PhysicsComp *physics, const Stage *stage, float dt) {
+void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stage, float dt) {
     Vector2 next_pos = {transform->rect.x + physics->velocity.x * dt, transform->rect.y + physics->velocity.y * dt};
 
     bool on_any_platform = false;

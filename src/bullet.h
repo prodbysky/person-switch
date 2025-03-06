@@ -21,8 +21,8 @@ typedef struct {
     size_t current;
 } Bullets;
 
-void bullets_spawn_bullet_system(const TransformComp* player_transform, Bullets *bullets, BulletDirection dir);
-void bullets_update_system(Bullets *bullets, float dt);
-void bullets_draw_system(const Bullets *bullets);
+void bullets_spawn_bullet(const TransformComp* player_transform, Bullets *bullets, BulletDirection dir);
+void bullets_update(Bullets *bullets, float dt);
+void bullets_draw(const Bullets *bullets);
 
 #endif

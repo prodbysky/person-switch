@@ -18,9 +18,9 @@ typedef struct {
 #define TRANSFORM(x_, y_, w_, h_) (TransformComp){.rect = {.x = (x_), .y = (y_), .width = (w_), .height = (h_)}}
 #define DEFAULT_PHYSICS() (PhysicsComp){.velocity = {.x = 0, .y = 0}, .grounded = false}
 
-void physics_system(PhysicsComp* physics, float dt); 
+void physics(PhysicsComp* physics, float dt); 
 
-void collision_system(TransformComp* transform, PhysicsComp* physics, 
+void collision(TransformComp* transform, PhysicsComp* physics, 
                     const Stage* stage, float dt); 
 
 #endif
