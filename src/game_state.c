@@ -1,4 +1,5 @@
 #include "game_state.h"
+#include "arena.h"
 #include "ecs.h"
 #include "enemy.h"
 #include "player.h"
@@ -10,17 +11,22 @@
 #include <string.h>
 
 #define TRANSITION_TIME 0.25
+
+#ifndef RELEASE
 static double update_took = 0;
+#endif
 
 GameState game_state_init() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     InitAudioDevice();
     SetTargetFPS(120);
+
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
     st.current_wave = default_wave();
+    st.wave_finished = false;
     st.phase = GP_TRANSITION;
     st.after_transition = GP_STARTMENU;
     st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
@@ -31,6 +37,7 @@ GameState game_state_init() {
     st.phase_change_sound = LoadSound("assets/sfx/menu_switch.wav");
     st.bullets = (Bullets){0};
     st.began_transition = GetTime();
+
     return st;
 }
 void game_state_phase_change(GameState *state, GamePhase next) {
@@ -57,6 +64,16 @@ void game_state_update(GameState *state) {
         bullets_update(&state->bullets, dt);
         if (state->player.state.dead) {
             game_state_phase_change(state, GP_DEAD);
+        }
+        state->wave_finished = true;
+        for (int i = 0; i < state->current_wave.count; i++) {
+            if (!state->current_wave.enemies[i].dead) {
+                state->wave_finished = false;
+            }
+        }
+        if (state->wave_finished) {
+            state->wave_finished = false;
+            game_state_phase_change(state, GP_AFTER_WAVE);
         }
         break;
 
@@ -86,10 +103,19 @@ void game_state_update(GameState *state) {
             state->phase = state->after_transition;
             return;
         }
+        break;
         /*const double t = (GetTime() - state->began_transition) * 2;*/
+    case GP_AFTER_WAVE:
+        if (IsKeyPressed(KEY_SPACE)) {
+            game_state_phase_change(state, GP_MAIN);
+            state->began_transition = GetTime();
+            state->stage = default_stage();
+            state->current_wave = default_wave();
+        }
     }
 }
 
+#ifndef RELEASE
 void game_state_draw_debug_stats(const GameState *state) {
     DrawTextEx(state->font, TextFormat("Frame time: %.4f ms.", GetFrameTime()), (Vector2){10, 10}, 32, 0, WHITE);
     DrawTextEx(state->font, TextFormat("Update took: %.4f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0, WHITE);
@@ -98,6 +124,7 @@ void game_state_draw_debug_stats(const GameState *state) {
                           ((float)state->allocator.used * 100.0) / state->allocator.cap),
                (Vector2){10, 70}, 32, 0, WHITE);
 }
+#endif
 
 void game_state_draw_playfield(const GameState *state) {
     draw_stage(&state->stage);
@@ -117,11 +144,14 @@ void game_state_frame(const GameState *state) {
     ClearBackground(GetColor(0x181818ff));
     switch (state->phase) {
     case GP_MAIN:
+
+#ifndef RELEASE
         game_state_draw_debug_stats(state);
+#endif
         game_state_draw_playfield(state);
         break;
     case GP_STARTMENU:
-        ClearBackground(GetColor(0x8a8a8aff));
+        ClearBackground(GetColor(0x0a0a0aff));
         Vector2 font_24_size = MeasureTextEx(state->font, "A", 24, 0);
         const float line_spacing = font_24_size.y;
         Vector2 ui_cursor = {.x = 10, .y = 10};
@@ -150,7 +180,10 @@ void game_state_frame(const GameState *state) {
         game_state_draw_playfield(state);
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
+
+#ifndef RELEASE
         game_state_draw_debug_stats(state);
+#endif
         break;
     case GP_TRANSITION: {
         double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
@@ -162,19 +195,33 @@ void game_state_frame(const GameState *state) {
             DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                              GetColor(0xffffff40 - (t * 255)));
 
+#ifndef RELEASE
         game_state_draw_debug_stats(state);
+#endif
         break;
     }
+    case GP_AFTER_WAVE:
+        game_state_draw_playfield(state);
+        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
+                         GetColor(0x00000055));
+        DrawTextEx(state->font, "Wave finished", (Vector2){200, 200}, 36, 0, WHITE);
+#ifndef RELEASE
+        game_state_draw_debug_stats(state);
+#endif
     }
 
     EndDrawing();
 }
 
 void game_state(GameState *state) {
+#ifndef RELEASE
     double pre_update = GetTime();
+#endif
     game_state_update(state);
+#ifndef RELEASE
     double post_update = GetTime();
     update_took = post_update - pre_update;
+#endif
     game_state_frame(state);
 }
 

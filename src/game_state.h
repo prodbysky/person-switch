@@ -13,6 +13,7 @@ typedef enum {
     GP_MAIN,
     GP_DEAD,
     GP_PAUSED,
+    GP_AFTER_WAVE,
     GP_TRANSITION
 } GamePhase;
 
@@ -20,14 +21,20 @@ typedef enum {
 typedef struct {
     // Internal arena allocator which will store all internal allocations for the game
     Arena allocator;
+
     ECSPlayer player;
     Stage stage;
     EnemyWave current_wave;
+    bool wave_finished;
     GamePhase phase;
     Bullets bullets;
-    Font font;
+
+    // Phase Transitions
     double began_transition;
     GamePhase after_transition;
+
+    // Assets
+    Font font;
     Sound player_jump_sound;
     Sound player_shoot_sound;
     Sound enemy_hit_sound;
@@ -40,6 +47,8 @@ void game_state_destroy(GameState *state);
 void game_state(GameState *state); 
 void game_state_update(GameState *state);
 void game_state_frame(const GameState *state); 
+#ifndef RELEASE
 void game_state_draw_debug_stats(const GameState *state);
+#endif
 void game_state_draw_playfield(const GameState *state); 
 #endif
