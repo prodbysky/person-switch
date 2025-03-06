@@ -31,6 +31,7 @@ typedef struct {
     Sound player_jump_sound;
     Sound player_shoot_sound;
     Sound enemy_hit_sound;
+    Sound phase_change_sound;
 } GameState;
 
 

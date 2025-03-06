@@ -21,24 +21,31 @@ GameState game_state_init() {
     st.stage = default_stage();
     st.player = ecs_player_new();
     st.current_wave = default_wave();
-    st.phase = GP_STARTMENU;
+    st.phase = GP_TRANSITION;
+    st.after_transition = GP_STARTMENU;
     st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
     SetTextureFilter(st.font.texture, TEXTURE_FILTER_BILINEAR);
     st.player_jump_sound = LoadSound("assets/sfx/player_jump.wav");
     st.player_shoot_sound = LoadSound("assets/sfx/shoot.wav");
     st.enemy_hit_sound = LoadSound("assets/sfx/enemy_hit.wav");
+    st.phase_change_sound = LoadSound("assets/sfx/menu_switch.wav");
     st.bullets = (Bullets){0};
     st.began_transition = GetTime();
     return st;
 }
+void game_state_phase_change(GameState *state, GamePhase next) {
+    state->phase = GP_TRANSITION;
+    state->after_transition = next;
+    state->began_transition = GetTime();
+    PlaySound(state->phase_change_sound);
+}
+
 void game_state_update(GameState *state) {
     float dt = GetFrameTime();
     switch (state->phase) {
     case GP_MAIN:
         if (IsKeyPressed(KEY_P)) {
-            state->phase = GP_TRANSITION;
-            state->after_transition = GP_PAUSED;
-            state->began_transition = GetTime();
+            game_state_phase_change(state, GP_PAUSED);
             return;
         }
         for (int i = 0; i < state->current_wave.count; i++) {
@@ -49,24 +56,19 @@ void game_state_update(GameState *state) {
                           &state->player_jump_sound, &state->player_shoot_sound);
         bullets_update(&state->bullets, dt);
         if (state->player.state.dead) {
-            state->phase = GP_TRANSITION;
-            state->after_transition = GP_DEAD;
-            state->began_transition = GetTime();
+            game_state_phase_change(state, GP_DEAD);
         }
         break;
 
     case GP_STARTMENU:
         if (IsKeyPressed(KEY_SPACE)) {
-            state->phase = GP_TRANSITION;
-            state->after_transition = GP_MAIN;
-            state->began_transition = GetTime();
+            game_state_phase_change(state, GP_MAIN);
         }
         break;
 
     case GP_DEAD:
         if (IsKeyPressed(KEY_SPACE)) {
-            state->phase = GP_TRANSITION;
-            state->after_transition = GP_MAIN;
+            game_state_phase_change(state, GP_MAIN);
             state->began_transition = GetTime();
             state->player = ecs_player_new();
             state->stage = default_stage();
@@ -76,10 +78,7 @@ void game_state_update(GameState *state) {
 
     case GP_PAUSED:
         if (IsKeyPressed(KEY_P)) {
-            state->phase = GP_TRANSITION;
-            state->after_transition = GP_MAIN;
-            state->began_transition = GetTime();
-            return;
+            game_state_phase_change(state, GP_MAIN);
         }
         break;
     case GP_TRANSITION:
@@ -152,11 +151,9 @@ void game_state_frame(const GameState *state) {
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
         game_state_draw_debug_stats(state);
-        DrawTextEx(state->font, "The game is paused", (Vector2){200, 350}, 48, 0, WHITE);
         break;
     case GP_TRANSITION: {
         double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
-
         game_state_draw_playfield(state);
         if (t < 0.5)
             DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
