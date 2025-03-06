@@ -1,31 +1,30 @@
-CFLAGS = -ggdb -Wall -Werror -Lextern/raylib/src/ -Iextern/raylib/src/
+CC = gcc
+CFLAGS = -ggdb -Wall -Werror -Iextern/raylib/src/
+LDFLAGS = -Lextern/raylib/src/
 LIBS = -lm -l:libraylib.a
 
+SRC_DIR = src
+BUILD_DIR = build
+EXTERN_DIR = extern/raylib/src
 
-main.c: src/main.c raylib player arena stage ecs enemy game_state bullet
-	gcc src/main.c -o build/persona $(CFLAGS) $(LIBS) build/player.o build/arena.o build/stage.o build/ecs.o build/enemy.o build/game_state.o build/bullet.o
+TARGET = $(BUILD_DIR)/persona
+OBJS = $(BUILD_DIR)/player.o $(BUILD_DIR)/arena.o $(BUILD_DIR)/stage.o \
+       $(BUILD_DIR)/ecs.o $(BUILD_DIR)/enemy.o $(BUILD_DIR)/game_state.o \
+       $(BUILD_DIR)/bullet.o
 
-game_state: src/game_state.c src/game_state.h
-	gcc src/game_state.c -c -o build/game_state.o $(CFLAGS) $(LIBS)
+all: $(TARGET)
 
-player: src/player.c src/player.h
-	gcc src/player.c -c -o build/player.o $(CFLAGS) $(LIBS)
+$(TARGET): $(OBJS) $(SRC_DIR)/main.c
+	$(CC) $(SRC_DIR)/main.c $(OBJS) -o $(TARGET) $(CFLAGS) $(LDFLAGS) $(LIBS)
 
-stage: src/stage.c src/stage.h
-	gcc src/stage.c -c -o build/stage.o $(CFLAGS)
-
-arena: src/arena.c src/arena.h
-	gcc src/arena.c -c -o build/arena.o $(CFLAGS)
-
-ecs: src/ecs.c src/ecs.h
-	gcc src/ecs.c -c -o build/ecs.o $(CFLAGS)
-
-enemy: src/enemy.c src/enemy.h
-	gcc src/enemy.c -c -o build/enemy.o $(CFLAGS)
-
-bullet: src/bullet.c src/bullet.h
-	gcc src/bullet.c -c -o build/bullet.o $(CFLAGS)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+	$(CC) -c $< -o $@ $(CFLAGS) $(LIBS)
 
 raylib:
-	make -C extern/raylib/src
+	$(MAKE) -C $(EXTERN_DIR)
 
+clean:
+	rm -f $(BUILD_DIR)/*.o $(TARGET)
+
+# Phony targets
+.PHONY: all raylib clean

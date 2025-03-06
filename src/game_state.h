@@ -28,6 +28,9 @@ typedef struct {
     Font font;
     double began_transition;
     GamePhase after_transition;
+    Sound player_jump_sound;
+    Sound player_shoot_sound;
+    Sound enemy_hit_sound;
 } GameState;
 
 

@@ -1,8 +1,8 @@
 #include "player.h"
 #include "ecs.h"
 #include "enemy.h"
-#include "raylib.h"
 #include "static_config.h"
+#include <raylib.h>
 
 static const PlayerStat PLAYER_STATES[] = {
     [PS_TANK] = {.jump_power = 150, .speed_x = 200},
@@ -28,7 +28,8 @@ ECSPlayer ecs_player_new() {
     return p;
 }
 
-void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets) {
+void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
+                       const Sound *jump_sound, const Sound *shoot_sound) {
     if (player->state.dead) {
         return;
     }
@@ -40,7 +41,7 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
         player->c = WHITE;
     }
 
-    player_input(&player->state, &player->physics, &player->transform, bullets);
+    player_input(&player->state, &player->physics, &player->transform, bullets, jump_sound, shoot_sound);
     physics(&player->physics, dt);
     collision(&player->transform, &player->physics, stage, dt);
     player_enemy_interaction(player, wave);
@@ -63,17 +64,20 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
     }
 }
 
-void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets) {
+void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
+                  const Sound *jump_sound, const Sound *shoot_sound) {
 
     if (GetTime() - state->last_shot > 0.25) {
         if (IsKeyPressed(KEY_LEFT)) {
             bullets_spawn_bullet(transform, bullets, BD_LEFT);
             state->last_shot = GetTime();
+            PlaySound(*shoot_sound);
         }
 
         if (IsKeyPressed(KEY_RIGHT)) {
             bullets_spawn_bullet(transform, bullets, BD_RIGHT);
             state->last_shot = GetTime();
+            PlaySound(*shoot_sound);
         }
     }
 
@@ -92,6 +96,7 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
 
     if (physics->grounded && IsKeyPressed(KEY_SPACE)) {
         physics->velocity.y = -PLAYER_STATES[state->current_class].jump_power;
+        PlaySound(*jump_sound);
         physics->grounded = false;
     }
 }

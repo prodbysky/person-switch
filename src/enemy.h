@@ -21,7 +21,7 @@ typedef struct {
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed);
 void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
                      const TransformComp *player_transform);
-void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets);
+void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets, const Sound* hit_sound);
 void enemy_bullet_interaction(const TransformComp *transform, size_t *health, Bullets *bullets,
-                                     double *last_hit);
+                                     double *last_hit, const Sound* hit_sound);
 #endif

@@ -9,11 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define TRANSITION_TIME 0.25
 static double update_took = 0;
 
 GameState game_state_init() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
+    InitAudioDevice();
     SetTargetFPS(120);
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
@@ -22,11 +24,13 @@ GameState game_state_init() {
     st.phase = GP_STARTMENU;
     st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
     SetTextureFilter(st.font.texture, TEXTURE_FILTER_BILINEAR);
+    st.player_jump_sound = LoadSound("assets/sfx/player_jump.wav");
+    st.player_shoot_sound = LoadSound("assets/sfx/shoot.wav");
+    st.enemy_hit_sound = LoadSound("assets/sfx/enemy_hit.wav");
     st.bullets = (Bullets){0};
     st.began_transition = GetTime();
     return st;
 }
-#define TRANSITION_TIME 0.25
 void game_state_update(GameState *state) {
     float dt = GetFrameTime();
     switch (state->phase) {
@@ -38,9 +42,11 @@ void game_state_update(GameState *state) {
             return;
         }
         for (int i = 0; i < state->current_wave.count; i++) {
-            ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets);
+            ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets,
+                             &state->enemy_hit_sound);
         }
-        ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets);
+        ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
+                          &state->player_jump_sound, &state->player_shoot_sound);
         bullets_update(&state->bullets, dt);
         if (state->player.state.dead) {
             state->phase = GP_TRANSITION;
@@ -150,12 +156,16 @@ void game_state_frame(const GameState *state) {
         break;
     case GP_TRANSITION: {
         double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
+
+        game_state_draw_playfield(state);
         if (t < 0.5)
             DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                              GetColor(0xffffff00 + (t * 255)));
         else
             DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                              GetColor(0xffffff40 - (t * 255)));
+
+        game_state_draw_debug_stats(state);
         break;
     }
     }
@@ -174,6 +184,7 @@ void game_state(GameState *state) {
 void game_state_destroy(GameState *state) {
     arena_free(&state->allocator);
     UnloadFont(state->font);
+    CloseAudioDevice();
     CloseWindow();
 }
 
