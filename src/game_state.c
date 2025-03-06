@@ -106,11 +106,28 @@ void game_state_update(GameState *state) {
         break;
         /*const double t = (GetTime() - state->began_transition) * 2;*/
     case GP_AFTER_WAVE:
-        if (IsKeyPressed(KEY_SPACE)) {
-            game_state_phase_change(state, GP_MAIN);
-            state->began_transition = GetTime();
-            state->stage = default_stage();
-            state->current_wave = default_wave();
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
+                state->player.state.current_class = PS_TANK;
+                state->player.state.health = 10;
+                game_state_phase_change(state, GP_MAIN);
+                state->stage = default_stage();
+                state->current_wave = default_wave();
+            }
+            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
+                state->player.state.current_class = PS_MOVE;
+                state->player.state.health = 7;
+                game_state_phase_change(state, GP_MAIN);
+                state->stage = default_stage();
+                state->current_wave = default_wave();
+            }
+            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
+                state->player.state.current_class = PS_DAMAGE;
+                state->player.state.health = 7;
+                game_state_phase_change(state, GP_MAIN);
+                state->stage = default_stage();
+                state->current_wave = default_wave();
+            }
         }
     }
 }
@@ -204,7 +221,10 @@ void game_state_frame(const GameState *state) {
         game_state_draw_playfield(state);
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
-        DrawTextEx(state->font, "Wave finished", (Vector2){200, 200}, 36, 0, WHITE);
+        DrawRectangle(275, 200, 256, 64, WHITE);
+        DrawRectangle(275, 300, 256, 64, WHITE);
+        DrawRectangle(275, 400, 256, 64, WHITE);
+
 #ifndef RELEASE
         game_state_draw_debug_stats(state);
 #endif

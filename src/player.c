@@ -16,7 +16,6 @@ ECSPlayer ecs_player_new() {
         .state =
             {
                 .current_class = PS_MOVE,
-                .last_switched = 0.0,
                 .health = 5,
                 .last_hit = 0.0,
                 .last_shot = 0.0,
@@ -79,11 +78,6 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
             state->last_shot = GetTime();
             PlaySound(*shoot_sound);
         }
-    }
-
-    if (IsKeyPressed(KEY_F) && GetTime() - state->last_switched > PLAYER_CLASS_SWITCH_COOLDOWN) {
-        state->current_class = (state->current_class + 1) % PS_COUNT;
-        state->last_switched = GetTime();
     }
 
     physics->velocity.x = 0;
