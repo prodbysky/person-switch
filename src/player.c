@@ -22,6 +22,8 @@ ECSPlayer ecs_player_new() {
                 .last_shot = 0.0,
                 .dead = false,
             },
+        .physics = DEFAULT_PHYSICS(),
+        .c = WHITE,
     };
     return p;
 }
@@ -31,6 +33,12 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
         return;
     }
     float dt = GetFrameTime();
+
+    if (GetTime() - player->state.last_hit < INVULNERABILITY_TIME) {
+        player->c = RED;
+    } else {
+        player->c = WHITE;
+    }
 
     player_input(&player->state, &player->physics, &player->transform, bullets);
     physics(&player->physics, dt);

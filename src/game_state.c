@@ -23,15 +23,18 @@ GameState game_state_init() {
     st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
     SetTextureFilter(st.font.texture, TEXTURE_FILTER_BILINEAR);
     st.bullets = (Bullets){0};
+    st.began_transition = GetTime();
     return st;
 }
-
+#define TRANSITION_TIME 0.25
 void game_state_update(GameState *state) {
     float dt = GetFrameTime();
     switch (state->phase) {
     case GP_MAIN:
         if (IsKeyPressed(KEY_P)) {
-            state->phase = GP_PAUSED;
+            state->phase = GP_TRANSITION;
+            state->after_transition = GP_PAUSED;
+            state->began_transition = GetTime();
             return;
         }
         for (int i = 0; i < state->current_wave.count; i++) {
@@ -40,19 +43,25 @@ void game_state_update(GameState *state) {
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets);
         bullets_update(&state->bullets, dt);
         if (state->player.state.dead) {
-            state->phase = GP_DEAD;
+            state->phase = GP_TRANSITION;
+            state->after_transition = GP_DEAD;
+            state->began_transition = GetTime();
         }
         break;
 
     case GP_STARTMENU:
         if (IsKeyPressed(KEY_SPACE)) {
-            state->phase = GP_MAIN;
+            state->phase = GP_TRANSITION;
+            state->after_transition = GP_MAIN;
+            state->began_transition = GetTime();
         }
         break;
 
     case GP_DEAD:
         if (IsKeyPressed(KEY_SPACE)) {
-            state->phase = GP_MAIN;
+            state->phase = GP_TRANSITION;
+            state->after_transition = GP_MAIN;
+            state->began_transition = GetTime();
             state->player = ecs_player_new();
             state->stage = default_stage();
             state->current_wave = default_wave();
@@ -61,16 +70,24 @@ void game_state_update(GameState *state) {
 
     case GP_PAUSED:
         if (IsKeyPressed(KEY_P)) {
-            state->phase = GP_MAIN;
+            state->phase = GP_TRANSITION;
+            state->after_transition = GP_MAIN;
+            state->began_transition = GetTime();
             return;
         }
         break;
+    case GP_TRANSITION:
+        if (GetTime() - state->began_transition > TRANSITION_TIME) {
+            state->phase = state->after_transition;
+            return;
+        }
+        /*const double t = (GetTime() - state->began_transition) * 2;*/
     }
 }
 
 void game_state_draw_debug_stats(const GameState *state) {
-    DrawTextEx(state->font, TextFormat("FPS: %d", GetFPS()), (Vector2){10, 10}, 32, 0, WHITE);
-    DrawTextEx(state->font, TextFormat("Update took: %f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0, WHITE);
+    DrawTextEx(state->font, TextFormat("Frame time: %.4f ms.", GetFrameTime()), (Vector2){10, 10}, 32, 0, WHITE);
+    DrawTextEx(state->font, TextFormat("Update took: %.4f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0, WHITE);
     DrawTextEx(state->font,
                TextFormat("Heap usage: %u/%u (%.2f%) Bytes", state->allocator.used, state->allocator.cap,
                           ((float)state->allocator.used * 100.0) / state->allocator.cap),
@@ -79,11 +96,11 @@ void game_state_draw_debug_stats(const GameState *state) {
 
 void game_state_draw_playfield(const GameState *state) {
     if (!state->player.state.dead) {
-        DrawRectangleRec(state->player.transform.rect, WHITE);
+        DrawRectangleRec(state->player.transform.rect, state->player.c);
     }
     for (int i = 0; i < state->current_wave.count; i++) {
         if (!state->current_wave.enemies[i].dead) {
-            DrawRectangleRec(state->current_wave.enemies[i].transform.rect, BLUE);
+            DrawRectangleRec(state->current_wave.enemies[i].transform.rect, state->current_wave.enemies[i].c);
         }
     }
     draw_stage(&state->stage);
@@ -131,6 +148,16 @@ void game_state_frame(const GameState *state) {
         game_state_draw_debug_stats(state);
         DrawTextEx(state->font, "The game is paused", (Vector2){200, 350}, 48, 0, WHITE);
         break;
+    case GP_TRANSITION: {
+        double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
+        if (t < 0.5)
+            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
+                             GetColor(0xffffff00 + (t * 255)));
+        else
+            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
+                             GetColor(0xffffff40 - (t * 255)));
+        break;
+    }
     }
 
     EndDrawing();
@@ -167,13 +194,9 @@ EnemyWave default_wave() {
     return (EnemyWave){
         .enemies =
             {
-                (ECSEnemy){.transform = TRANSFORM(150, 300, 64, 32),
-                           .physics = DEFAULT_PHYSICS(),
-                           .enemy_conf = {.speed = 5},
-                           .health = 5,
-                           .last_hit = 0.0,
-                           .dead = false},
+                ecs_enemy_new((Vector2){150, 300}, (Vector2){64, 32}, 10),
+                ecs_enemy_new((Vector2){250, 500}, (Vector2){64, 32}, 20),
             },
-        .count = 1,
+        .count = 2,
     };
 }

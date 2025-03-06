@@ -13,6 +13,7 @@ typedef enum {
     GP_MAIN,
     GP_DEAD,
     GP_PAUSED,
+    GP_TRANSITION
 } GamePhase;
 
 // The entire game state, sort of a `god` object
@@ -25,6 +26,8 @@ typedef struct {
     GamePhase phase;
     Bullets bullets;
     Font font;
+    double began_transition;
+    GamePhase after_transition;
 } GameState;
 
 

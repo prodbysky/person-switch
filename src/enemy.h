@@ -12,6 +12,7 @@ typedef struct {
     EnemyConfigComp enemy_conf;
     TransformComp transform;
     PhysicsComp physics;
+    Color c;
     size_t health;
     double last_hit;
     bool dead;

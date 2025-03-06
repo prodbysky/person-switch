@@ -36,6 +36,7 @@ typedef struct {
     TransformComp transform;
     PhysicsComp physics;
     PlayerStateComp state;
+    Color c;
 } ECSPlayer;
 
 ECSPlayer ecs_player_new();

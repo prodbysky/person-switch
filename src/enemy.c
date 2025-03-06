@@ -13,7 +13,8 @@ ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed) {
                       .enemy_conf = {.speed = speed},
                       .health = 5,
                       .last_hit = 0.0,
-                      .dead = false};
+                      .dead = false,
+                      .c = BLUE};
 }
 
 void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
@@ -44,6 +45,12 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     if (enemy->health <= 0) {
         enemy->dead = true;
         return;
+    }
+
+    if (GetTime() - enemy->last_hit < INVULNERABILITY_TIME) {
+        enemy->c = RED;
+    } else {
+        enemy->c = BLUE;
     }
     physics(&enemy->physics, dt);
     enemy_ai(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);
