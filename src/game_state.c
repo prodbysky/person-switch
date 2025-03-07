@@ -121,17 +121,7 @@ void game_state_update(GameState *state) {
 
         switch (state->screen_type) {
         case IST_PLAYER_CLASS_SELECT:
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
-                    game_state_start_new_wave(state, PS_TANK);
-                }
-                if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
-                    game_state_start_new_wave(state, PS_MOVE);
-                }
-                if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
-                    game_state_start_new_wave(state, PS_DAMAGE);
-                }
-            }
+            game_state_class_select_update(state);
             break;
         }
     }
@@ -228,30 +218,8 @@ void game_state_frame(const GameState *state) {
                          GetColor(0x00000055));
         switch (state->screen_type) {
         case IST_PLAYER_CLASS_SELECT:
-            if (state->player.state.current_class != PS_TANK) {
-                DrawRectangle(275, 200, 256, 64, WHITE);
-                DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, GRAY);
-            } else {
-                DrawRectangle(275, 200, 256, 64, GRAY);
-                DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, WHITE);
-            }
+            game_state_class_select_draw(state);
 
-            if (state->player.state.current_class != PS_MOVE) {
-                DrawRectangle(275, 300, 256, 64, WHITE);
-                DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, GRAY);
-            } else {
-                DrawRectangle(275, 300, 256, 64, GRAY);
-                DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, WHITE);
-            }
-            if (state->player.state.current_class != PS_DAMAGE) {
-                DrawRectangle(275, 400, 256, 64, WHITE);
-                DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
-            } else {
-                DrawRectangle(275, 400, 256, 64, GRAY);
-                DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, WHITE);
-            }
-            DrawRectangle(275, 400, 256, 64, WHITE);
-            DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
             break;
         }
 
@@ -261,6 +229,45 @@ void game_state_frame(const GameState *state) {
     }
 
     EndDrawing();
+}
+
+void game_state_class_select_update(GameState *state) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
+            game_state_start_new_wave(state, PS_TANK);
+        }
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
+            game_state_start_new_wave(state, PS_MOVE);
+        }
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
+            game_state_start_new_wave(state, PS_DAMAGE);
+        }
+    }
+}
+
+void game_state_class_select_draw(const GameState *state) {
+    if (state->player.state.current_class != PS_TANK) {
+        DrawRectangle(275, 200, 256, 64, WHITE);
+        DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, GRAY);
+    } else {
+        DrawRectangle(275, 200, 256, 64, GRAY);
+        DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, WHITE);
+    }
+
+    if (state->player.state.current_class != PS_MOVE) {
+        DrawRectangle(275, 300, 256, 64, WHITE);
+        DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, GRAY);
+    } else {
+        DrawRectangle(275, 300, 256, 64, GRAY);
+        DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, WHITE);
+    }
+    if (state->player.state.current_class != PS_DAMAGE) {
+        DrawRectangle(275, 400, 256, 64, WHITE);
+        DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
+    } else {
+        DrawRectangle(275, 400, 256, 64, GRAY);
+        DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, WHITE);
+    }
 }
 
 void game_state(GameState *state) {

@@ -75,4 +75,8 @@ void game_state_draw_debug_stats(const GameState *state);
 #endif
 // Draws the stage, enemies, bullets, player
 void game_state_draw_playfield(const GameState *state); 
+
+
+void game_state_class_select_draw(const GameState* state);
+void game_state_class_select_update(GameState* state);
 #endif
