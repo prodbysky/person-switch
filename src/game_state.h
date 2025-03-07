@@ -30,7 +30,6 @@ typedef struct {
     Stage stage;
 
     EnemyWave current_wave;
-    bool wave_finished;
 
     GamePhase phase;
 

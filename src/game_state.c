@@ -27,7 +27,6 @@ GameState game_state_init() {
     st.stage = default_stage();
     st.player = ecs_player_new();
     st.current_wave = default_wave();
-    st.wave_finished = false;
     st.phase = GP_TRANSITION;
     st.after_transition = GP_STARTMENU;
     st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
@@ -66,14 +65,8 @@ void game_state_update(GameState *state) {
         if (state->player.state.dead) {
             game_state_phase_change(state, GP_DEAD);
         }
-        state->wave_finished = true;
-        for (size_t i = 0; i < state->current_wave.count; i++) {
-            if (!state->current_wave.enemies[i].state.dead) {
-                state->wave_finished = false;
-            }
-        }
-        if (state->wave_finished) {
-            state->wave_finished = false;
+
+        if (wave_is_done(&state->current_wave)) {
             game_state_phase_change(state, GP_AFTER_WAVE);
         }
         break;

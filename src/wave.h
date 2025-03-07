@@ -10,4 +10,6 @@ typedef struct {
     size_t count;
 } EnemyWave;
 
+bool wave_is_done(const EnemyWave* wave);
+
 #endif
