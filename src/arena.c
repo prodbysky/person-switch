@@ -12,7 +12,9 @@ Arena arena_new(size_t size) {
 
 void arena_free(Arena *arena) {
     free(arena->buffer);
-    memset(arena, 0, sizeof(Arena));
+    arena->buffer = 0;
+    arena->cap = 0;
+    arena->buffer = 0;
 }
 
 void *arena_alloc(Arena *arena, size_t size) {

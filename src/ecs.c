@@ -19,7 +19,7 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
     bool on_any_platform = false;
     Rectangle next_rect = {next_pos.x, next_pos.y, transform->rect.width, transform->rect.height};
 
-    for (int i = 0; i < stage->count; i++) {
+    for (size_t i = 0; i < stage->count; i++) {
         if (CheckCollisionRecs(next_rect, stage->platforms[i])) {
             const Platform *platform = &stage->platforms[i];
             const bool from_left = next_rect.x < platform->x + platform->width;
@@ -40,7 +40,7 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
     }
     if (physics->grounded && !on_any_platform) {
         bool above_platform = false;
-        for (int i = 0; i < stage->count; i++) {
+        for (size_t i = 0; i < stage->count; i++) {
             const Platform *platform = &stage->platforms[i];
             if (transform->rect.x + transform->rect.width > platform->x &&
                 transform->rect.x < platform->x + platform->width &&

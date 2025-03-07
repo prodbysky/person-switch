@@ -44,7 +44,7 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
 }
 
 void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
-    for (int i = 0; i < wave->count; i++) {
+    for (size_t i = 0; i < wave->count; i++) {
         if (wave->enemies[i].state.dead) {
             continue;
         }

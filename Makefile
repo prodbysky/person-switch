@@ -1,5 +1,5 @@
-CC = gcc
-CFLAGS = -Wall -Werror -Iextern/raylib/src/
+CC = clang
+CFLAGS = -Wall -Werror -Iextern/raylib/src/ --extra-warnings
 LDFLAGS = -Lextern/raylib/src/ 
 LIBS = -lm -l:libraylib.a
 
@@ -30,7 +30,7 @@ $(TARGET): $(OBJS) $(SRC_DIR)/main.c
 	$(CC) $(SRC_DIR)/main.c $(OBJS) -o $(TARGET) $(CFLAGS) $(LDFLAGS) $(LIBS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
-	$(CC) -c $< -o $@ $(CFLAGS) $(LIBS)
+	$(CC) -c $< -o $@ $(CFLAGS)
 
 raylib:
 	$(MAKE) -C $(EXTERN_DIR)

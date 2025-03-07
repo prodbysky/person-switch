@@ -1,1 +1,5 @@
 -Iextern/raylib/src/
+
+-Wall 
+-Werror 
+--extra-warnings

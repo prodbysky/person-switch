@@ -55,7 +55,7 @@ void game_state_update(GameState *state) {
             game_state_phase_change(state, GP_PAUSED);
             return;
         }
-        for (int i = 0; i < state->current_wave.count; i++) {
+        for (size_t i = 0; i < state->current_wave.count; i++) {
             ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets,
                              &state->enemy_hit_sound, PLAYER_STATES[state->player.state.current_class].damage);
         }
@@ -66,7 +66,7 @@ void game_state_update(GameState *state) {
             game_state_phase_change(state, GP_DEAD);
         }
         state->wave_finished = true;
-        for (int i = 0; i < state->current_wave.count; i++) {
+        for (size_t i = 0; i < state->current_wave.count; i++) {
             if (!state->current_wave.enemies[i].state.dead) {
                 state->wave_finished = false;
             }
@@ -145,7 +145,7 @@ void game_state_draw_debug_stats(const GameState *state) {
 
 void game_state_draw_playfield(const GameState *state) {
     draw_stage(&state->stage);
-    for (int i = 0; i < state->current_wave.count; i++) {
+    for (size_t i = 0; i < state->current_wave.count; i++) {
         if (!state->current_wave.enemies[i].state.dead) {
             DrawRectangleRec(state->current_wave.enemies[i].transform.rect, state->current_wave.enemies[i].c);
         }
