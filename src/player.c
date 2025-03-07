@@ -45,7 +45,7 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
 
 void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
     for (int i = 0; i < wave->count; i++) {
-        if (wave->enemies[i].dead) {
+        if (wave->enemies[i].state.dead) {
             continue;
         }
         if (CheckCollisionRecs(player->transform.rect, wave->enemies[i].transform.rect) &&

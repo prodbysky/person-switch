@@ -67,7 +67,7 @@ void game_state_update(GameState *state) {
         }
         state->wave_finished = true;
         for (int i = 0; i < state->current_wave.count; i++) {
-            if (!state->current_wave.enemies[i].dead) {
+            if (!state->current_wave.enemies[i].state.dead) {
                 state->wave_finished = false;
             }
         }
@@ -146,7 +146,7 @@ void game_state_draw_debug_stats(const GameState *state) {
 void game_state_draw_playfield(const GameState *state) {
     draw_stage(&state->stage);
     for (int i = 0; i < state->current_wave.count; i++) {
-        if (!state->current_wave.enemies[i].dead) {
+        if (!state->current_wave.enemies[i].state.dead) {
             DrawRectangleRec(state->current_wave.enemies[i].transform.rect, state->current_wave.enemies[i].c);
         }
     }

@@ -11,9 +11,7 @@ ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health) {
     return (ECSEnemy){.physics = DEFAULT_PHYSICS(),
                       .transform = TRANSFORM(pos.x, pos.y, size.x, size.y),
                       .enemy_conf = {.speed = speed},
-                      .health = health,
-                      .last_hit = 0.0,
-                      .dead = false,
+                      .state = {.health = health, .last_hit = 0.0, .dead = false},
                       .c = BLUE};
 }
 
@@ -40,15 +38,15 @@ void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, Physi
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets,
                       const Sound *hit_sound, size_t dmg) {
     float dt = GetFrameTime();
-    if (enemy->dead) {
+    if (enemy->state.dead) {
         return;
     }
-    if (enemy->health <= 0) {
-        enemy->dead = true;
+    if (enemy->state.health <= 0) {
+        enemy->state.dead = true;
         return;
     }
 
-    if (GetTime() - enemy->last_hit < INVULNERABILITY_TIME) {
+    if (GetTime() - enemy->state.last_hit < INVULNERABILITY_TIME) {
         enemy->c = RED;
     } else {
         enemy->c = BLUE;
@@ -56,23 +54,23 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     physics(&enemy->physics, dt);
     enemy_ai(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);
     collision(&enemy->transform, &enemy->physics, stage, dt);
-    enemy_bullet_interaction(&enemy->transform, &enemy->health, bullets, &enemy->last_hit, hit_sound, dmg);
+    enemy_bullet_interaction(&enemy->transform, bullets, &enemy->state, hit_sound, dmg);
 }
 
-void enemy_bullet_interaction(const TransformComp *transform, int *health, Bullets *bullets, double *last_hit,
+void enemy_bullet_interaction(const TransformComp *transform, Bullets *bullets, EnemyState *state,
                               const Sound *hit_sound, size_t dmg) {
-    if ((*health) <= 0) {
+    if (state->health <= 0) {
         return;
     }
-    if (GetTime() - (*last_hit) < INVULNERABILITY_TIME) {
+    if (GetTime() - state->last_hit < INVULNERABILITY_TIME) {
         return;
     }
     for (int i = 0; i < MAX_BULLETS; i++) {
         if (GetTime() - bullets->bullets[i].creation_time < 2) {
             if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
-                (*health) -= dmg;
+                state->health -= dmg;
                 bullets->bullets[i].creation_time = INFINITY;
-                *last_hit = GetTime();
+                state->last_hit = GetTime();
                 PlaySound(*hit_sound);
                 return;
             }
