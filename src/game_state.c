@@ -136,7 +136,7 @@ void game_state_draw_debug_stats(const GameState *state) {
     DrawTextEx(state->font, TextFormat("Frame time: %.4f ms.", GetFrameTime()), (Vector2){10, 10}, 32, 0, WHITE);
     DrawTextEx(state->font, TextFormat("Update took: %.4f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0, WHITE);
     DrawTextEx(state->font,
-               TextFormat("Heap usage: %u/%u (%.2f%) Bytes", state->allocator.used, state->allocator.cap,
+               TextFormat("Heap usage: %u/%u (%.2f%%) Bytes", state->allocator.used, state->allocator.cap,
                           ((float)state->allocator.used * 100.0) / state->allocator.cap),
                (Vector2){10, 70}, 32, 0, WHITE);
 }
