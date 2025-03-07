@@ -37,6 +37,8 @@ GameState game_state_init() {
     st.phase_change_sound = LoadSound("assets/sfx/menu_switch.wav");
     st.bullets = (Bullets){0};
     st.began_transition = GetTime();
+    st.screen_type = IST_PLAYER_CLASS_SELECT;
+    st.selected_class = PS_MOVE;
 
     return st;
 }
@@ -117,16 +119,11 @@ void game_state_update(GameState *state) {
         break;
         /*const double t = (GetTime() - state->began_transition) * 2;*/
     case GP_AFTER_WAVE:
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
-                game_state_start_new_wave(state, PS_TANK);
-            }
-            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
-                game_state_start_new_wave(state, PS_MOVE);
-            }
-            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
-                game_state_start_new_wave(state, PS_DAMAGE);
-            }
+
+        switch (state->screen_type) {
+        case IST_PLAYER_CLASS_SELECT:
+            game_state_class_select_update(state);
+            break;
         }
     }
 }
@@ -190,7 +187,7 @@ void game_state_frame(const GameState *state) {
         break;
 
     case GP_DEAD:
-        DrawTextEx(state->font, "You died!", (Vector2){300, 350}, 32, 0, WHITE);
+        draw_centered_text("You died!", &state->font, 32, WHITE, 300);
         break;
     case GP_PAUSED:
         game_state_draw_playfield(state);
@@ -220,12 +217,12 @@ void game_state_frame(const GameState *state) {
         game_state_draw_playfield(state);
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
-        DrawRectangle(275, 200, 256, 64, WHITE);
-        DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, GRAY);
-        DrawRectangle(275, 300, 256, 64, WHITE);
-        DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, GRAY);
-        DrawRectangle(275, 400, 256, 64, WHITE);
-        DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
+        switch (state->screen_type) {
+        case IST_PLAYER_CLASS_SELECT:
+            game_state_class_select_draw(state);
+
+            break;
+        }
 
 #ifndef RELEASE
         game_state_draw_debug_stats(state);
@@ -233,6 +230,53 @@ void game_state_frame(const GameState *state) {
     }
 
     EndDrawing();
+}
+
+void game_state_class_select_update(GameState *state) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 200, 256, 64})) {
+            state->selected_class = PS_TANK;
+        }
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 300, 256, 64})) {
+            state->selected_class = PS_MOVE;
+        }
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 400, 256, 64})) {
+            state->selected_class = PS_DAMAGE;
+        }
+    }
+    if (IsKeyDown(KEY_ENTER)) {
+        game_state_start_new_wave(state, state->selected_class);
+    }
+}
+
+double screen_centered_position(double w) {
+    return (WINDOW_W / 2.0) - (w / 2.0);
+}
+
+void game_state_class_select_draw(const GameState *state) {
+    draw_centered_text("Press enter to start the next wave", &state->font, 32, WHITE, 100);
+
+    if (state->selected_class != PS_TANK) {
+        DrawRectangle(screen_centered_position(256), 200, 256, 64, WHITE);
+        draw_centered_text("Tank", &state->font, 32, GRAY, 215);
+    } else {
+        DrawRectangle(screen_centered_position(256), 200, 256, 64, GRAY);
+        draw_centered_text("Tank", &state->font, 32, WHITE, 215);
+    }
+    if (state->selected_class != PS_MOVE) {
+        DrawRectangle(screen_centered_position(256), 300, 256, 64, WHITE);
+        draw_centered_text("Mover", &state->font, 32, GRAY, 315);
+    } else {
+        DrawRectangle(screen_centered_position(256), 300, 256, 64, GRAY);
+        draw_centered_text("Mover", &state->font, 32, WHITE, 315);
+    }
+    if (state->selected_class != PS_DAMAGE) {
+        DrawRectangle(screen_centered_position(256), 400, 256, 64, WHITE);
+        draw_centered_text("Killer", &state->font, 32, GRAY, 415);
+    } else {
+        DrawRectangle(screen_centered_position(256), 400, 256, 64, GRAY);
+        draw_centered_text("Killer", &state->font, 32, WHITE, 415);
+    }
 }
 
 void game_state(GameState *state) {
@@ -252,6 +296,11 @@ void game_state_destroy(GameState *state) {
     UnloadFont(state->font);
     CloseAudioDevice();
     CloseWindow();
+}
+
+void draw_centered_text(const char *message, const Font *font, size_t size, Color color, float y) {
+    const Vector2 text_size = MeasureTextEx(*font, message, size, 0);
+    DrawTextEx(*font, message, (Vector2){screen_centered_position(text_size.x), y}, size, 0, color);
 }
 
 Stage default_stage() {

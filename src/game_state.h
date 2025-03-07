@@ -17,6 +17,10 @@ typedef enum {
     GP_TRANSITION
 } GamePhase;
 
+typedef enum {
+    IST_PLAYER_CLASS_SELECT = 0,
+} IntermissionScreenType;
+
 // The entire game state, sort of a `god` object
 typedef struct {
     // Internal arena allocator which will store all internal allocations for the game
@@ -43,6 +47,12 @@ typedef struct {
     Sound player_shoot_sound;
     Sound enemy_hit_sound;
     Sound phase_change_sound;
+
+    // Intermission screen (upgrades)
+    IntermissionScreenType screen_type;
+    PlayerClass selected_class;
+
+
 } GameState;
 
 // Initializes raylib, loads needed assets
@@ -66,4 +76,12 @@ void game_state_draw_debug_stats(const GameState *state);
 #endif
 // Draws the stage, enemies, bullets, player
 void game_state_draw_playfield(const GameState *state); 
+
+
+void game_state_class_select_draw(const GameState* state);
+void game_state_class_select_update(GameState* state);
+
+void draw_centered_text(const char* message, const Font* font, size_t size, Color color, float y);
+double screen_centered_position(double w);
+
 #endif
