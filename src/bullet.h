@@ -4,6 +4,7 @@
 #include "ecs.h"
 
 #define MAX_BULLETS 100
+#define BULLET_LIFETIME 2.0
 
 typedef enum {
     BD_LEFT,

@@ -20,12 +20,16 @@ void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, Physi
     float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
                              (player_transform->rect.x + (player_transform->rect.width / 2.0)));
 
+    // Jump if we can and the player bottom y position is higher than our y top position
     if ((player_transform->rect.y + player_transform->rect.height < transform->rect.y) && physics->grounded) {
         physics->velocity.y = -200;
     }
-    if (x_pos_delta < 50)
+    // If close enough to the player then just return
+    if (x_pos_delta < 50) {
         return;
+    }
 
+    // Approach player
     if (transform->rect.x + (transform->rect.width / 2.0) >
         player_transform->rect.x + (player_transform->rect.width / 2.0)) {
         physics->velocity.x -= conf->speed;
@@ -37,7 +41,6 @@ void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, Physi
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets,
                       const Sound *hit_sound, size_t dmg) {
-    float dt = GetFrameTime();
     if (enemy->state.dead) {
         return;
     }
@@ -45,6 +48,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
         enemy->state.dead = true;
         return;
     }
+    const float dt = GetFrameTime();
 
     if (GetTime() - enemy->state.last_hit < INVULNERABILITY_TIME) {
         enemy->c = RED;
