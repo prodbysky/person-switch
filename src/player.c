@@ -15,6 +15,8 @@ ECSPlayer ecs_player_new() {
                 .last_hit = 0.0,
                 .last_shot = 0.0,
                 .dead = false,
+                .movement_speed = 0.0,
+                .reload_time = 0.0,
             },
         .physics = DEFAULT_PHYSICS(),
         .c = WHITE,
@@ -61,7 +63,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
                   const Sound *jump_sound, const Sound *shoot_sound) {
 
-    if (time_delta(state->last_shot) > SHOOT_DELAY) {
+    if (time_delta(state->last_shot) > SHOOT_DELAY - state->reload_time) {
         if (IsKeyPressed(KEY_LEFT)) {
             bullets_spawn_bullet(transform, bullets, BD_LEFT);
             state->last_shot = GetTime();
@@ -77,10 +79,10 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
 
     physics->velocity.x = 0;
     if (IsKeyDown(KEY_A)) {
-        physics->velocity.x = -PLAYER_STATES[state->current_class].speed_x;
+        physics->velocity.x = -(PLAYER_STATES[state->current_class].speed_x + state->movement_speed);
     }
     if (IsKeyDown(KEY_D)) {
-        physics->velocity.x = PLAYER_STATES[state->current_class].speed_x;
+        physics->velocity.x = (PLAYER_STATES[state->current_class].speed_x + state->movement_speed);
     }
 
     if (physics->grounded && IsKeyPressed(KEY_SPACE)) {
