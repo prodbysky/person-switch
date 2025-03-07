@@ -4,6 +4,7 @@
 #include "enemy.h"
 #include "player.h"
 #include "static_config.h"
+#include "timing_utilities.h"
 #include "wave.h"
 #include <raylib.h>
 #include <raymath.h>
@@ -99,7 +100,7 @@ void game_state_update(GameState *state) {
         }
         break;
     case GP_TRANSITION:
-        if (GetTime() - state->began_transition > TRANSITION_TIME) {
+        if (time_delta(state->began_transition) > TRANSITION_TIME) {
             state->phase = state->after_transition;
             return;
         }

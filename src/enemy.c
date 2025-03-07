@@ -3,6 +3,7 @@
 #include "ecs.h"
 #include "raylib.h"
 #include "static_config.h"
+#include "timing_utilities.h"
 #include <math.h>
 #include <raymath.h>
 #include <stdlib.h>
@@ -50,7 +51,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     }
     const float dt = GetFrameTime();
 
-    if (GetTime() - enemy->state.last_hit < INVULNERABILITY_TIME) {
+    if (time_delta(enemy->state.last_hit) < INVULNERABILITY_TIME) {
         enemy->c = RED;
     } else {
         enemy->c = BLUE;
@@ -66,11 +67,11 @@ void enemy_bullet_interaction(const TransformComp *transform, Bullets *bullets, 
     if (state->health <= 0) {
         return;
     }
-    if (GetTime() - state->last_hit < INVULNERABILITY_TIME) {
+    if (time_delta(state->last_hit) < INVULNERABILITY_TIME) {
         return;
     }
     for (int i = 0; i < MAX_BULLETS; i++) {
-        if (GetTime() - bullets->bullets[i].creation_time < 2) {
+        if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
             if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
                 state->health -= dmg;
                 bullets->bullets[i].creation_time = INFINITY;

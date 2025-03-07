@@ -1,4 +1,5 @@
 #include "bullet.h"
+#include "timing_utilities.h"
 
 void bullets_spawn_bullet(const TransformComp *player_transform, Bullets *bullets, BulletDirection dir) {
     const float x = player_transform->rect.x + (player_transform->rect.width / 2.0);
@@ -13,7 +14,7 @@ void bullets_spawn_bullet(const TransformComp *player_transform, Bullets *bullet
 
 void bullets_update(Bullets *bullets, float dt) {
     for (int i = 0; i < MAX_BULLETS; i++) {
-        if (GetTime() - bullets->bullets[i].creation_time < BULLET_LIFETIME) {
+        if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
             if (bullets->bullets[i].dir == BD_RIGHT) {
                 bullets->bullets[i].transform.rect.x += 500 * dt;
             } else {
@@ -24,7 +25,7 @@ void bullets_update(Bullets *bullets, float dt) {
 }
 void bullets_draw(const Bullets *bullets) {
     for (int i = 0; i < MAX_BULLETS; i++) {
-        if (GetTime() - bullets->bullets[i].creation_time < BULLET_LIFETIME) {
+        if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
             DrawRectangleRec(bullets->bullets[i].transform.rect, PURPLE);
         }
     }

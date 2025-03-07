@@ -7,6 +7,8 @@
 #include "wave.h"
 #include "bullet.h"
 
+#define SHOOT_DELAY 0.25
+
 // The player stats that are dependant on the selected class
 typedef struct {
     uint16_t speed_x;

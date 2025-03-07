@@ -10,7 +10,7 @@ EXTERN_DIR = extern/raylib/src
 TARGET = $(BUILD_DIR)/persona
 OBJS = $(BUILD_DIR)/player.o $(BUILD_DIR)/arena.o $(BUILD_DIR)/stage.o \
        $(BUILD_DIR)/ecs.o $(BUILD_DIR)/enemy.o $(BUILD_DIR)/game_state.o \
-       $(BUILD_DIR)/bullet.o
+       $(BUILD_DIR)/bullet.o $(BUILD_DIR)/timing_utilities.o
 
 BUILD_CONFIG = debug
 

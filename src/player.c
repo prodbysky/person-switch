@@ -2,6 +2,7 @@
 #include "ecs.h"
 #include "enemy.h"
 #include "static_config.h"
+#include "timing_utilities.h"
 #include <raylib.h>
 
 ECSPlayer ecs_player_new() {
@@ -28,7 +29,7 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
     }
     float dt = GetFrameTime();
 
-    if (GetTime() - player->state.last_hit < INVULNERABILITY_TIME) {
+    if (time_delta(player->state.last_hit) < INVULNERABILITY_TIME) {
         player->c = RED;
     } else {
         player->c = WHITE;
@@ -49,7 +50,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
             continue;
         }
         if (CheckCollisionRecs(player->transform.rect, wave->enemies[i].transform.rect) &&
-            GetTime() - player->state.last_hit > INVULNERABILITY_TIME) {
+            time_delta(player->state.last_hit) > INVULNERABILITY_TIME) {
             player->state.last_hit = GetTime();
             player->state.health--;
             return;
@@ -60,7 +61,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
                   const Sound *jump_sound, const Sound *shoot_sound) {
 
-    if (GetTime() - state->last_shot > 0.25) {
+    if (time_delta(state->last_shot) > SHOOT_DELAY) {
         if (IsKeyPressed(KEY_LEFT)) {
             bullets_spawn_bullet(transform, bullets, BD_LEFT);
             state->last_shot = GetTime();
