@@ -7,6 +7,7 @@
 #include "wave.h"
 #include "bullet.h"
 
+// The player stats that are dependant on the selected class
 typedef struct {
     uint16_t speed_x;
     uint16_t jump_power;
@@ -36,6 +37,7 @@ typedef struct {
 } ECSPlayer;
 
 ECSPlayer ecs_player_new();
+// Handles player input
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
                   const Sound *jump_sound, const Sound *shoot_sound);
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets, 

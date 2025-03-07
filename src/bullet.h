@@ -21,7 +21,11 @@ typedef struct {
     size_t current;
 } Bullets;
 
+// Spawns a bullet according to `dir`
+// NOTES:
+// Hard limit of `MAX_BULLETS` (if more are spawned then they will be overriden)
 void bullets_spawn_bullet(const TransformComp* player_transform, Bullets *bullets, BulletDirection dir);
+
 void bullets_update(Bullets *bullets, float dt);
 void bullets_draw(const Bullets *bullets);
 

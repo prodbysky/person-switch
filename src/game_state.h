@@ -22,12 +22,17 @@ typedef struct {
     // Internal arena allocator which will store all internal allocations for the game
     Arena allocator;
 
+    // Player state
     ECSPlayer player;
+    Bullets bullets;
+
+    // Contains platforms
     Stage stage;
+
     EnemyWave current_wave;
     bool wave_finished;
+
     GamePhase phase;
-    Bullets bullets;
 
     // Phase Transitions
     double began_transition;
@@ -41,14 +46,23 @@ typedef struct {
     Sound phase_change_sound;
 } GameState;
 
-
+// Initializes raylib, loads needed assets
 GameState game_state_init(); 
+
+// Closes the raylib context
 void game_state_destroy(GameState *state); 
+
+
+// Runs a single frame (update and draw) of the game
 void game_state(GameState *state); 
+// Runs actual logic of the game, also plays sounds,
 void game_state_update(GameState *state);
+// Draws a single frame of the game state
 void game_state_frame(const GameState *state); 
 #ifndef RELEASE
+// Displays debug stats of the game (FPS, update time, arena usage)
 void game_state_draw_debug_stats(const GameState *state);
 #endif
+// Draws the stage, enemies, bullets, player
 void game_state_draw_playfield(const GameState *state); 
 #endif
