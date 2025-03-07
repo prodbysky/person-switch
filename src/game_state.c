@@ -187,7 +187,7 @@ void game_state_frame(const GameState *state) {
         break;
 
     case GP_DEAD:
-        DrawTextEx(state->font, "You died!", (Vector2){300, 350}, 32, 0, WHITE);
+        draw_centered_text("You died!", &state->font, 32, WHITE, 300);
         break;
     case GP_PAUSED:
         game_state_draw_playfield(state);
