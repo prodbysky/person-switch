@@ -42,6 +42,7 @@ ECSPlayer ecs_player_new();
 // Handles player input
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
                   const Sound *jump_sound, const Sound *shoot_sound);
+// Updates the entire player state
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets, 
                   const Sound *jump_sound, const Sound* shoot_sound);
 void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave);
