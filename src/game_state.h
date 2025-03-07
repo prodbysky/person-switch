@@ -51,8 +51,7 @@ GameState game_state_init();
 // Closes the raylib context
 void game_state_destroy(GameState *state); 
 
-
-// 
+// Starts a new wave with the given new class of player
 void game_state_start_new_wave(GameState* state, PlayerClass new_class);
 
 // Runs a single frame (update and draw) of the game
