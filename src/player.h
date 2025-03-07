@@ -23,12 +23,14 @@ typedef enum {
     PS_COUNT
 } PlayerClass;
 
-typedef struct  {
+typedef struct {
     PlayerClass current_class;
     double last_hit;
     double last_shot;
     size_t health;
     bool dead;
+    float reload_time; 
+    float movement_speed;
 } PlayerStateComp;
 
 typedef struct {

@@ -120,10 +120,28 @@ void game_state_update(GameState *state) {
         /*const double t = (GetTime() - state->began_transition) * 2;*/
     case GP_AFTER_WAVE:
 
+        if (IsKeyDown(KEY_ENTER)) {
+            game_state_start_new_wave(state, state->selected_class);
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){30, 30, 128, 64})) {
+                state->screen_type = IST_PLAYER_CLASS_SELECT;
+            }
+            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){30, 124, 128, 64})) {
+                state->screen_type = IST_PLAYER_UPGRADE;
+            }
+        }
+
         switch (state->screen_type) {
-        case IST_PLAYER_CLASS_SELECT:
+        case IST_PLAYER_CLASS_SELECT: {
             game_state_class_select_update(state);
             break;
+        }
+        case IST_PLAYER_UPGRADE: {
+            game_state_upgrade_update(state);
+            break;
+        }
         }
     }
 }
@@ -217,11 +235,32 @@ void game_state_frame(const GameState *state) {
         game_state_draw_playfield(state);
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
-        switch (state->screen_type) {
-        case IST_PLAYER_CLASS_SELECT:
-            game_state_class_select_draw(state);
 
+        draw_centered_text("Press enter to start the next wave", &state->font, 32, WHITE, 100);
+        if (state->screen_type == IST_PLAYER_CLASS_SELECT) {
+            DrawRectangle(30, 30, 128, 64, GRAY);
+            DrawTextEx(state->font, "Class select", (Vector2){37, 50}, 24, 0, WHITE);
+        } else {
+            DrawRectangle(30, 30, 128, 64, WHITE);
+            DrawTextEx(state->font, "Class select", (Vector2){37, 50}, 24, 0, GRAY);
+        }
+        if (state->screen_type == IST_PLAYER_UPGRADE) {
+            DrawRectangle(30, 124, 128, 64, GRAY);
+            DrawTextEx(state->font, "Upgrade", (Vector2){60, 144}, 24, 0, WHITE);
+        } else {
+            DrawRectangle(30, 124, 128, 64, WHITE);
+            DrawTextEx(state->font, "Upgrade", (Vector2){60, 144}, 24, 0, GRAY);
+        }
+
+        switch (state->screen_type) {
+        case IST_PLAYER_CLASS_SELECT: {
+            game_state_class_select_draw(state);
             break;
+        }
+        case IST_PLAYER_UPGRADE: {
+            game_state_upgrade_draw(state);
+            break;
+        }
         }
 
 #ifndef RELEASE
@@ -244,9 +283,6 @@ void game_state_class_select_update(GameState *state) {
             state->selected_class = PS_DAMAGE;
         }
     }
-    if (IsKeyDown(KEY_ENTER)) {
-        game_state_start_new_wave(state, state->selected_class);
-    }
 }
 
 double screen_centered_position(double w) {
@@ -254,7 +290,6 @@ double screen_centered_position(double w) {
 }
 
 void game_state_class_select_draw(const GameState *state) {
-    draw_centered_text("Press enter to start the next wave", &state->font, 32, WHITE, 100);
 
     if (state->selected_class != PS_TANK) {
         DrawRectangle(screen_centered_position(256), 200, 256, 64, WHITE);
@@ -276,6 +311,35 @@ void game_state_class_select_draw(const GameState *state) {
     } else {
         DrawRectangle(screen_centered_position(256), 400, 256, 64, GRAY);
         draw_centered_text("Killer", &state->font, 32, WHITE, 415);
+    }
+}
+
+void game_state_upgrade_draw(const GameState *state) {
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
+        CheckCollisionPointRec(GetMousePosition(), (Rectangle){20, 220, 64, 64})) {
+        DrawRectangle(20, 220, 64, 64, GRAY);
+        DrawTextEx(state->font, "Reload", (Vector2){24, 224}, 24, 0, WHITE);
+    } else {
+        DrawRectangle(20, 220, 64, 64, WHITE);
+        DrawTextEx(state->font, "Reload", (Vector2){24, 224}, 24, 0, GRAY);
+    }
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
+        CheckCollisionPointRec(GetMousePosition(), (Rectangle){104, 220, 64, 64})) {
+        DrawRectangle(104, 220, 64, 64, GRAY);
+        DrawTextEx(state->font, "Speed", (Vector2){108, 224}, 24, 0, WHITE);
+    } else {
+        DrawRectangle(104, 220, 64, 64, WHITE);
+        DrawTextEx(state->font, "Speed", (Vector2){108, 224}, 24, 0, GRAY);
+    }
+}
+void game_state_upgrade_update(GameState *state) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){20, 220, 64, 64})) {
+            state->player.state.reload_time += 0.02;
+        }
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){104, 220, 64, 64})) {
+            state->player.state.movement_speed += 5.0;
+        }
     }
 }
 

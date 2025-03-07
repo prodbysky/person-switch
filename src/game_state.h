@@ -19,6 +19,7 @@ typedef enum {
 
 typedef enum {
     IST_PLAYER_CLASS_SELECT = 0,
+    IST_PLAYER_UPGRADE = 1
 } IntermissionScreenType;
 
 // The entire game state, sort of a `god` object
@@ -80,6 +81,9 @@ void game_state_draw_playfield(const GameState *state);
 
 void game_state_class_select_draw(const GameState* state);
 void game_state_class_select_update(GameState* state);
+
+void game_state_upgrade_draw(const GameState* state);
+void game_state_upgrade_update(GameState* state);
 
 void draw_centered_text(const char* message, const Font* font, size_t size, Color color, float y);
 double screen_centered_position(double w);

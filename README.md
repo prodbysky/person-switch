@@ -7,7 +7,6 @@ TODO:
  - Game art
  - Forever increasing difficulty randomly generated (deterministic) waves
  - More enemy types
- - Player upgrades
  - Particles :0
  - Environment hazards (lava pits (as suggested by u/skeeto))
  - Powerups
