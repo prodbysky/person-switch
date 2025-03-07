@@ -17,6 +17,10 @@ typedef enum {
     GP_TRANSITION
 } GamePhase;
 
+typedef enum {
+    IST_PLAYER_CLASS_SELECT = 0,
+} IntermissionScreenType;
+
 // The entire game state, sort of a `god` object
 typedef struct {
     // Internal arena allocator which will store all internal allocations for the game
@@ -43,6 +47,11 @@ typedef struct {
     Sound player_shoot_sound;
     Sound enemy_hit_sound;
     Sound phase_change_sound;
+
+    // Intermission screen (upgrades)
+    IntermissionScreenType screen_type;
+
+
 } GameState;
 
 // Initializes raylib, loads needed assets

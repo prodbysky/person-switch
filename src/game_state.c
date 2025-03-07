@@ -37,6 +37,7 @@ GameState game_state_init() {
     st.phase_change_sound = LoadSound("assets/sfx/menu_switch.wav");
     st.bullets = (Bullets){0};
     st.began_transition = GetTime();
+    st.screen_type = IST_PLAYER_CLASS_SELECT;
 
     return st;
 }
@@ -117,16 +118,21 @@ void game_state_update(GameState *state) {
         break;
         /*const double t = (GetTime() - state->began_transition) * 2;*/
     case GP_AFTER_WAVE:
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
-                game_state_start_new_wave(state, PS_TANK);
+
+        switch (state->screen_type) {
+        case IST_PLAYER_CLASS_SELECT:
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
+                    game_state_start_new_wave(state, PS_TANK);
+                }
+                if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
+                    game_state_start_new_wave(state, PS_MOVE);
+                }
+                if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
+                    game_state_start_new_wave(state, PS_DAMAGE);
+                }
             }
-            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
-                game_state_start_new_wave(state, PS_MOVE);
-            }
-            if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
-                game_state_start_new_wave(state, PS_DAMAGE);
-            }
+            break;
         }
     }
 }
@@ -220,12 +226,34 @@ void game_state_frame(const GameState *state) {
         game_state_draw_playfield(state);
         DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                          GetColor(0x00000055));
-        DrawRectangle(275, 200, 256, 64, WHITE);
-        DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, GRAY);
-        DrawRectangle(275, 300, 256, 64, WHITE);
-        DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, GRAY);
-        DrawRectangle(275, 400, 256, 64, WHITE);
-        DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
+        switch (state->screen_type) {
+        case IST_PLAYER_CLASS_SELECT:
+            if (state->player.state.current_class != PS_TANK) {
+                DrawRectangle(275, 200, 256, 64, WHITE);
+                DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, GRAY);
+            } else {
+                DrawRectangle(275, 200, 256, 64, GRAY);
+                DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, WHITE);
+            }
+
+            if (state->player.state.current_class != PS_MOVE) {
+                DrawRectangle(275, 300, 256, 64, WHITE);
+                DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, GRAY);
+            } else {
+                DrawRectangle(275, 300, 256, 64, GRAY);
+                DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, WHITE);
+            }
+            if (state->player.state.current_class != PS_DAMAGE) {
+                DrawRectangle(275, 400, 256, 64, WHITE);
+                DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
+            } else {
+                DrawRectangle(275, 400, 256, 64, GRAY);
+                DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, WHITE);
+            }
+            DrawRectangle(275, 400, 256, 64, WHITE);
+            DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
+            break;
+        }
 
 #ifndef RELEASE
         game_state_draw_debug_stats(state);
