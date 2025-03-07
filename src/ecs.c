@@ -57,8 +57,8 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
     }
 
     next_pos = (Vector2){
-        .x = transform->rect.x + physics->velocity.x * GetFrameTime(),
-        .y = transform->rect.y + physics->velocity.y * GetFrameTime(),
+        .x = transform->rect.x + physics->velocity.x * dt,
+        .y = transform->rect.y + physics->velocity.y * dt,
     };
 
     transform->rect.x = next_pos.x;
