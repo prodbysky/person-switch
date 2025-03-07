@@ -52,6 +52,9 @@ GameState game_state_init();
 void game_state_destroy(GameState *state); 
 
 
+// 
+void game_state_start_new_wave(GameState* state, PlayerClass new_class);
+
 // Runs a single frame (update and draw) of the game
 void game_state(GameState *state); 
 // Runs actual logic of the game, also plays sounds,

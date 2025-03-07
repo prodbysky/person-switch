@@ -47,6 +47,23 @@ void game_state_phase_change(GameState *state, GamePhase next) {
     PlaySound(state->phase_change_sound);
 }
 
+void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
+
+    state->player.state.current_class = new_class;
+    switch (new_class) {
+    case PS_TANK:
+        state->player.state.health = 10;
+        break;
+    case PS_MOVE:
+    case PS_DAMAGE:
+        state->player.state.health = 7;
+    case PS_COUNT:
+        break;
+    }
+    game_state_phase_change(state, GP_MAIN);
+    state->current_wave = default_wave();
+}
+
 void game_state_update(GameState *state) {
     float dt = GetFrameTime();
     switch (state->phase) {
@@ -102,25 +119,13 @@ void game_state_update(GameState *state) {
     case GP_AFTER_WAVE:
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
-                state->player.state.current_class = PS_TANK;
-                state->player.state.health = 10;
-                game_state_phase_change(state, GP_MAIN);
-                state->stage = default_stage();
-                state->current_wave = default_wave();
+                game_state_start_new_wave(state, PS_TANK);
             }
             if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
-                state->player.state.current_class = PS_MOVE;
-                state->player.state.health = 7;
-                game_state_phase_change(state, GP_MAIN);
-                state->stage = default_stage();
-                state->current_wave = default_wave();
+                game_state_start_new_wave(state, PS_MOVE);
             }
             if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
-                state->player.state.current_class = PS_DAMAGE;
-                state->player.state.health = 7;
-                game_state_phase_change(state, GP_MAIN);
-                state->stage = default_stage();
-                state->current_wave = default_wave();
+                game_state_start_new_wave(state, PS_DAMAGE);
             }
         }
     }
