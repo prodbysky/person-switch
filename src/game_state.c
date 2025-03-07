@@ -234,13 +234,13 @@ void game_state_frame(const GameState *state) {
 
 void game_state_class_select_update(GameState *state) {
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 200, 256, 64})) {
             state->selected_class = PS_TANK;
         }
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 300, 256, 64})) {
             state->selected_class = PS_MOVE;
         }
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
+        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 400, 256, 64})) {
             state->selected_class = PS_DAMAGE;
         }
     }
