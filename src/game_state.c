@@ -38,6 +38,7 @@ GameState game_state_init() {
     st.bullets = (Bullets){0};
     st.began_transition = GetTime();
     st.screen_type = IST_PLAYER_CLASS_SELECT;
+    st.selected_class = PS_MOVE;
 
     return st;
 }
@@ -234,19 +235,23 @@ void game_state_frame(const GameState *state) {
 void game_state_class_select_update(GameState *state) {
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 200, 256, 64})) {
-            game_state_start_new_wave(state, PS_TANK);
+            state->selected_class = PS_TANK;
         }
         if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 300, 256, 64})) {
-            game_state_start_new_wave(state, PS_MOVE);
+            state->selected_class = PS_MOVE;
         }
         if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){275, 400, 256, 64})) {
-            game_state_start_new_wave(state, PS_DAMAGE);
+            state->selected_class = PS_DAMAGE;
         }
+    }
+    if (IsKeyDown(KEY_ENTER)) {
+        game_state_start_new_wave(state, state->selected_class);
     }
 }
 
 void game_state_class_select_draw(const GameState *state) {
-    if (state->player.state.current_class != PS_TANK) {
+    DrawTextEx(state->font, "Press enter to start the next wave", (Vector2){175, 100}, 32, 0, WHITE);
+    if (state->selected_class != PS_TANK) {
         DrawRectangle(275, 200, 256, 64, WHITE);
         DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, GRAY);
     } else {
@@ -254,14 +259,14 @@ void game_state_class_select_draw(const GameState *state) {
         DrawTextEx(state->font, "Tank", (Vector2){375, 215}, 32, 0, WHITE);
     }
 
-    if (state->player.state.current_class != PS_MOVE) {
+    if (state->selected_class != PS_MOVE) {
         DrawRectangle(275, 300, 256, 64, WHITE);
         DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, GRAY);
     } else {
         DrawRectangle(275, 300, 256, 64, GRAY);
         DrawTextEx(state->font, "Mover", (Vector2){370, 315}, 32, 0, WHITE);
     }
-    if (state->player.state.current_class != PS_DAMAGE) {
+    if (state->selected_class != PS_DAMAGE) {
         DrawRectangle(275, 400, 256, 64, WHITE);
         DrawTextEx(state->font, "Killer", (Vector2){365, 415}, 32, 0, GRAY);
     } else {

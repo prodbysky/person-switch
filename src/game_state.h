@@ -50,6 +50,7 @@ typedef struct {
 
     // Intermission screen (upgrades)
     IntermissionScreenType screen_type;
+    PlayerClass selected_class;
 
 
 } GameState;
