@@ -66,6 +66,7 @@ void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
     game_state_phase_change(state, GP_MAIN);
     state->wave_strength *= 1.1;
     state->current_wave = generate_wave(state->wave_strength);
+    state->bullets = (Bullets){0};
 }
 
 void game_state_update(GameState *state) {
