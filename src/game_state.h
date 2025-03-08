@@ -53,6 +53,8 @@ typedef struct {
     // Intermission screen (upgrades)
     IntermissionScreenType screen_type;
     PlayerClass selected_class;
+
+    double wave_strength;
 } GameState;
 
 // Initializes raylib, loads needed assets
@@ -86,5 +88,7 @@ void game_state_upgrade_update(GameState* state);
 
 void draw_centered_text(const char* message, const Font* font, size_t size, Color color, float y);
 double screen_centered_position(double w);
+
+EnemyWave generate_wave(double strength);
 
 #endif

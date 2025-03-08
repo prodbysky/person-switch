@@ -23,6 +23,7 @@ typedef struct {
     SolidRectangleComp draw_conf;
 } ECSEnemy;
 
+
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health);
 
 // Makes the enemy follow the passed in transform `player_transform`
@@ -32,5 +33,5 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
                       const Sound *hit_sound, size_t dmg);
 // Decrements the enemy health after colliding with a single bullet
 void enemy_bullet_interaction(const TransformComp *transform, Bullets *bullets, EnemyState* state,
-                              const Sound *hit_sound, size_t dmg) ;
+                              const Sound *hit_sound, size_t dmg);
 #endif

@@ -26,7 +26,6 @@ GameState game_state_init() {
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
-    st.current_wave = default_wave();
     st.phase = GP_TRANSITION;
     st.after_transition = GP_STARTMENU;
     st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
@@ -39,6 +38,8 @@ GameState game_state_init() {
     st.began_transition = GetTime();
     st.screen_type = IST_PLAYER_CLASS_SELECT;
     st.selected_class = PS_MOVE;
+    st.wave_strength = 2;
+    st.current_wave = generate_wave(2);
 
     return st;
 }
@@ -63,7 +64,8 @@ void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
         break;
     }
     game_state_phase_change(state, GP_MAIN);
-    state->current_wave = default_wave();
+    state->wave_strength *= 1.1;
+    state->current_wave = generate_wave(state->wave_strength);
 }
 
 void game_state_update(GameState *state) {
@@ -382,6 +384,30 @@ Stage default_stage() {
 
 #define FAST_WEAK_ENEMY(x, y) ecs_enemy_new((Vector2){(x), (y)}, (Vector2){32, 64}, 40, 3)
 #define SLOW_STRONG_ENEMY(x, y) ecs_enemy_new((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
+
+EnemyWave generate_wave(double strength) {
+    EnemyWave wave = {.count = 0};
+    size_t current_index = 0;
+
+    while (strength > 0) {
+        size_t enemy_type = GetRandomValue(0, 1);
+        switch (enemy_type) {
+        case 0: {
+            wave.enemies[current_index] = FAST_WEAK_ENEMY(GetRandomValue(0, 700), GetRandomValue(100, 300));
+            strength -= 0.5;
+            break;
+        }
+        case 1: {
+            wave.enemies[current_index] = SLOW_STRONG_ENEMY(GetRandomValue(0, 700), GetRandomValue(100, 300));
+            strength -= 1;
+            break;
+        }
+        }
+        current_index++;
+    }
+    wave.count = current_index;
+    return wave;
+}
 
 EnemyWave default_wave() {
     return (EnemyWave){
