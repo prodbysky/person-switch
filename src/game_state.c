@@ -170,6 +170,11 @@ void game_state_draw_playfield(const GameState *state) {
     if (!state->player.state.dead) {
         draw_solid(&state->player.transform, &state->player.draw_conf);
     }
+    game_state_draw_ui(state);
+}
+
+void game_state_draw_ui(const GameState *state) {
+    DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
 }
 
 void game_state_frame(const GameState *state) {
