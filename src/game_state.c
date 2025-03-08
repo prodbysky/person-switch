@@ -38,6 +38,7 @@ GameState game_state_init() {
     st.screen_type = IST_PLAYER_CLASS_SELECT;
     st.selected_class = PS_MOVE;
     st.wave_strength = 2;
+    st.wave_number = 1;
     st.current_wave = generate_wave(2);
     st.camera = (Camera2D){
         .zoom = 1,
@@ -74,6 +75,7 @@ void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
     }
     game_state_phase_change(state, GP_MAIN);
     state->wave_strength *= 1.1;
+    state->wave_number++;
     state->current_wave = generate_wave(state->wave_strength);
     state->bullets = (Bullets){0};
 }
@@ -198,6 +200,7 @@ void game_state_draw_ui(const GameState *state) {
     switch (state->phase) {
     case GP_MAIN: {
         DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
+        DrawTextEx(state->font, TextFormat("Wave #%d", state->wave_number), (Vector2){10, 50}, 48, 0, WHITE);
         break;
     }
     case GP_STARTMENU: {

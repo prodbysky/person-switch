@@ -55,6 +55,7 @@ typedef struct {
     PlayerClass selected_class;
 
     double wave_strength;
+    size_t wave_number;
 
     Camera2D camera;
 
