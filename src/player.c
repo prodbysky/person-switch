@@ -91,3 +91,9 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
         physics->grounded = false;
     }
 }
+
+void player_draw(const ECSPlayer *player) {
+    if (!player->state.dead) {
+        draw_solid(&player->transform, &player->draw_conf);
+    }
+}

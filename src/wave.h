@@ -11,5 +11,6 @@ typedef struct {
 } EnemyWave;
 
 bool wave_is_done(const EnemyWave* wave);
+void wave_draw(const EnemyWave* wave);
 
 #endif

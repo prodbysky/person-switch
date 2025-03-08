@@ -1,6 +1,5 @@
 #include "game_state.h"
 #include "arena.h"
-#include "ecs.h"
 #include "enemy.h"
 #include "player.h"
 #include "static_config.h"
@@ -170,15 +169,9 @@ void game_state_draw_debug_stats(const GameState *state) {
 
 void game_state_draw_playfield(const GameState *state) {
     draw_stage(&state->stage);
-    for (size_t i = 0; i < state->current_wave.count; i++) {
-        if (!state->current_wave.enemies[i].state.dead) {
-            draw_solid(&state->current_wave.enemies[i].transform, &state->current_wave.enemies[i].draw_conf);
-        }
-    }
+    wave_draw(&state->current_wave);
     bullets_draw(&state->bullets);
-    if (!state->player.state.dead) {
-        draw_solid(&state->player.transform, &state->player.draw_conf);
-    }
+    player_draw(&state->player);
     game_state_draw_ui(state);
 }
 
@@ -192,7 +185,6 @@ void game_state_frame(const GameState *state) {
     ClearBackground(GetColor(0x181818ff));
     switch (state->phase) {
     case GP_MAIN:
-
 #ifndef RELEASE
         game_state_draw_debug_stats(state);
 #endif
@@ -308,7 +300,6 @@ double screen_centered_position(double w) {
 }
 
 void game_state_class_select_draw(const GameState *state) {
-
     if (state->selected_class != PS_TANK) {
         DrawRectangle(screen_centered_position(256), 200, 256, 64, WHITE);
         draw_centered_text("Tank", &state->font, 32, GRAY, 215);
