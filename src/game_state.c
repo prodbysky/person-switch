@@ -83,12 +83,12 @@ void game_state_update(GameState *state) {
 
     if (IsKeyPressed(KEY_LEFT_BRACKET)) {
         state->volume_label_opacity = 1;
-        SetMasterVolume(Clamp(GetMasterVolume() - 0.05, 0, 100));
+        SetMasterVolume(Clamp(GetMasterVolume() - 0.05, 0, 1));
     }
 
     if (IsKeyPressed(KEY_RIGHT_BRACKET)) {
         state->volume_label_opacity = 1;
-        SetMasterVolume(Clamp(GetMasterVolume() + 0.05, 0, 100));
+        SetMasterVolume(Clamp(GetMasterVolume() + 0.05, 0, 1));
     }
 
     switch (state->phase) {
