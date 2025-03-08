@@ -22,6 +22,7 @@ typedef enum {
     IST_PLAYER_UPGRADE = 1
 } IntermissionScreenType;
 
+
 // The entire game state, sort of a `god` object
 typedef struct {
     // Internal arena allocator which will store all internal allocations for the game

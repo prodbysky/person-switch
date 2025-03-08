@@ -1,4 +1,5 @@
 #include "ecs.h"
+#include "raylib.h"
 #include "static_config.h"
 #include <raymath.h>
 
@@ -65,4 +66,8 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
     transform->rect.y = next_pos.y;
 
     transform->rect.x = Clamp(transform->rect.x, 0, WINDOW_W - transform->rect.width);
+}
+
+void draw_solid(const TransformComp *transform, const SolidRectangleComp *solid_rectangle) {
+    DrawRectangleRec(transform->rect, solid_rectangle->color);
 }
