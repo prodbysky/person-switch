@@ -16,5 +16,6 @@ TODO:
 ## Build
 ```bash
     mkdir build
+    cp -r assets/ build/assets/
     make release 
 ```
