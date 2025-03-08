@@ -46,6 +46,7 @@ GameState game_state_init() {
         .target = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
     };
     st.volume_label_opacity = 0.0;
+    st.target = LoadRenderTexture(WINDOW_W, WINDOW_H);
 
     return st;
 }
@@ -269,10 +270,10 @@ void game_state_draw_ui(const GameState *state) {
 }
 
 void game_state_frame(const GameState *state) {
-    BeginDrawing();
-    ClearBackground(GetColor(0x181818ff));
-    game_state_draw_ui(state);
+
+    BeginTextureMode(state->target);
     BeginMode2D(state->camera);
+    ClearBackground(GetColor(0x181818ff));
     switch (state->phase) {
     case GP_MAIN:
         game_state_draw_playfield(state);
@@ -299,6 +300,19 @@ void game_state_frame(const GameState *state) {
     }
 
     EndMode2D();
+    EndTextureMode();
+
+    BeginDrawing();
+    ClearBackground(GetColor(0x181818ff));
+    DrawTextureRec(state->target.texture,
+                   (Rectangle){
+                       0,
+                       (float)state->target.texture.height,
+                       (float)state->target.texture.width,
+                       -(float)state->target.texture.height,
+                   },
+                   (Vector2){0, 0}, WHITE);
+    game_state_draw_ui(state);
     EndDrawing();
 }
 
@@ -388,6 +402,7 @@ void game_state(GameState *state) {
 void game_state_destroy(GameState *state) {
     arena_free(&state->allocator);
     UnloadFont(state->font);
+    UnloadRenderTexture(state->target);
     CloseAudioDevice();
     CloseWindow();
 }
