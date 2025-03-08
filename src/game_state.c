@@ -83,12 +83,12 @@ void game_state_update(GameState *state) {
 
     if (IsKeyPressed(KEY_LEFT_BRACKET)) {
         state->volume_label_opacity = 1;
-        SetMasterVolume(GetMasterVolume() - 0.05);
+        SetMasterVolume(Clamp(GetMasterVolume() - 0.05, 0, 100));
     }
 
     if (IsKeyPressed(KEY_RIGHT_BRACKET)) {
         state->volume_label_opacity = 1;
-        SetMasterVolume(GetMasterVolume() + 0.05);
+        SetMasterVolume(Clamp(GetMasterVolume() + 0.05, 0, 100));
     }
 
     switch (state->phase) {
@@ -260,7 +260,7 @@ void game_state_draw_ui(const GameState *state) {
         break;
     }
     }
-    DrawTextEx(state->font, TextFormat("Volume: %f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
+    DrawTextEx(state->font, TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
                GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
 
 #ifndef RELEASE
