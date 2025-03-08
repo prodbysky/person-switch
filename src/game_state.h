@@ -61,6 +61,7 @@ typedef struct {
     double volume_label_opacity;
 
     RenderTexture2D target;
+    Shader pixelizer;
 } GameState;
 
 // Initializes raylib, loads needed assets

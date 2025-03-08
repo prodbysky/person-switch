@@ -47,6 +47,7 @@ GameState game_state_init() {
     };
     st.volume_label_opacity = 0.0;
     st.target = LoadRenderTexture(WINDOW_W, WINDOW_H);
+    st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
 
     return st;
 }
@@ -304,6 +305,7 @@ void game_state_frame(const GameState *state) {
 
     BeginDrawing();
     ClearBackground(GetColor(0x181818ff));
+    BeginShaderMode(state->pixelizer);
     DrawTextureRec(state->target.texture,
                    (Rectangle){
                        0,
@@ -312,6 +314,7 @@ void game_state_frame(const GameState *state) {
                        -(float)state->target.texture.height,
                    },
                    (Vector2){0, 0}, WHITE);
+    EndShaderMode();
     game_state_draw_ui(state);
     EndDrawing();
 }
@@ -403,6 +406,7 @@ void game_state_destroy(GameState *state) {
     arena_free(&state->allocator);
     UnloadFont(state->font);
     UnloadRenderTexture(state->target);
+    UnloadShader(state->pixelizer);
     CloseAudioDevice();
     CloseWindow();
 }
