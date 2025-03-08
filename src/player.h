@@ -37,7 +37,7 @@ typedef struct {
     TransformComp transform;
     PhysicsComp physics;
     PlayerStateComp state;
-    Color c;
+    SolidRectangleComp draw_conf;
 } ECSPlayer;
 
 ECSPlayer ecs_player_new();

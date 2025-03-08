@@ -161,12 +161,12 @@ void game_state_draw_playfield(const GameState *state) {
     draw_stage(&state->stage);
     for (size_t i = 0; i < state->current_wave.count; i++) {
         if (!state->current_wave.enemies[i].state.dead) {
-            DrawRectangleRec(state->current_wave.enemies[i].transform.rect, state->current_wave.enemies[i].c);
+            draw_solid(&state->current_wave.enemies[i].transform, &state->current_wave.enemies[i].draw_conf);
         }
     }
     bullets_draw(&state->bullets);
     if (!state->player.state.dead) {
-        DrawRectangleRec(state->player.transform.rect, state->player.c);
+        draw_solid(&state->player.transform, &state->player.draw_conf);
     }
 }
 

@@ -19,7 +19,7 @@ ECSPlayer ecs_player_new() {
                 .reload_time = 0.0,
             },
         .physics = DEFAULT_PHYSICS(),
-        .c = WHITE,
+        .draw_conf = {.color = WHITE},
     };
     return p;
 }
@@ -32,9 +32,9 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
     float dt = GetFrameTime();
 
     if (time_delta(player->state.last_hit) < INVULNERABILITY_TIME) {
-        player->c = RED;
+        player->draw_conf.color = RED;
     } else {
-        player->c = WHITE;
+        player->draw_conf.color = WHITE;
     }
 
     player_input(&player->state, &player->physics, &player->transform, bullets, jump_sound, shoot_sound);

@@ -1,5 +1,6 @@
 #include "ecs.h"
 #include "raylib.h"
+#include "stage.h"
 #include "static_config.h"
 #include <raymath.h>
 

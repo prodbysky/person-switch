@@ -9,11 +9,13 @@
 #include <stdlib.h>
 
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health) {
-    return (ECSEnemy){.physics = DEFAULT_PHYSICS(),
-                      .transform = TRANSFORM(pos.x, pos.y, size.x, size.y),
-                      .enemy_conf = {.speed = speed},
-                      .state = {.health = health, .last_hit = 0.0, .dead = false},
-                      .c = BLUE};
+    return (ECSEnemy){
+        .physics = DEFAULT_PHYSICS(),
+        .transform = TRANSFORM(pos.x, pos.y, size.x, size.y),
+        .enemy_conf = {.speed = speed},
+        .state = {.health = health, .last_hit = 0.0, .dead = false},
+        .draw_conf = {.color = BLUE},
+    };
 }
 
 void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
@@ -52,9 +54,9 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     const float dt = GetFrameTime();
 
     if (time_delta(enemy->state.last_hit) < INVULNERABILITY_TIME) {
-        enemy->c = RED;
+        enemy->draw_conf.color = RED;
     } else {
-        enemy->c = BLUE;
+        enemy->draw_conf.color = BLUE;
     }
     physics(&enemy->physics, dt);
     enemy_ai(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);

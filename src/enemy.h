@@ -3,6 +3,7 @@
 
 #include "ecs.h"
 #include "bullet.h"
+#include <stdlib.h>
 
 typedef struct {
     size_t speed;
@@ -18,8 +19,8 @@ typedef struct {
     EnemyConfigComp enemy_conf;
     TransformComp transform;
     PhysicsComp physics;
-    Color c;
     EnemyState state;
+    SolidRectangleComp draw_conf;
 } ECSEnemy;
 
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health);

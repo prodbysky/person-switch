@@ -13,6 +13,7 @@ typedef enum {
 
 typedef struct {
     TransformComp transform;
+    SolidRectangleComp draw_conf;
     BulletDirection dir;
     double creation_time;
 } ECSPlayerBullet;

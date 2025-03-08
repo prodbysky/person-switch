@@ -1,6 +1,7 @@
 #ifndef ECS_H
 #define ECS_H
 
+#include <raylib.h>
 #include "stage.h"
 
 // Base Components
@@ -25,6 +26,8 @@ typedef struct {
 
 // Applies gravity and fades x velocity towards 0
 void physics(PhysicsComp* physics, float dt); 
+
+
 
 // Does collision for the passed in transform with the current stage
 void collision(TransformComp* transform, PhysicsComp* physics, 

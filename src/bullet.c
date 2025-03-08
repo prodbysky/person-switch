@@ -1,4 +1,5 @@
 #include "bullet.h"
+#include "ecs.h"
 #include "timing_utilities.h"
 
 void bullets_spawn_bullet(const TransformComp *player_transform, Bullets *bullets, BulletDirection dir) {
@@ -8,6 +9,7 @@ void bullets_spawn_bullet(const TransformComp *player_transform, Bullets *bullet
         .dir = dir,
         .creation_time = GetTime(),
         .transform = TRANSFORM(x, y, 16, 8),
+        .draw_conf = {.color = PURPLE},
     };
     bullets->current = (bullets->current + 1) % MAX_BULLETS;
 }
@@ -26,7 +28,7 @@ void bullets_update(Bullets *bullets, float dt) {
 void bullets_draw(const Bullets *bullets) {
     for (int i = 0; i < MAX_BULLETS; i++) {
         if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
-            DrawRectangleRec(bullets->bullets[i].transform.rect, PURPLE);
+            draw_solid(&bullets->bullets[i].transform, &bullets->bullets[i].draw_conf);
         }
     }
 }
