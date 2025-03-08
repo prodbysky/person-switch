@@ -189,24 +189,12 @@ void game_state_draw_playfield(const GameState *state) {
 }
 
 void game_state_draw_ui(const GameState *state) {
-    DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
-    DrawTextEx(state->font, TextFormat("Volume: %f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
-               GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
-}
-
-void game_state_frame(const GameState *state) {
-    BeginDrawing();
-    BeginMode2D(state->camera);
-    ClearBackground(GetColor(0x181818ff));
     switch (state->phase) {
-    case GP_MAIN:
-#ifndef RELEASE
-        game_state_draw_debug_stats(state);
-#endif
-        game_state_draw_playfield(state);
+    case GP_MAIN: {
+        DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
         break;
-    case GP_STARTMENU:
-        ClearBackground(GetColor(0x0a0a0aff));
+    }
+    case GP_STARTMENU: {
         Vector2 font_24_size = MeasureTextEx(state->font, "A", 24, 0);
         const float line_spacing = font_24_size.y;
         Vector2 ui_cursor = {.x = 10, .y = 10};
@@ -232,39 +220,18 @@ void game_state_frame(const GameState *state) {
         DrawTextEx(state->font, "Right bracket: Increase master volume by 5%", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
         break;
-
-    case GP_DEAD:
+    }
+    case GP_DEAD: {
         draw_centered_text("You died!", &state->font, 32, WHITE, 300);
         break;
-    case GP_PAUSED:
-        game_state_draw_playfield(state);
-        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
-                         GetColor(0x00000055));
-
-#ifndef RELEASE
-        game_state_draw_debug_stats(state);
-#endif
-        break;
-    case GP_TRANSITION: {
-        double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
-        game_state_draw_playfield(state);
-        if (t < 0.5)
-            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
-                             GetColor(0xffffff00 + (t * 255)));
-        else
-            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
-                             GetColor(0xffffff40 - (t * 255)));
-
-#ifndef RELEASE
-        game_state_draw_debug_stats(state);
-#endif
+    }
+    case GP_PAUSED: {
         break;
     }
-    case GP_AFTER_WAVE:
-        game_state_draw_playfield(state);
-        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
-                         GetColor(0x00000055));
-
+    case GP_TRANSITION: {
+        break;
+    }
+    case GP_AFTER_WAVE: {
         draw_centered_text("Press enter to start the next wave", &state->font, 32, WHITE, 100);
         if (state->screen_type == IST_PLAYER_CLASS_SELECT) {
             DrawRectangle(30, 30, 128, 64, GRAY);
@@ -291,10 +258,45 @@ void game_state_frame(const GameState *state) {
             break;
         }
         }
+        break;
+    }
+    }
+    DrawTextEx(state->font, TextFormat("Volume: %f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
+               GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
 
 #ifndef RELEASE
-        game_state_draw_debug_stats(state);
+    game_state_draw_debug_stats(state);
 #endif
+}
+
+void game_state_frame(const GameState *state) {
+    BeginDrawing();
+    ClearBackground(GetColor(0x181818ff));
+    game_state_draw_ui(state);
+    BeginMode2D(state->camera);
+    switch (state->phase) {
+    case GP_MAIN:
+        game_state_draw_playfield(state);
+        break;
+    case GP_STARTMENU:
+    case GP_DEAD:
+        break;
+    case GP_PAUSED:
+        game_state_draw_playfield(state);
+        break;
+    case GP_TRANSITION: {
+        double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
+        game_state_draw_playfield(state);
+        if (t < 0.5)
+            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
+                             GetColor(0xffffff00 + (t * 255)));
+        else
+            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
+                             GetColor(0xffffff40 - (t * 255)));
+        break;
+    }
+    case GP_AFTER_WAVE:
+        game_state_draw_playfield(state);
     }
 
     EndMode2D();
