@@ -40,7 +40,12 @@ GameState game_state_init() {
     st.selected_class = PS_MOVE;
     st.wave_strength = 2;
     st.current_wave = generate_wave(2);
-    st.camera = (Camera2D){.zoom = 1, .offset = Vector2Zero(), .rotation = 0, .target = (Vector2){0, 0}};
+    st.camera = (Camera2D){
+        .zoom = 1,
+        .offset = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
+        .rotation = 0,
+        .target = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
+    };
 
     return st;
 }
@@ -52,7 +57,7 @@ void game_state_phase_change(GameState *state, GamePhase next) {
 }
 
 void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
-
+    state->camera.zoom = 1.5;
     state->player.state.current_class = new_class;
     switch (new_class) {
     case PS_TANK:
@@ -72,6 +77,8 @@ void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
 
 void game_state_update(GameState *state) {
     float dt = GetFrameTime();
+    state->camera.zoom *= 0.98;
+    state->camera.zoom = Clamp(state->camera.zoom, 1, 999);
     switch (state->phase) {
     case GP_MAIN:
         if (IsKeyPressed(KEY_P)) {
