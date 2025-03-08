@@ -48,6 +48,7 @@ GameState game_state_init() {
     st.volume_label_opacity = 0.0;
     st.target = LoadRenderTexture(WINDOW_W, WINDOW_H);
     st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
+    st.vfx_enabled = true;
 
     return st;
 }
@@ -91,6 +92,10 @@ void game_state_update(GameState *state) {
     if (IsKeyPressed(KEY_RIGHT_BRACKET)) {
         state->volume_label_opacity = 1;
         SetMasterVolume(Clamp(GetMasterVolume() + 0.05, 0, 1));
+    }
+
+    if (IsKeyPressed(KEY_SLASH)) {
+        state->vfx_enabled = !state->vfx_enabled;
     }
 
     switch (state->phase) {
@@ -220,6 +225,8 @@ void game_state_draw_ui(const GameState *state) {
         ui_cursor.y += line_spacing;
         DrawTextEx(state->font, "Right bracket: Increase master volume by 5%", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "Slash: Toggle shaders OwO", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
         break;
     }
     case GP_DEAD: {
@@ -305,7 +312,9 @@ void game_state_frame(const GameState *state) {
 
     BeginDrawing();
     ClearBackground(GetColor(0x181818ff));
-    BeginShaderMode(state->pixelizer);
+    if (state->vfx_enabled) {
+        BeginShaderMode(state->pixelizer);
+    }
     DrawTextureRec(state->target.texture,
                    (Rectangle){
                        0,
@@ -314,7 +323,9 @@ void game_state_frame(const GameState *state) {
                        -(float)state->target.texture.height,
                    },
                    (Vector2){0, 0}, WHITE);
-    EndShaderMode();
+    if (state->vfx_enabled) {
+        EndShaderMode();
+    }
     game_state_draw_ui(state);
     EndDrawing();
 }

@@ -62,6 +62,7 @@ typedef struct {
 
     RenderTexture2D target;
     Shader pixelizer;
+    bool vfx_enabled;
 } GameState;
 
 // Initializes raylib, loads needed assets
