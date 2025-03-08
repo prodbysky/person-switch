@@ -3,6 +3,7 @@
 
 #include "arena.h"
 #include "player.h"
+#include "raylib.h"
 #include "wave.h"
 
 Stage default_stage();
@@ -55,6 +56,8 @@ typedef struct {
     PlayerClass selected_class;
 
     double wave_strength;
+
+    Camera2D camera;
 } GameState;
 
 // Initializes raylib, loads needed assets

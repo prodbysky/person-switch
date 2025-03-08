@@ -40,6 +40,7 @@ GameState game_state_init() {
     st.selected_class = PS_MOVE;
     st.wave_strength = 2;
     st.current_wave = generate_wave(2);
+    st.camera = (Camera2D){.zoom = 1, .offset = Vector2Zero(), .rotation = 0, .target = (Vector2){0, 0}};
 
     return st;
 }
@@ -180,6 +181,7 @@ void game_state_draw_ui(const GameState *state) {
 
 void game_state_frame(const GameState *state) {
     BeginDrawing();
+    BeginMode2D(state->camera);
     ClearBackground(GetColor(0x181818ff));
     switch (state->phase) {
     case GP_MAIN:
@@ -276,6 +278,7 @@ void game_state_frame(const GameState *state) {
 #endif
     }
 
+    EndMode2D();
     EndDrawing();
 }
 
