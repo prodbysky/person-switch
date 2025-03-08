@@ -113,7 +113,7 @@ void game_state_update(GameState *state) {
             state->began_transition = GetTime();
             state->player = ecs_player_new();
             state->stage = default_stage();
-            state->current_wave = default_wave();
+            state->current_wave = generate_wave(state->wave_strength);
         }
         break;
 
