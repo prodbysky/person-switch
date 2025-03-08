@@ -185,7 +185,6 @@ void game_state_draw_playfield(const GameState *state) {
     wave_draw(&state->current_wave);
     bullets_draw(&state->bullets);
     player_draw(&state->player);
-    game_state_draw_ui(state);
 }
 
 void game_state_draw_ui(const GameState *state) {
