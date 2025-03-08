@@ -57,6 +57,8 @@ typedef struct {
     double wave_strength;
 
     Camera2D camera;
+
+    double volume_label_opacity;
 } GameState;
 
 // Initializes raylib, loads needed assets

@@ -45,6 +45,7 @@ GameState game_state_init() {
         .rotation = 0,
         .target = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
     };
+    st.volume_label_opacity = 0.0;
 
     return st;
 }
@@ -78,6 +79,18 @@ void game_state_update(GameState *state) {
     float dt = GetFrameTime();
     state->camera.zoom *= 0.98;
     state->camera.zoom = Clamp(state->camera.zoom, 1, 999);
+    state->volume_label_opacity = Clamp(state->volume_label_opacity - 0.02, 0, 1);
+
+    if (IsKeyPressed(KEY_LEFT_BRACKET)) {
+        state->volume_label_opacity = 1;
+        SetMasterVolume(GetMasterVolume() - 0.05);
+    }
+
+    if (IsKeyPressed(KEY_RIGHT_BRACKET)) {
+        state->volume_label_opacity = 1;
+        SetMasterVolume(GetMasterVolume() + 0.05);
+    }
+
     switch (state->phase) {
     case GP_MAIN:
         if (IsKeyPressed(KEY_P)) {
@@ -177,6 +190,8 @@ void game_state_draw_playfield(const GameState *state) {
 
 void game_state_draw_ui(const GameState *state) {
     DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
+    DrawTextEx(state->font, TextFormat("Volume: %f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
+               GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
 }
 
 void game_state_frame(const GameState *state) {
@@ -211,6 +226,11 @@ void game_state_frame(const GameState *state) {
         DrawTextEx(state->font, "Right arrow: Shoot to the right", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
         DrawTextEx(state->font, "P: Pause the game", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "Left bracket: Decrease master volume by 5%", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "Right bracket: Increase master volume by 5%", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
         break;
 
     case GP_DEAD:
