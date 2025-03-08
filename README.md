@@ -11,7 +11,6 @@ TODO:
  - Environment hazards (lava pits (as suggested by u/skeeto))
  - Powerups
  - Boses?
- - Visual effects (camera shake, shaders, etc...)
 
 
 ## Build
