@@ -6,8 +6,6 @@
 #include "raylib.h"
 #include "wave.h"
 
-Stage default_stage();
-EnemyWave default_wave();
 
 typedef enum {
     GP_STARTMENU = 0,

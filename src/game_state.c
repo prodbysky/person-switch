@@ -385,19 +385,6 @@ void draw_centered_text(const char *message, const Font *font, size_t size, Colo
     DrawTextEx(*font, message, (Vector2){screen_centered_position(text_size.x), y}, size, 0, color);
 }
 
-Stage default_stage() {
-    Stage st;
-    st.count = 1;
-    st.platforms[0] = (Platform){
-        .x = 0,
-        .y = 550,
-        .width = 800,
-        .height = 32,
-    };
-
-    return st;
-}
-
 #define FAST_WEAK_ENEMY(x, y) ecs_enemy_new((Vector2){(x), (y)}, (Vector2){32, 64}, 40, 3)
 #define SLOW_STRONG_ENEMY(x, y) ecs_enemy_new((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
 
@@ -423,15 +410,4 @@ EnemyWave generate_wave(double strength) {
     }
     wave.count = current_index;
     return wave;
-}
-
-EnemyWave default_wave() {
-    return (EnemyWave){
-        .enemies =
-            {
-                FAST_WEAK_ENEMY(300, 300),
-                SLOW_STRONG_ENEMY(500, 200),
-            },
-        .count = 2,
-    };
 }
