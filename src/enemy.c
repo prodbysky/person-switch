@@ -8,19 +8,24 @@
 #include <raymath.h>
 #include <stdlib.h>
 
-ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health, EnemyType type) {
+ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, EnemyState state) {
     return (ECSEnemy){
-        .type = type,
         .physics = DEFAULT_PHYSICS(),
         .transform = TRANSFORM(pos.x, pos.y, size.x, size.y),
         .enemy_conf = {.speed = speed},
-        .state = {.health = health, .last_hit = 0.0, .dead = false},
+        .state = state,
         .draw_conf = {.color = BLUE},
     };
 }
 
 ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health) {
-    return ecs_enemy_new(pos, size, speed, health, ET_BASIC);
+    return ecs_enemy_new(pos, size, speed,
+                         (EnemyState){
+                             .type = ET_BASIC,
+                             .health = health,
+                             .dead = false,
+                             .last_hit = 0.0,
+                         });
 }
 
 void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,

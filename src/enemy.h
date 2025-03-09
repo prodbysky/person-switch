@@ -9,16 +9,25 @@ typedef struct {
     size_t speed;
 } EnemyConfigComp;
 
+typedef enum {
+    ET_BASIC,
+    ET_RANGER,
+} EnemyType;
+
 typedef struct {
+    EnemyType type;
     int health;
     double last_hit;
     bool dead;
+
+    union {
+        struct {
+            double reload_time;
+        } ranger;
+    } type_specific;
 } EnemyState;
 
 
-typedef enum {
-    ET_BASIC,
-} EnemyType;
 
 typedef struct {
     EnemyState state;
@@ -26,11 +35,14 @@ typedef struct {
     TransformComp transform;
     PhysicsComp physics;
     SolidRectangleComp draw_conf;
-    EnemyType type;
+    
+
+    // ET_RANGER specific
+    double reload_time;
 } ECSEnemy;
 
 
-ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health, EnemyType type);
+ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, EnemyState state);
 ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health);
 
 // Makes the enemy follow the passed in transform `player_transform`
