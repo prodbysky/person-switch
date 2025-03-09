@@ -27,6 +27,23 @@ typedef struct {
 // Applies gravity and fades x velocity towards 0
 void physics(PhysicsComp* physics, float dt); 
 
+// Essencially physics += vec;
+void physics_add_velocity(PhysicsComp* physics, Vector2 vec);
+
+// Essencially physics.x += x;
+void physics_add_velocity_x(PhysicsComp* physics, float x);
+
+// Essencially physics.y += y;
+void physics_add_velocity_y(PhysicsComp* physics, float y);
+
+// Essencially physics = vec;
+void physics_set_velocity(PhysicsComp* physics, Vector2 vec);
+
+// Essencially physics.x = x;
+void physics_set_velocity_x(PhysicsComp* physics, float x);
+
+// Essencially physics.y = y;
+void physics_set_velocity_y(PhysicsComp* physics, float y);
 
 
 // Does collision for the passed in transform with the current stage

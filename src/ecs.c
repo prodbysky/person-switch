@@ -5,7 +5,6 @@
 #include <raymath.h>
 
 void physics(PhysicsComp *physics, float dt) {
-
     if (physics->grounded) {
         // Apply ground friction
         physics->velocity.x /= 1.1;
@@ -14,14 +13,37 @@ void physics(PhysicsComp *physics, float dt) {
     // Apply air friction
     physics->velocity.x /= 1.05;
 
-    physics->velocity.x = Clamp(physics->velocity.x, -300, 300);
-
     if (!physics->grounded) {
         physics->velocity.y += G * dt;
-        physics->velocity.y = Clamp(physics->velocity.y, -800, 800);
     } else {
         physics->velocity.y = 0;
     }
+    physics->velocity.x = Clamp(physics->velocity.x, -300, 300);
+    physics->velocity.y = Clamp(physics->velocity.y, -800, 800);
+}
+
+void physics_add_velocity(PhysicsComp *physics, Vector2 vec) {
+    physics->velocity = Vector2Add(physics->velocity, vec);
+}
+
+void physics_add_velocity_x(PhysicsComp *physics, float x) {
+    physics->velocity.x += x;
+}
+
+void physics_add_velocity_y(PhysicsComp *physics, float y) {
+    physics->velocity.y += y;
+}
+
+void physics_set_velocity(PhysicsComp *physics, Vector2 vec) {
+    physics->velocity = vec;
+}
+
+void physics_set_velocity_x(PhysicsComp *physics, float x) {
+    physics->velocity.x = x;
+}
+
+void physics_set_velocity_y(PhysicsComp *physics, float y) {
+    physics->velocity.y = y;
 }
 
 void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stage, float dt) {
