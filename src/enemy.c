@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "static_config.h"
 #include "timing_utilities.h"
+#include <assert.h>
 #include <math.h>
 #include <raymath.h>
 #include <stdlib.h>
@@ -28,28 +29,37 @@ ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health)
                          });
 }
 
-void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
-              const TransformComp *player_transform) {
-    float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
-                             (player_transform->rect.x + (player_transform->rect.width / 2.0)));
+void enemy_ai(const EnemyConfigComp *conf, const EnemyState *state, const TransformComp *transform,
+              PhysicsComp *physics, const TransformComp *player_transform) {
 
-    // Jump if we can and the player bottom y position is higher than our y top position
-    if ((player_transform->rect.y + player_transform->rect.height < transform->rect.y) && physics->grounded) {
-        physics->velocity.y = -200;
-    }
-    // If close enough to the player then just return
-    if (x_pos_delta < 50) {
-        return;
-    }
+    switch (state->type) {
+    case ET_BASIC: {
+        float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
+                                 (player_transform->rect.x + (player_transform->rect.width / 2.0)));
 
-    // Approach player
-    if (transform->rect.x + (transform->rect.width / 2.0) >
-        player_transform->rect.x + (player_transform->rect.width / 2.0)) {
-        physics->velocity.x -= conf->speed;
+        // Jump if we can and the player bottom y position is higher than our y top position
+        if ((player_transform->rect.y + player_transform->rect.height < transform->rect.y) && physics->grounded) {
+            physics->velocity.y = -200;
+        }
+        // If close enough to the player then just return
+        if (x_pos_delta < 50) {
+            return;
+        }
+
+        // Approach player
+        if (transform->rect.x + (transform->rect.width / 2.0) >
+            player_transform->rect.x + (player_transform->rect.width / 2.0)) {
+            physics->velocity.x -= conf->speed;
+        }
+        if (transform->rect.x + (transform->rect.width / 2.0) <
+            player_transform->rect.x + (player_transform->rect.width / 2.0)) {
+            physics->velocity.x += conf->speed;
+        }
+        break;
     }
-    if (transform->rect.x + (transform->rect.width / 2.0) <
-        player_transform->rect.x + (player_transform->rect.width / 2.0)) {
-        physics->velocity.x += conf->speed;
+    case ET_RANGER: {
+        assert(false && "ET_RANGER AI behaviour not implemented yet");
+    }
     }
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets,
@@ -69,7 +79,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
         enemy->draw_conf.color = BLUE;
     }
     physics(&enemy->physics, dt);
-    enemy_ai(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);
+    enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform);
     collision(&enemy->transform, &enemy->physics, stage, dt);
     enemy_bullet_interaction(&enemy->physics, &enemy->transform, bullets, &enemy->state, hit_sound, dmg);
 }
