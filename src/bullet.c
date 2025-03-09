@@ -2,14 +2,14 @@
 #include "ecs.h"
 #include "timing_utilities.h"
 
-void bullets_spawn_bullet(const TransformComp *player_transform, Bullets *bullets, BulletDirection dir) {
-    const float x = player_transform->rect.x + (player_transform->rect.width / 2.0);
-    const float y = player_transform->rect.y + (player_transform->rect.height / 2.0);
+void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, BulletDirection dir, Color c) {
+    const float x = origin_transform->rect.x + (origin_transform->rect.width / 2.0);
+    const float y = origin_transform->rect.y + (origin_transform->rect.height / 2.0);
     bullets->bullets[bullets->current] = (ECSPlayerBullet){
         .dir = dir,
         .creation_time = GetTime(),
         .transform = TRANSFORM(x, y, 16, 8),
-        .draw_conf = {.color = PURPLE},
+        .draw_conf = {.color = c},
     };
     bullets->current = (bullets->current + 1) % MAX_BULLETS;
 }

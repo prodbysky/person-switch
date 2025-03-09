@@ -42,8 +42,7 @@ ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health
 }
 
 void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformComp *transform, PhysicsComp *physics,
-              const TransformComp *player_transform) {
-
+              const TransformComp *player_transform, Bullets *enemy_bullets) {
     switch (state->type) {
     case ET_BASIC: {
         float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
@@ -93,13 +92,18 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         // Shoot
         if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
             /*physics->velocity.y = -200;*/
+            if (player_is_on_the_left) {
+                bullets_spawn_bullet(transform, enemy_bullets, BD_RIGHT, GREEN);
+            } else {
+                bullets_spawn_bullet(transform, enemy_bullets, BD_LEFT, GREEN);
+            }
             state->type_specific.ranger.last_shot = GetTime();
         }
     }
     }
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets,
-                      const Sound *hit_sound, size_t dmg) {
+                      const Sound *hit_sound, size_t dmg, Bullets *enemy_bullets) {
     if (enemy->state.dead) {
         return;
     }
@@ -115,7 +119,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
         enemy->draw_conf.color = BLUE;
     }
     physics(&enemy->physics, dt);
-    enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform);
+    enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform, enemy_bullets);
     collision(&enemy->transform, &enemy->physics, stage, dt);
     enemy_bullet_interaction(&enemy->physics, &enemy->transform, bullets, &enemy->state, hit_sound, dmg);
 }

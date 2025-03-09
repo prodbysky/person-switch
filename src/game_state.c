@@ -1,5 +1,6 @@
 #include "game_state.h"
 #include "arena.h"
+#include "bullet.h"
 #include "enemy.h"
 #include "player.h"
 #include "static_config.h"
@@ -39,6 +40,7 @@ GameState game_state_init() {
     st.wave_strength = 2;
     st.wave_number = 1;
     st.current_wave = generate_wave(2);
+    st.bullets = (Bullets){0};
     st.camera = (Camera2D){
         .zoom = 1,
         .offset = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
@@ -111,11 +113,13 @@ void game_state_update(GameState *state) {
         }
         for (size_t i = 0; i < state->current_wave.count; i++) {
             ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets,
-                             &state->enemy_hit_sound, PLAYER_STATES[state->player.state.current_class].damage);
+                             &state->enemy_hit_sound, PLAYER_STATES[state->player.state.current_class].damage,
+                             &state->enemy_bullets);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
                           &state->player_jump_sound, &state->player_shoot_sound);
         bullets_update(&state->bullets, dt);
+        bullets_update(&state->enemy_bullets, dt);
         if (state->player.state.dead) {
             game_state_phase_change(state, GP_DEAD);
         }
@@ -196,6 +200,7 @@ void game_state_draw_playfield(const GameState *state) {
     draw_stage(&state->stage);
     wave_draw(&state->current_wave);
     bullets_draw(&state->bullets);
+    bullets_draw(&state->enemy_bullets);
     player_draw(&state->player);
 }
 
@@ -454,7 +459,7 @@ EnemyWave generate_wave(double strength) {
     EnemyWave wave = {.count = 0};
     size_t current_index = 0;
 
-    wave.enemies[current_index++] = ecs_ranger_enemy((Vector2){300, 300}, (Vector2){32, 96}, 20, 6, 0.75);
+    wave.enemies[current_index++] = ecs_ranger_enemy((Vector2){300, 300}, (Vector2){32, 96}, 20, 6, 2);
 
     while (strength > 0) {
         size_t enemy_type = GetRandomValue(0, 1);
