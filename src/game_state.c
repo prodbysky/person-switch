@@ -21,7 +21,6 @@ GameState game_state_init() {
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     InitAudioDevice();
     SetTargetFPS(120);
-
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
@@ -98,6 +97,10 @@ void game_state_update(GameState *state) {
 
     if (IsKeyPressed(KEY_SLASH)) {
         state->vfx_enabled = !state->vfx_enabled;
+    }
+
+    if (IsKeyPressed(KEY_PRINT_SCREEN)) {
+        TakeScreenshot(TextFormat("pswitch_ss_%.2f.png", GetTime()));
     }
 
     switch (state->phase) {
@@ -230,6 +233,8 @@ void game_state_draw_ui(const GameState *state) {
         ui_cursor.y += line_spacing;
         DrawTextEx(state->font, "Slash: Toggle shaders OwO", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
+        DrawTextEx(state->font, "Print screen: Take screenshot", ui_cursor, 24, 0, WHITE);
+        ui_cursor.y += line_spacing;
         break;
     }
     case GP_DEAD: {
@@ -281,7 +286,6 @@ void game_state_draw_ui(const GameState *state) {
 }
 
 void game_state_frame(const GameState *state) {
-
     BeginTextureMode(state->target);
     BeginMode2D(state->camera);
     ClearBackground(GetColor(0x181818ff));
