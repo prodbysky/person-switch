@@ -18,8 +18,8 @@ out vec4 finalColor;
 const float renderWidth = 800;
 const float renderHeight = 600;
 
-uniform float pixelWidth = 10.0;
-uniform float pixelHeight = 10.0;
+uniform float pixelWidth = 4.0;
+uniform float pixelHeight = 4.0;
 
 void main()
 {
