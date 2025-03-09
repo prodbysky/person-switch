@@ -37,11 +37,12 @@ ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health
                              .dead = false,
                              .last_hit = 0.0,
                              .type_specific.ranger.reload_time = reload_time,
+                             .type_specific.ranger.last_shot = 0.0,
                          });
 }
 
-void enemy_ai(const EnemyConfigComp *conf, const EnemyState *state, const TransformComp *transform,
-              PhysicsComp *physics, const TransformComp *player_transform) {
+void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformComp *transform, PhysicsComp *physics,
+              const TransformComp *player_transform) {
 
     switch (state->type) {
     case ET_BASIC: {
@@ -69,7 +70,31 @@ void enemy_ai(const EnemyConfigComp *conf, const EnemyState *state, const Transf
         break;
     }
     case ET_RANGER: {
-        assert(false && "ET_RANGER AI behaviour not implemented yet");
+        float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
+                                 (player_transform->rect.x + (player_transform->rect.width / 2.0)));
+
+        const bool player_is_on_the_left = transform->rect.x < player_transform->rect.x;
+        if (x_pos_delta > 300.0) {
+            // Move towards the player
+            if (player_is_on_the_left) {
+                physics->velocity.x += conf->speed;
+            } else {
+                physics->velocity.x -= conf->speed;
+            }
+        } else {
+            // Move away from the player
+            if (player_is_on_the_left) {
+                physics->velocity.x -= conf->speed;
+            } else {
+                physics->velocity.x += conf->speed;
+            }
+        }
+
+        // Shoot
+        if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
+            /*physics->velocity.y = -200;*/
+            state->type_specific.ranger.last_shot = GetTime();
+        }
     }
     }
 }
