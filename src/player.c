@@ -77,7 +77,6 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
         }
     }
 
-    physics->velocity.x = 0;
     if (IsKeyDown(KEY_A)) {
         physics->velocity.x = -(PLAYER_STATES[state->current_class].speed_x + state->movement_speed);
     }

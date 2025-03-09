@@ -5,7 +5,16 @@
 #include <raymath.h>
 
 void physics(PhysicsComp *physics, float dt) {
-    physics->velocity.x /= 1.2f;
+
+    if (physics->grounded) {
+        // Apply ground friction
+        physics->velocity.x /= 1.1;
+    }
+
+    // Apply air friction
+    physics->velocity.x /= 1.05;
+
+    physics->velocity.x = Clamp(physics->velocity.x, -300, 300);
 
     if (!physics->grounded) {
         physics->velocity.y += G * dt;
