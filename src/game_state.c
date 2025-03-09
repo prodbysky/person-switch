@@ -1,6 +1,7 @@
 #include "game_state.h"
 #include "arena.h"
 #include "bullet.h"
+#include "ecs.h"
 #include "enemy.h"
 #include "player.h"
 #include "static_config.h"
@@ -210,6 +211,15 @@ void game_state_draw_ui(const GameState *state) {
     case GP_MAIN: {
         DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
         DrawTextEx(state->font, TextFormat("Wave #%d", state->wave_number), (Vector2){10, 50}, 48, 0, WHITE);
+#ifndef RELEASE
+        draw_gizmo(&state->player.transform, &state->player.physics, &state->font);
+        for (size_t i = 0; i < state->current_wave.count; i++) {
+            const ECSEnemy *enemy = &state->current_wave.enemies[i];
+            if (!enemy->state.dead) {
+                draw_gizmo(&enemy->transform, &enemy->physics, &state->font);
+            }
+        }
+#endif
         break;
     }
     case GP_STARTMENU: {

@@ -102,3 +102,12 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
 void draw_solid(const TransformComp *transform, const SolidRectangleComp *solid_rectangle) {
     DrawRectangleRec(transform->rect, solid_rectangle->color);
 }
+
+void draw_gizmo(const TransformComp *transform, const PhysicsComp *physics, const Font *font) {
+    DrawTextEx(*font, TextFormat("Pos: (%.1f, %.1f)", transform->rect.x, transform->rect.y),
+               (Vector2){transform->rect.x, transform->rect.y - 80}, 18, 0, WHITE);
+    DrawTextEx(*font, TextFormat("Velocity: (%.2f, %.2f)", physics->velocity.x, physics->velocity.y),
+               (Vector2){transform->rect.x, transform->rect.y - 60}, 18, 0, WHITE);
+    DrawTextEx(*font, TextFormat("Is grounded: %b", physics->grounded),
+               (Vector2){transform->rect.x, transform->rect.y - 40}, 18, 0, WHITE);
+}

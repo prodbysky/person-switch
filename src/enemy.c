@@ -91,7 +91,6 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
 
         // Shoot
         if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
-            /*physics->velocity.y = -200;*/
             if (player_is_on_the_left) {
                 bullets_spawn_bullet(transform, enemy_bullets, BD_RIGHT, GREEN);
             } else {
