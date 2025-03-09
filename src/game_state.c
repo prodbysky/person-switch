@@ -454,6 +454,8 @@ EnemyWave generate_wave(double strength) {
     EnemyWave wave = {.count = 0};
     size_t current_index = 0;
 
+    wave.enemies[current_index++] = ecs_ranger_enemy((Vector2){300, 300}, (Vector2){32, 32}, 20, 6, 0.75);
+
     while (strength > 0) {
         size_t enemy_type = GetRandomValue(0, 1);
         switch (enemy_type) {

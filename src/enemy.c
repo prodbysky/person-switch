@@ -29,6 +29,17 @@ ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health)
                          });
 }
 
+ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double reload_time) {
+    return ecs_enemy_new(pos, size, speed,
+                         (EnemyState){
+                             .type = ET_RANGER,
+                             .health = health,
+                             .dead = false,
+                             .last_hit = 0.0,
+                             .type_specific.ranger.reload_time = reload_time,
+                         });
+}
+
 void enemy_ai(const EnemyConfigComp *conf, const EnemyState *state, const TransformComp *transform,
               PhysicsComp *physics, const TransformComp *player_transform) {
 

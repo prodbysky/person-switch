@@ -35,15 +35,12 @@ typedef struct {
     TransformComp transform;
     PhysicsComp physics;
     SolidRectangleComp draw_conf;
-    
-
-    // ET_RANGER specific
-    double reload_time;
 } ECSEnemy;
 
 
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, EnemyState state);
 ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health);
+ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double reload_time);
 
 // Makes the enemy follow the passed in transform `player_transform`
 void enemy_ai(const EnemyConfigComp *conf, const EnemyState* state, const TransformComp *transform, PhysicsComp *physics,
