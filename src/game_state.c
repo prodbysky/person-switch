@@ -79,6 +79,7 @@ void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
     state->wave_number++;
     state->current_wave = generate_wave(state->wave_strength);
     state->bullets = (Bullets){0};
+    state->enemy_bullets = (Bullets){0};
 }
 
 void game_state_update(GameState *state) {

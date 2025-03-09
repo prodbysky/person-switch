@@ -73,7 +73,7 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
                                  (player_transform->rect.x + (player_transform->rect.width / 2.0)));
 
         const bool player_is_on_the_left = transform->rect.x < player_transform->rect.x;
-        if (x_pos_delta > 300.0) {
+        if (x_pos_delta > 300.0 + GetRandomValue(-100, 100)) {
             // Move towards the player
             if (player_is_on_the_left) {
                 physics->velocity.x += conf->speed;
