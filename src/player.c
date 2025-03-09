@@ -4,6 +4,7 @@
 #include "static_config.h"
 #include "timing_utilities.h"
 #include <raylib.h>
+#include <raymath.h>
 
 ECSPlayer ecs_player_new() {
     ECSPlayer p = {
@@ -47,6 +48,8 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
 }
 
 void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
+    const float KNOCKBACK_FORCE = 500.0f;
+
     for (size_t i = 0; i < wave->count; i++) {
         if (wave->enemies[i].state.dead) {
             continue;
@@ -55,6 +58,23 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
             time_delta(player->state.last_hit) > INVULNERABILITY_TIME) {
             player->state.last_hit = GetTime();
             player->state.health--;
+
+            Vector2 player_center = {player->transform.rect.x + player->transform.rect.width / 2,
+                                     player->transform.rect.y + player->transform.rect.height / 2};
+            Vector2 enemy_center = {wave->enemies[i].transform.rect.x + wave->enemies[i].transform.rect.width / 2,
+                                    wave->enemies[i].transform.rect.y + wave->enemies[i].transform.rect.height / 2};
+
+            Vector2 direction = {0};
+            if (player_center.x > enemy_center.x) {
+                direction.x = 1.0f;
+            } else {
+                direction.x = -1.0f;
+            }
+
+            const Vector2 scaled_kb = Vector2Scale(direction, KNOCKBACK_FORCE);
+
+            player->physics.velocity.x += scaled_kb.x;
+
             return;
         }
     }
