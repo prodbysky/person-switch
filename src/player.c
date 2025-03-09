@@ -1,4 +1,5 @@
 #include "player.h"
+#include "bullet.h"
 #include "ecs.h"
 #include "enemy.h"
 #include "static_config.h"
@@ -26,7 +27,7 @@ ECSPlayer ecs_player_new() {
 }
 
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
-                       const Sound *jump_sound, const Sound *shoot_sound) {
+                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets) {
     if (player->state.dead) {
         return;
     }
@@ -41,13 +42,13 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
     player_input(&player->state, &player->physics, &player->transform, bullets, jump_sound, shoot_sound);
     physics(&player->physics, dt);
     collision(&player->transform, &player->physics, stage, dt);
-    player_enemy_interaction(player, wave);
+    player_enemy_interaction(player, wave, enemy_bullets);
     if (player->state.health <= 0) {
         player->state.dead = true;
     }
 }
 
-void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
+void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets *enemy_bullets) {
     const float KNOCKBACK_FORCE = 500.0f;
 
     for (size_t i = 0; i < wave->count; i++) {
@@ -75,6 +76,17 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave) {
 
             player->physics.velocity.x += scaled_kb.x;
 
+            return;
+        }
+    }
+    for (size_t i = 0; i < MAX_BULLETS; i++) {
+        if (time_delta(enemy_bullets->bullets[i].creation_time) > BULLET_LIFETIME) {
+            continue;
+        }
+        if (CheckCollisionRecs(player->transform.rect, enemy_bullets->bullets[i].transform.rect) &&
+            time_delta(player->state.last_hit) > INVULNERABILITY_TIME) {
+            player->state.last_hit = GetTime();
+            player->state.health--;
             return;
         }
     }

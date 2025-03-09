@@ -117,7 +117,7 @@ void game_state_update(GameState *state) {
                              &state->enemy_bullets);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
-                          &state->player_jump_sound, &state->player_shoot_sound);
+                          &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets);
         bullets_update(&state->bullets, dt);
         bullets_update(&state->enemy_bullets, dt);
         if (state->player.state.dead) {
@@ -454,15 +454,14 @@ Stage default_stage() {
 
 #define FAST_WEAK_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){32, 64}, 40, 3)
 #define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
+#define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 10, 3)
 
 EnemyWave generate_wave(double strength) {
     EnemyWave wave = {.count = 0};
     size_t current_index = 0;
 
-    wave.enemies[current_index++] = ecs_ranger_enemy((Vector2){300, 300}, (Vector2){32, 96}, 20, 6, 2);
-
     while (strength > 0) {
-        size_t enemy_type = GetRandomValue(0, 1);
+        size_t enemy_type = GetRandomValue(0, 2);
         switch (enemy_type) {
         case 0: {
             wave.enemies[current_index] = FAST_WEAK_ENEMY(GetRandomValue(0, 700), GetRandomValue(100, 300));
@@ -471,6 +470,11 @@ EnemyWave generate_wave(double strength) {
         }
         case 1: {
             wave.enemies[current_index] = SLOW_STRONG_ENEMY(GetRandomValue(0, 700), GetRandomValue(100, 300));
+            strength -= 1;
+            break;
+        }
+        case 2: {
+            wave.enemies[current_index] = RANGER(GetRandomValue(0, 700), GetRandomValue(100, 300));
             strength -= 1;
             break;
         }
