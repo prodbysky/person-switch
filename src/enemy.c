@@ -61,10 +61,10 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     physics(&enemy->physics, dt);
     enemy_ai(&enemy->enemy_conf, &enemy->transform, &enemy->physics, player_transform);
     collision(&enemy->transform, &enemy->physics, stage, dt);
-    enemy_bullet_interaction(&enemy->transform, bullets, &enemy->state, hit_sound, dmg);
+    enemy_bullet_interaction(&enemy->physics, &enemy->transform, bullets, &enemy->state, hit_sound, dmg);
 }
 
-void enemy_bullet_interaction(const TransformComp *transform, Bullets *bullets, EnemyState *state,
+void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transform, Bullets *bullets, EnemyState *state,
                               const Sound *hit_sound, size_t dmg) {
     if (state->health <= 0) {
         return;
@@ -78,6 +78,11 @@ void enemy_bullet_interaction(const TransformComp *transform, Bullets *bullets, 
                 state->health -= dmg;
                 bullets->bullets[i].creation_time = INFINITY;
                 state->last_hit = GetTime();
+                if (bullets->bullets[i].dir == BD_LEFT) {
+                    physics->velocity.x -= 200;
+                } else {
+                    physics->velocity.x += 200;
+                }
                 PlaySound(*hit_sound);
                 return;
             }
