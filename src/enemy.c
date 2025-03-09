@@ -89,9 +89,6 @@ void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transfo
     if (state->health <= 0) {
         return;
     }
-    if (time_delta(state->last_hit) < INVULNERABILITY_TIME) {
-        return;
-    }
     for (int i = 0; i < MAX_BULLETS; i++) {
         if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
             if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
