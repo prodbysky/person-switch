@@ -32,7 +32,6 @@ Class selection screen (pops up after finishing a wave):
 
 TODO:
  - Game art
- - More enemy types
  - Particles :0
  - Environment hazards (lava pits (as suggested by u/skeeto))
  - Powerups
