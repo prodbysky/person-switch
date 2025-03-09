@@ -15,16 +15,23 @@ typedef struct {
     bool dead;
 } EnemyState;
 
+
+typedef enum {
+    ET_BASIC,
+} EnemyType;
+
 typedef struct {
+    EnemyState state;
     EnemyConfigComp enemy_conf;
     TransformComp transform;
     PhysicsComp physics;
-    EnemyState state;
     SolidRectangleComp draw_conf;
+    EnemyType type;
 } ECSEnemy;
 
 
-ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health);
+ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health, EnemyType type);
+ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health);
 
 // Makes the enemy follow the passed in transform `player_transform`
 void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,

@@ -8,14 +8,19 @@
 #include <raymath.h>
 #include <stdlib.h>
 
-ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health) {
+ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, size_t health, EnemyType type) {
     return (ECSEnemy){
+        .type = type,
         .physics = DEFAULT_PHYSICS(),
         .transform = TRANSFORM(pos.x, pos.y, size.x, size.y),
         .enemy_conf = {.speed = speed},
         .state = {.health = health, .last_hit = 0.0, .dead = false},
         .draw_conf = {.color = BLUE},
     };
+}
+
+ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health) {
+    return ecs_enemy_new(pos, size, speed, health, ET_BASIC);
 }
 
 void enemy_ai(const EnemyConfigComp *conf, const TransformComp *transform, PhysicsComp *physics,
@@ -76,7 +81,7 @@ void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transfo
         if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
             if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
                 state->health -= dmg;
-                bullets->bullets[i].creation_time = INFINITY;
+                bullets->bullets[i].creation_time = 0.0;
                 state->last_hit = GetTime();
                 if (bullets->bullets[i].dir == BD_LEFT) {
                     physics->velocity.x -= 200;

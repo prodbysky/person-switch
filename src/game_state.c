@@ -447,8 +447,8 @@ Stage default_stage() {
     return st;
 }
 
-#define FAST_WEAK_ENEMY(x, y) ecs_enemy_new((Vector2){(x), (y)}, (Vector2){32, 64}, 40, 3)
-#define SLOW_STRONG_ENEMY(x, y) ecs_enemy_new((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
+#define FAST_WEAK_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){32, 64}, 40, 3)
+#define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
 
 EnemyWave generate_wave(double strength) {
     EnemyWave wave = {.count = 0};
