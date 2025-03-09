@@ -61,6 +61,7 @@ typedef struct {
 
     double volume_label_opacity;
 
+    // vfx
     RenderTexture2D target;
     Shader pixelizer;
     bool vfx_enabled;
