@@ -226,6 +226,21 @@ void ui_label(const char *text, uint16_t size, Color c) {
                                     }, ));
 }
 
+void handle_screen_select_button_class(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->screen_type = IST_PLAYER_CLASS_SELECT;
+    }
+}
+void handle_screen_select_button_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->screen_type = IST_PLAYER_UPGRADE;
+    }
+}
+
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     Clay_BeginLayout();
     CLAY({
@@ -311,7 +326,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             }) {
                 // TODO: Active highlighting
                 ui_label("Press enter to start the next wave", 32, WHITE);
-                CLAY({.id = CLAY_ID("ClassSelectButton"),
+                CLAY({.id = CLAY_ID("ScreenSelectButtonContainer"),
                       .layout =
                           {
                               .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
@@ -319,19 +334,22 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                               .childGap = 32,
                           },
                       .backgroundColor = {255, 255, 255, 50}}, ) {
-                    CLAY({.id = CLAY_ID("UpgradeButton"),
+                    CLAY({.id = CLAY_ID("ClassSelectScreenButton"),
                           .layout =
                               {
                                   .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
                               },
                           .backgroundColor = {255, 255, 255, 50}}) {
+                        Clay_OnHover(handle_screen_select_button_class, (intptr_t)state);
                         ui_label("Class select", 24, WHITE);
                     }
-                    CLAY({.layout =
+                    CLAY({.id = CLAY_ID("UpgradeSelectScreenButton"),
+                          .layout =
                               {
                                   .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
                               },
                           .backgroundColor = {255, 255, 255, 50}}) {
+                        Clay_OnHover(handle_screen_select_button_upgrade, (intptr_t)state);
                         ui_label("Upgrade", 24, WHITE);
                     }
                 }
