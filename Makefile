@@ -40,8 +40,8 @@ clean:
 
 .PHONY: all raylib clean
 
-debug:
+debug: raylib
 	$(MAKE) BUILD_CONFIG=debug
 
-release:
+release: raylib
 	$(MAKE) BUILD_CONFIG=release
