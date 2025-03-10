@@ -16,5 +16,6 @@ typedef struct {
 Arena arena_new(size_t size);
 void arena_free(Arena* arena);
 void* arena_alloc(Arena* arena, size_t size);
+void* arena_alloc_n(Arena* arena, size_t element_size, size_t count);
 
 #endif
