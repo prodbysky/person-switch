@@ -46,7 +46,7 @@ typedef struct {
     GamePhase after_transition;
 
     // Assets
-    Font font;
+    Font font[1];
     Sound player_jump_sound;
     Sound player_shoot_sound;
     Sound enemy_hit_sound;
@@ -107,5 +107,7 @@ void draw_centered_text(const char* message, const Font* font, size_t size, Colo
 double screen_centered_position(double w);
 
 EnemyWave generate_wave(double strength);
+
+void ui_label(const char *text, uint16_t size);
 
 #endif

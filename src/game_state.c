@@ -24,7 +24,8 @@ static double update_took = 0;
 #endif
 
 void clay_error_callback(Clay_ErrorData errorData) {
-    printf("%s", errorData.errorText.chars);
+    printf("%s\n", errorData.errorText.chars);
+    abort();
 }
 
 GameState game_state_init() {
@@ -38,14 +39,15 @@ GameState game_state_init() {
 
     Clay_Initialize(st.clay_memory, (Clay_Dimensions){.width = WINDOW_W, .height = WINDOW_H},
                     (Clay_ErrorHandler){.errorHandlerFunction = clay_error_callback});
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, st.font);
 
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
     st.phase = GP_TRANSITION;
     st.after_transition = GP_STARTMENU;
-    st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
-    SetTextureFilter(st.font.texture, TEXTURE_FILTER_BILINEAR);
+    st.font[0] = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
+    SetTextureFilter(st.font[0].texture, TEXTURE_FILTER_BILINEAR);
     st.player_jump_sound = LoadSound("assets/sfx/player_jump.wav");
     st.player_shoot_sound = LoadSound("assets/sfx/shoot.wav");
     st.enemy_hit_sound = LoadSound("assets/sfx/enemy_hit.wav");
@@ -205,9 +207,10 @@ void game_state_update(GameState *state) {
 
 #ifndef RELEASE
 void game_state_draw_debug_stats(const GameState *state) {
-    DrawTextEx(state->font, TextFormat("Frame time: %.4f ms.", GetFrameTime()), (Vector2){10, 10}, 32, 0, WHITE);
-    DrawTextEx(state->font, TextFormat("Update took: %.4f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0, WHITE);
-    DrawTextEx(state->font,
+    DrawTextEx(state->font[0], TextFormat("Frame time: %.4f ms.", GetFrameTime()), (Vector2){10, 10}, 32, 0, WHITE);
+    DrawTextEx(state->font[0], TextFormat("Update took: %.4f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0,
+               WHITE);
+    DrawTextEx(state->font[0],
                TextFormat("Heap usage: %u/%u (%.2f%%) Bytes", state->allocator.used, state->allocator.cap,
                           ((float)state->allocator.used * 100.0) / state->allocator.cap),
                (Vector2){10, 70}, 32, 0, WHITE);
@@ -222,58 +225,121 @@ void game_state_draw_playfield(const GameState *state) {
     player_draw(&state->player);
 }
 
+void ui_label(const char *text, uint16_t size) {
+    Clay_String str = {.chars = text, .length = strlen(text)};
+    CLAY_TEXT(str, CLAY_TEXT_CONFIG({
+                                        .fontId = 0,
+                                        .textColor = {255, 255, 255, 255},
+                                        .fontSize = size,
+                                    }, ));
+}
+
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     Clay_BeginLayout();
-    CLAY() {
+    CLAY({
+             .id = CLAY_ID("OuterContainer"),
+             .layout =
+                 {
+                     .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                     .sizing =
+                         {
+                             .height = CLAY_SIZING_GROW(0),
+                             .width = CLAY_SIZING_GROW(0),
+                         },
+                 },
+         }, ) {
+        switch (state->phase) {
+        case GP_MAIN: {
+            CLAY({
+                .layout =
+                    {
+                        .sizing = {.height = CLAY_SIZING_FIXED(80), .width = CLAY_SIZING_FIXED(300)},
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .padding = {16, 16, 16, 16},
+                    },
+            }) {
+                ui_label(TextFormat("Health: %d", state->player.state.health), 48);
+                ui_label(TextFormat("Wave #%d", state->wave_number), 48);
+            }
+            break;
+        }
+        case GP_STARTMENU: {
+            CLAY({
+                .layout =
+                    {
+                        .sizing = {.height = CLAY_SIZING_FIXED(600), .width = CLAY_SIZING_FIXED(600)},
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .padding = {16, 16, 16, 16},
+                    },
+            }) {
+                ui_label("Press `space` to start the game", 48);
+                ui_label(" ", 48);
+                ui_label("Controls:", 36);
+                ui_label("A: Move left", 36);
+                ui_label("D: Move right", 36);
+                ui_label("Space: Jump", 24);
+                ui_label("Left arrow: Shoot to the left", 24);
+                ui_label("Right arrow: Shoot to the right", 24);
+                ui_label("P: Pause the game", 24);
+                ui_label("Left bracket: Decrease master volume by 5%", 24);
+                ui_label("Right bracket: Increase master volume by 5%", 24);
+                ui_label("Slash: Toggle shaders OwO", 24);
+                ui_label("Print screen: Take screenshot", 24);
+            }
+            break;
+        }
+        default: {
+        }
+        }
     }
+
+    return Clay_EndLayout();
     switch (state->phase) {
     case GP_MAIN: {
-        DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
-        DrawTextEx(state->font, TextFormat("Wave #%d", state->wave_number), (Vector2){10, 50}, 48, 0, WHITE);
 #ifndef RELEASE
-        draw_gizmo(&state->player.transform, &state->player.physics, &state->font);
+        draw_gizmo(&state->player.transform, &state->player.physics, &state->font[0]);
         for (size_t i = 0; i < state->current_wave.count; i++) {
             const ECSEnemy *enemy = &state->current_wave.enemies[i];
             if (!enemy->state.dead) {
-                draw_gizmo(&enemy->transform, &enemy->physics, &state->font);
+                draw_gizmo(&enemy->transform, &enemy->physics, &state->font[0]);
             }
         }
 #endif
         break;
     }
     case GP_STARTMENU: {
-        Vector2 font_24_size = MeasureTextEx(state->font, "A", 24, 0);
+        Vector2 font_24_size = MeasureTextEx(state->font[0], "A", 24, 0);
         const float line_spacing = font_24_size.y;
         Vector2 ui_cursor = {.x = 10, .y = 10};
-        DrawTextEx(state->font, "Press `space` to start\nthe game!", ui_cursor, 32, 0, WHITE);
+        DrawTextEx(state->font[0], "Press `space` to start\nthe game!", ui_cursor, 32, 0, WHITE);
         ui_cursor.y = 90;
-        DrawTextEx(state->font, "Controls:", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Controls:", ui_cursor, 24, 0, WHITE);
         ui_cursor.x += 10;
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "A: Move left", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "A: Move left", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "D: Move right", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "D: Move right", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Space: Jump", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Space: Jump", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Left arrow: Shoot to the left", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Left arrow: Shoot to the left", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Right arrow: Shoot to the right", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Right arrow: Shoot to the right", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "P: Pause the game", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "P: Pause the game", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Left bracket: Decrease master volume by 5%", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Left bracket: Decrease master volume by 5%", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Right bracket: Increase master volume by 5%", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Right bracket: Increase master volume by 5%", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Slash: Toggle shaders OwO", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Slash: Toggle shaders OwO", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Print screen: Take screenshot", ui_cursor, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Print screen: Take screenshot", ui_cursor, 24, 0, WHITE);
         ui_cursor.y += line_spacing;
         break;
     }
     case GP_DEAD: {
-        draw_centered_text("You died!", &state->font, 32, WHITE, 300);
+        draw_centered_text("You died!", &state->font[0], 32, WHITE, 300);
         break;
     }
     case GP_PAUSED: {
@@ -283,20 +349,20 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         break;
     }
     case GP_AFTER_WAVE: {
-        draw_centered_text("Press enter to start the next wave", &state->font, 32, WHITE, 100);
+        draw_centered_text("Press enter to start the next wave", &state->font[0], 32, WHITE, 100);
         if (state->screen_type == IST_PLAYER_CLASS_SELECT) {
             DrawRectangle(30, 30, 128, 64, GRAY);
-            DrawTextEx(state->font, "Class select", (Vector2){37, 50}, 24, 0, WHITE);
+            DrawTextEx(state->font[0], "Class select", (Vector2){37, 50}, 24, 0, WHITE);
         } else {
             DrawRectangle(30, 30, 128, 64, WHITE);
-            DrawTextEx(state->font, "Class select", (Vector2){37, 50}, 24, 0, GRAY);
+            DrawTextEx(state->font[0], "Class select", (Vector2){37, 50}, 24, 0, GRAY);
         }
         if (state->screen_type == IST_PLAYER_UPGRADE) {
             DrawRectangle(30, 124, 128, 64, GRAY);
-            DrawTextEx(state->font, "Upgrade", (Vector2){60, 144}, 24, 0, WHITE);
+            DrawTextEx(state->font[0], "Upgrade", (Vector2){60, 144}, 24, 0, WHITE);
         } else {
             DrawRectangle(30, 124, 128, 64, WHITE);
-            DrawTextEx(state->font, "Upgrade", (Vector2){60, 144}, 24, 0, GRAY);
+            DrawTextEx(state->font[0], "Upgrade", (Vector2){60, 144}, 24, 0, GRAY);
         }
 
         switch (state->screen_type) {
@@ -312,13 +378,12 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         break;
     }
     }
-    DrawTextEx(state->font, TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
+    DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
                GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
 
 #ifndef RELEASE
     game_state_draw_debug_stats(state);
 #endif
-    return Clay_EndLayout();
 }
 
 void game_state_frame(GameState *state) {
@@ -369,7 +434,7 @@ void game_state_frame(GameState *state) {
     if (state->vfx_enabled) {
         EndShaderMode();
     }
-    Clay_Raylib_Render(game_state_draw_ui(state), &state->font);
+    Clay_Raylib_Render(game_state_draw_ui(state), &state->font[0]);
     EndDrawing();
 }
 
@@ -394,24 +459,24 @@ double screen_centered_position(double w) {
 void game_state_class_select_draw(const GameState *state) {
     if (state->selected_class != PS_TANK) {
         DrawRectangle(screen_centered_position(256), 200, 256, 64, WHITE);
-        draw_centered_text("Tank", &state->font, 32, GRAY, 215);
+        draw_centered_text("Tank", &state->font[0], 32, GRAY, 215);
     } else {
         DrawRectangle(screen_centered_position(256), 200, 256, 64, GRAY);
-        draw_centered_text("Tank", &state->font, 32, WHITE, 215);
+        draw_centered_text("Tank", &state->font[0], 32, WHITE, 215);
     }
     if (state->selected_class != PS_MOVE) {
         DrawRectangle(screen_centered_position(256), 300, 256, 64, WHITE);
-        draw_centered_text("Mover", &state->font, 32, GRAY, 315);
+        draw_centered_text("Mover", &state->font[0], 32, GRAY, 315);
     } else {
         DrawRectangle(screen_centered_position(256), 300, 256, 64, GRAY);
-        draw_centered_text("Mover", &state->font, 32, WHITE, 315);
+        draw_centered_text("Mover", &state->font[0], 32, WHITE, 315);
     }
     if (state->selected_class != PS_DAMAGE) {
         DrawRectangle(screen_centered_position(256), 400, 256, 64, WHITE);
-        draw_centered_text("Killer", &state->font, 32, GRAY, 415);
+        draw_centered_text("Killer", &state->font[0], 32, GRAY, 415);
     } else {
         DrawRectangle(screen_centered_position(256), 400, 256, 64, GRAY);
-        draw_centered_text("Killer", &state->font, 32, WHITE, 415);
+        draw_centered_text("Killer", &state->font[0], 32, WHITE, 415);
     }
 }
 
@@ -419,18 +484,18 @@ void game_state_upgrade_draw(const GameState *state) {
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
         CheckCollisionPointRec(GetMousePosition(), (Rectangle){20, 220, 64, 64})) {
         DrawRectangle(20, 220, 64, 64, GRAY);
-        DrawTextEx(state->font, "Reload", (Vector2){24, 224}, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Reload", (Vector2){24, 224}, 24, 0, WHITE);
     } else {
         DrawRectangle(20, 220, 64, 64, WHITE);
-        DrawTextEx(state->font, "Reload", (Vector2){24, 224}, 24, 0, GRAY);
+        DrawTextEx(state->font[0], "Reload", (Vector2){24, 224}, 24, 0, GRAY);
     }
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
         CheckCollisionPointRec(GetMousePosition(), (Rectangle){104, 220, 64, 64})) {
         DrawRectangle(104, 220, 64, 64, GRAY);
-        DrawTextEx(state->font, "Speed", (Vector2){108, 224}, 24, 0, WHITE);
+        DrawTextEx(state->font[0], "Speed", (Vector2){108, 224}, 24, 0, WHITE);
     } else {
         DrawRectangle(104, 220, 64, 64, WHITE);
-        DrawTextEx(state->font, "Speed", (Vector2){108, 224}, 24, 0, GRAY);
+        DrawTextEx(state->font[0], "Speed", (Vector2){108, 224}, 24, 0, GRAY);
     }
 }
 void game_state_upgrade_update(GameState *state) {
@@ -458,7 +523,7 @@ void game_state(GameState *state) {
 
 void game_state_destroy(GameState *state) {
     arena_free(&state->allocator);
-    UnloadFont(state->font);
+    UnloadFont(state->font[0]);
     UnloadRenderTexture(state->target);
     UnloadShader(state->pixelizer);
 
