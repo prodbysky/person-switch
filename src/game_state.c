@@ -261,6 +261,20 @@ void handle_player_class_select_button_killer(Clay_ElementId e_id, Clay_PointerD
         state->selected_class = PS_DAMAGE;
     }
 }
+void handle_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->player.state.movement_speed += 5.0;
+    }
+}
+void handle_reload_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->player.state.reload_time += 0.02;
+    }
+}
 
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     Clay_BeginLayout();
@@ -450,6 +464,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
                             },
                     }) {
+                        Clay_OnHover(handle_reload_speed_upgrade_button, (intptr_t)state);
                         ui_label("Reload", 24, WHITE);
                     }
                     CLAY({
@@ -460,6 +475,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
                             },
                     }) {
+                        Clay_OnHover(handle_speed_upgrade_button, (intptr_t)state);
                         ui_label("Speed", 24, WHITE);
                     }
                 }
