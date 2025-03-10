@@ -9,6 +9,7 @@
 #include "wave.h"
 #include <raylib.h>
 #include <raymath.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,11 +23,22 @@
 static double update_took = 0;
 #endif
 
+void clay_error_callback(Clay_ErrorData errorData) {
+    printf("%s", errorData.errorText.chars);
+}
+
 GameState game_state_init() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     InitAudioDevice();
     SetTargetFPS(120);
+
+    uint64_t clay_req_memory = Clay_MinMemorySize();
+    st.clay_memory = Clay_CreateArenaWithCapacityAndMemory(clay_req_memory, malloc(clay_req_memory));
+
+    Clay_Initialize(st.clay_memory, (Clay_Dimensions){.width = WINDOW_W, .height = WINDOW_H},
+                    (Clay_ErrorHandler){.errorHandlerFunction = clay_error_callback});
+
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
@@ -445,6 +457,7 @@ void game_state_destroy(GameState *state) {
     UnloadFont(state->font);
     UnloadRenderTexture(state->target);
     UnloadShader(state->pixelizer);
+
     CloseAudioDevice();
     CloseWindow();
 }

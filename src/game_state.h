@@ -5,6 +5,7 @@
 #include "player.h"
 #include "raylib.h"
 #include "wave.h"
+#include <clay/clay.h>
 
 Stage default_stage();
 
@@ -66,6 +67,10 @@ typedef struct {
     RenderTexture2D target;
     Shader pixelizer;
     bool vfx_enabled;
+
+    // clay ui
+    Clay_Arena clay_memory;
+
 } GameState;
 
 // Initializes raylib, loads needed assets
