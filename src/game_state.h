@@ -87,14 +87,14 @@ void game_state(GameState *state);
 // Runs actual logic of the game, also plays sounds,
 void game_state_update(GameState *state);
 // Draws a single frame of the game state
-void game_state_frame(const GameState *state); 
+void game_state_frame(GameState *state); 
 #ifndef RELEASE
 // Displays debug stats of the game (FPS, update time, arena usage)
 void game_state_draw_debug_stats(const GameState *state);
 #endif
 // Draws the stage, enemies, bullets, player
 void game_state_draw_playfield(const GameState *state); 
-void game_state_draw_ui(const GameState* state);
+Clay_RenderCommandArray game_state_draw_ui(const GameState *state);
 
 
 void game_state_class_select_draw(const GameState* state);

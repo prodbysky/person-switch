@@ -222,7 +222,10 @@ void game_state_draw_playfield(const GameState *state) {
     player_draw(&state->player);
 }
 
-void game_state_draw_ui(const GameState *state) {
+Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
+    Clay_BeginLayout();
+    CLAY() {
+    }
     switch (state->phase) {
     case GP_MAIN: {
         DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
@@ -315,9 +318,10 @@ void game_state_draw_ui(const GameState *state) {
 #ifndef RELEASE
     game_state_draw_debug_stats(state);
 #endif
+    return Clay_EndLayout();
 }
 
-void game_state_frame(const GameState *state) {
+void game_state_frame(GameState *state) {
     BeginTextureMode(state->target);
     BeginMode2D(state->camera);
     ClearBackground(GetColor(0x181818ff));
@@ -365,7 +369,7 @@ void game_state_frame(const GameState *state) {
     if (state->vfx_enabled) {
         EndShaderMode();
     }
-    game_state_draw_ui(state);
+    Clay_Raylib_Render(game_state_draw_ui(state), &state->font);
     EndDrawing();
 }
 
