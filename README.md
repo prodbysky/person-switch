@@ -3,6 +3,13 @@
 Currently is **unfinished**
 No lore, you are just a person trying to survive many waves
 
+## Build
+```bash
+    mkdir build
+    cp -r assets/ build/assets/
+    make release 
+```
+
 ## Controls (shown in-game):
  - `A`           - Move left
  - `D`           - Move right
@@ -29,8 +36,12 @@ Class selection screen (pops up after finishing a wave):
 
 ![pswitch_ss_24 52](https://github.com/user-attachments/assets/bac0d10d-7bae-42f7-8f55-1fabc1212020)
 
+## Direct Dependencies
+ - Raylib
+ - Clay
 
-TODO:
+
+## TODO:
  - Game art
  - Particles :0
  - Environment hazards (lava pits (as suggested by u/skeeto))
@@ -38,9 +49,3 @@ TODO:
  - Boses?
 
 
-## Build
-```bash
-    mkdir build
-    cp -r assets/ build/assets/
-    make release 
-```
