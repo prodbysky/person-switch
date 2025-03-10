@@ -18,10 +18,12 @@ void arena_free(Arena *arena) {
 }
 
 void *arena_alloc(Arena *arena, size_t size) {
-    if (arena->used + size >= arena->cap) {
+    size_t alligned = (size + 7) & ~7;
+
+    if (arena->used + alligned >= arena->cap) {
         assert(false && "Arena overflow!: Buy more ram!!!");
     }
     uint8_t *buf = &arena->buffer[arena->used];
-    arena->used += size;
+    arena->used += alligned;
     return (void *)buf;
 }
