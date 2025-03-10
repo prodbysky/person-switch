@@ -318,7 +318,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                               .layoutDirection = CLAY_TOP_TO_BOTTOM,
                               .childGap = 32,
                           },
-                      .backgroundColor = {255, 255, 255, 50}}) {
+                      .backgroundColor = {255, 255, 255, 50}}, ) {
                     CLAY({.id = CLAY_ID("UpgradeButton"),
                           .layout =
                               {
@@ -527,48 +527,6 @@ double screen_centered_position(double w) {
     return (WINDOW_W / 2.0) - (w / 2.0);
 }
 
-void game_state_class_select_draw(const GameState *state) {
-    if (state->selected_class != PS_TANK) {
-        DrawRectangle(screen_centered_position(256), 200, 256, 64, WHITE);
-        draw_centered_text("Tank", &state->font[0], 32, GRAY, 215);
-    } else {
-        DrawRectangle(screen_centered_position(256), 200, 256, 64, GRAY);
-        draw_centered_text("Tank", &state->font[0], 32, WHITE, 215);
-    }
-    if (state->selected_class != PS_MOVE) {
-        DrawRectangle(screen_centered_position(256), 300, 256, 64, WHITE);
-        draw_centered_text("Mover", &state->font[0], 32, GRAY, 315);
-    } else {
-        DrawRectangle(screen_centered_position(256), 300, 256, 64, GRAY);
-        draw_centered_text("Mover", &state->font[0], 32, WHITE, 315);
-    }
-    if (state->selected_class != PS_DAMAGE) {
-        DrawRectangle(screen_centered_position(256), 400, 256, 64, WHITE);
-        draw_centered_text("Killer", &state->font[0], 32, GRAY, 415);
-    } else {
-        DrawRectangle(screen_centered_position(256), 400, 256, 64, GRAY);
-        draw_centered_text("Killer", &state->font[0], 32, WHITE, 415);
-    }
-}
-
-void game_state_upgrade_draw(const GameState *state) {
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
-        CheckCollisionPointRec(GetMousePosition(), (Rectangle){20, 220, 64, 64})) {
-        DrawRectangle(20, 220, 64, 64, GRAY);
-        DrawTextEx(state->font[0], "Reload", (Vector2){24, 224}, 24, 0, WHITE);
-    } else {
-        DrawRectangle(20, 220, 64, 64, WHITE);
-        DrawTextEx(state->font[0], "Reload", (Vector2){24, 224}, 24, 0, GRAY);
-    }
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
-        CheckCollisionPointRec(GetMousePosition(), (Rectangle){104, 220, 64, 64})) {
-        DrawRectangle(104, 220, 64, 64, GRAY);
-        DrawTextEx(state->font[0], "Speed", (Vector2){108, 224}, 24, 0, WHITE);
-    } else {
-        DrawRectangle(104, 220, 64, 64, WHITE);
-        DrawTextEx(state->font[0], "Speed", (Vector2){108, 224}, 24, 0, GRAY);
-    }
-}
 void game_state_upgrade_update(GameState *state) {
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){20, 220, 64, 64})) {
