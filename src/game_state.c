@@ -24,7 +24,6 @@ static double update_took = 0;
 
 void clay_error_callback(Clay_ErrorData errorData) {
     printf("%s\n", errorData.errorText.chars);
-    abort();
 }
 
 GameState game_state_init() {
