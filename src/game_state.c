@@ -102,6 +102,10 @@ void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
 }
 
 void game_state_update(GameState *state) {
+    Vector2 mousePosition = GetMousePosition();
+    Vector2 scrollDelta = GetMouseWheelMoveV();
+    Clay_SetPointerState((Clay_Vector2){mousePosition.x, mousePosition.y}, IsMouseButtonDown(0));
+    Clay_UpdateScrollContainers(true, (Clay_Vector2){scrollDelta.x, scrollDelta.y}, GetFrameTime());
     float dt = GetFrameTime();
     state->camera.zoom *= 0.98;
     state->camera.zoom = Clamp(state->camera.zoom, 1, 999);
@@ -205,18 +209,6 @@ void game_state_update(GameState *state) {
     }
 }
 
-#ifndef RELEASE
-void game_state_draw_debug_stats(const GameState *state) {
-    DrawTextEx(state->font[0], TextFormat("Frame time: %.4f ms.", GetFrameTime()), (Vector2){10, 10}, 32, 0, WHITE);
-    DrawTextEx(state->font[0], TextFormat("Update took: %.4f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0,
-               WHITE);
-    DrawTextEx(state->font[0],
-               TextFormat("Heap usage: %u/%u (%.2f%%) Bytes", state->allocator.used, state->allocator.cap,
-                          ((float)state->allocator.used * 100.0) / state->allocator.cap),
-               (Vector2){10, 70}, 32, 0, WHITE);
-}
-#endif
-
 void game_state_draw_playfield(const GameState *state) {
     draw_stage(&state->stage);
     wave_draw(&state->current_wave);
@@ -225,11 +217,11 @@ void game_state_draw_playfield(const GameState *state) {
     player_draw(&state->player);
 }
 
-void ui_label(const char *text, uint16_t size) {
+void ui_label(const char *text, uint16_t size, Color c) {
     Clay_String str = {.chars = text, .length = strlen(text)};
     CLAY_TEXT(str, CLAY_TEXT_CONFIG({
                                         .fontId = 0,
-                                        .textColor = {255, 255, 255, 255},
+                                        .textColor = {c.r, c.g, c.b, c.a},
                                         .fontSize = size,
                                     }, ));
 }
@@ -251,95 +243,206 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         switch (state->phase) {
         case GP_MAIN: {
             CLAY({
+                .id = CLAY_ID("PlayerInfoContainer"),
                 .layout =
                     {
-                        .sizing = {.height = CLAY_SIZING_FIXED(80), .width = CLAY_SIZING_FIXED(300)},
+                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
                         .padding = {16, 16, 16, 16},
                     },
             }) {
-                ui_label(TextFormat("Health: %d", state->player.state.health), 48);
-                ui_label(TextFormat("Wave #%d", state->wave_number), 48);
+                ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE);
+                ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE);
             }
             break;
         }
         case GP_STARTMENU: {
             CLAY({
+                .id = CLAY_ID("StartMenuContainer"),
                 .layout =
                     {
-                        .sizing = {.height = CLAY_SIZING_FIXED(600), .width = CLAY_SIZING_FIXED(600)},
+                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
                         .padding = {16, 16, 16, 16},
                     },
             }) {
-                ui_label("Press `space` to start the game", 48);
-                ui_label(" ", 48);
-                ui_label("Controls:", 36);
-                ui_label("A: Move left", 36);
-                ui_label("D: Move right", 36);
-                ui_label("Space: Jump", 24);
-                ui_label("Left arrow: Shoot to the left", 24);
-                ui_label("Right arrow: Shoot to the right", 24);
-                ui_label("P: Pause the game", 24);
-                ui_label("Left bracket: Decrease master volume by 5%", 24);
-                ui_label("Right bracket: Increase master volume by 5%", 24);
-                ui_label("Slash: Toggle shaders OwO", 24);
-                ui_label("Print screen: Take screenshot", 24);
+                ui_label("Press `space` to start the game", 48, WHITE);
+                ui_label(" ", 48, WHITE);
+                ui_label("Controls:", 36, WHITE);
+                ui_label("A: Move left", 36, WHITE);
+                ui_label("D: Move right", 36, WHITE);
+                ui_label("Space: Jump", 24, WHITE);
+                ui_label("Left arrow: Shoot to the left", 24, WHITE);
+                ui_label("Right arrow: Shoot to the right", 24, WHITE);
+                ui_label("P: Pause the game", 24, WHITE);
+                ui_label("Left bracket: Decrease master volume by 5%", 24, WHITE);
+                ui_label("Right bracket: Increase master volume by 5%", 24, WHITE);
+                ui_label("Slash: Toggle shaders OwO", 24, WHITE);
+                ui_label("Print screen: Take screenshot", 24, WHITE);
+            }
+            break;
+        }
+        case GP_DEAD: {
+            CLAY({
+                .id = CLAY_ID("DeadStatusContainer"),
+                .layout =
+                    {
+                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                        .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                        .padding = {16, 16, 16, 16},
+                    },
+            }) {
+                CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                }
+                ui_label("You died!", 48, WHITE);
+                CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                }
+            }
+            break;
+        }
+        case GP_AFTER_WAVE: {
+            CLAY({
+                .layout =
+                    {
+                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .padding = {16, 16, 16, 16},
+                    },
+            }) {
+                // TODO: Active highlighting
+                ui_label("Press enter to start the next wave", 32, WHITE);
+                CLAY({.id = CLAY_ID("ClassSelectButton"),
+                      .layout =
+                          {
+                              .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
+                              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                              .childGap = 32,
+                          },
+                      .backgroundColor = {255, 255, 255, 50}}) {
+                    CLAY({.id = CLAY_ID("UpgradeButton"),
+                          .layout =
+                              {
+                                  .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
+                              },
+                          .backgroundColor = {255, 255, 255, 50}}) {
+                        ui_label("Class select", 24, WHITE);
+                    }
+                    CLAY({.layout =
+                              {
+                                  .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
+                              },
+                          .backgroundColor = {255, 255, 255, 50}}) {
+                        ui_label("Upgrade", 24, WHITE);
+                    }
+                }
+            }
+            switch (state->screen_type) {
+            case IST_PLAYER_CLASS_SELECT: {
+                CLAY({
+                    .id = CLAY_ID("PlayerClassSelectContainer"),
+                    .layout =
+                        {
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .sizing =
+                                {
+                                    .width = CLAY_SIZING_GROW(0),
+                                    .height = CLAY_SIZING_GROW(0),
+                                },
+                            .childGap = 16,
+                            .padding = {16, 16, 16, 16},
+                        },
+                }) {
+                    CLAY({
+                        .id = CLAY_ID("TankClassButton"),
+                        .backgroundColor = {255, 0, 0, 50},
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        ui_label("Tank", 32, WHITE);
+                    }
+                    CLAY({
+                        .id = CLAY_ID("MoveClassButton"),
+                        .backgroundColor = {255, 0, 0, 50},
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        ui_label("Mover", 32, WHITE);
+                    }
+                    CLAY({
+                        .id = CLAY_ID("KillerClassButton"),
+                        .backgroundColor = {255, 0, 0, 50},
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        ui_label("Killer", 32, WHITE);
+                    }
+                }
+                break;
+            }
+            case IST_PLAYER_UPGRADE: {
+                CLAY({
+                    .id = CLAY_ID("PlayerUpgradeContainer"),
+                    .layout =
+                        {
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .sizing =
+                                {
+                                    .width = CLAY_SIZING_GROW(0),
+                                    .height = CLAY_SIZING_GROW(0),
+                                },
+                            .childGap = 16,
+                            .padding = {16, 16, 16, 16},
+                        },
+                }) {
+                    CLAY({
+                        .id = CLAY_ID("ReloadUpgradeButton"),
+                        .backgroundColor = {255, 0, 0, 50},
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        ui_label("Reload", 24, WHITE);
+                    }
+                    CLAY({
+                        .id = CLAY_ID("SpeedUpgradeButton"),
+                        .backgroundColor = {255, 0, 0, 50},
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        ui_label("Speed", 24, WHITE);
+                    }
+                }
+                break;
+            }
             }
             break;
         }
         default: {
         }
         }
+
+        DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
+                   GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
     }
 
     return Clay_EndLayout();
     switch (state->phase) {
     case GP_MAIN: {
-#ifndef RELEASE
-        draw_gizmo(&state->player.transform, &state->player.physics, &state->font[0]);
-        for (size_t i = 0; i < state->current_wave.count; i++) {
-            const ECSEnemy *enemy = &state->current_wave.enemies[i];
-            if (!enemy->state.dead) {
-                draw_gizmo(&enemy->transform, &enemy->physics, &state->font[0]);
-            }
-        }
-#endif
         break;
     }
     case GP_STARTMENU: {
-        Vector2 font_24_size = MeasureTextEx(state->font[0], "A", 24, 0);
-        const float line_spacing = font_24_size.y;
-        Vector2 ui_cursor = {.x = 10, .y = 10};
-        DrawTextEx(state->font[0], "Press `space` to start\nthe game!", ui_cursor, 32, 0, WHITE);
-        ui_cursor.y = 90;
-        DrawTextEx(state->font[0], "Controls:", ui_cursor, 24, 0, WHITE);
-        ui_cursor.x += 10;
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "A: Move left", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "D: Move right", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "Space: Jump", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "Left arrow: Shoot to the left", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "Right arrow: Shoot to the right", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "P: Pause the game", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "Left bracket: Decrease master volume by 5%", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "Right bracket: Increase master volume by 5%", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "Slash: Toggle shaders OwO", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font[0], "Print screen: Take screenshot", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
         break;
     }
     case GP_DEAD: {
-        draw_centered_text("You died!", &state->font[0], 32, WHITE, 300);
         break;
     }
     case GP_PAUSED: {
@@ -349,41 +452,9 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         break;
     }
     case GP_AFTER_WAVE: {
-        draw_centered_text("Press enter to start the next wave", &state->font[0], 32, WHITE, 100);
-        if (state->screen_type == IST_PLAYER_CLASS_SELECT) {
-            DrawRectangle(30, 30, 128, 64, GRAY);
-            DrawTextEx(state->font[0], "Class select", (Vector2){37, 50}, 24, 0, WHITE);
-        } else {
-            DrawRectangle(30, 30, 128, 64, WHITE);
-            DrawTextEx(state->font[0], "Class select", (Vector2){37, 50}, 24, 0, GRAY);
-        }
-        if (state->screen_type == IST_PLAYER_UPGRADE) {
-            DrawRectangle(30, 124, 128, 64, GRAY);
-            DrawTextEx(state->font[0], "Upgrade", (Vector2){60, 144}, 24, 0, WHITE);
-        } else {
-            DrawRectangle(30, 124, 128, 64, WHITE);
-            DrawTextEx(state->font[0], "Upgrade", (Vector2){60, 144}, 24, 0, GRAY);
-        }
-
-        switch (state->screen_type) {
-        case IST_PLAYER_CLASS_SELECT: {
-            game_state_class_select_draw(state);
-            break;
-        }
-        case IST_PLAYER_UPGRADE: {
-            game_state_upgrade_draw(state);
-            break;
-        }
-        }
         break;
     }
     }
-    DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
-               GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
-
-#ifndef RELEASE
-    game_state_draw_debug_stats(state);
-#endif
 }
 
 void game_state_frame(GameState *state) {

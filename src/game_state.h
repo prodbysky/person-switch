@@ -88,10 +88,6 @@ void game_state(GameState *state);
 void game_state_update(GameState *state);
 // Draws a single frame of the game state
 void game_state_frame(GameState *state); 
-#ifndef RELEASE
-// Displays debug stats of the game (FPS, update time, arena usage)
-void game_state_draw_debug_stats(const GameState *state);
-#endif
 // Draws the stage, enemies, bullets, player
 void game_state_draw_playfield(const GameState *state); 
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state);
@@ -108,6 +104,6 @@ double screen_centered_position(double w);
 
 EnemyWave generate_wave(double strength);
 
-void ui_label(const char *text, uint16_t size);
+void ui_label(const char *text, uint16_t size, Color c);
 
 #endif
