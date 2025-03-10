@@ -337,18 +337,27 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             break;
         }
         case GP_DEAD: {
-            CLAY({
-                .id = CLAY_ID("DeadStatusContainer"),
-                .layout =
-                    {
-                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                        .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                        .padding = {16, 16, 16, 16},
-                    },
-            }) {
+            CLAY({.layout = {
+                      .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                  }}) {
                 CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                 }
-                ui_label("You died!", 48, WHITE);
+                CLAY({
+                    .id = CLAY_ID("DeadStatusContainer"),
+                    .layout =
+                        {
+                            .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                            .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                            .padding = {16, 16, 16, 16},
+                        },
+                }) {
+                    CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                    }
+                    ui_label("You died!", 48, WHITE);
+                    CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                    }
+                }
                 CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                 }
             }
@@ -416,7 +425,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 }) {
                     CLAY({
                         .id = CLAY_ID("TankClassButton"),
-                        .backgroundColor = {255, 0, 0, 50},
+                        .backgroundColor = {128, 128, 128, 200},
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
@@ -427,7 +436,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     }
                     CLAY({
                         .id = CLAY_ID("MoveClassButton"),
-                        .backgroundColor = {255, 0, 0, 50},
+                        .backgroundColor = {128, 128, 128, 200},
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
@@ -438,7 +447,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     }
                     CLAY({
                         .id = CLAY_ID("KillerClassButton"),
-                        .backgroundColor = {255, 0, 0, 50},
+                        .backgroundColor = {128, 128, 128, 200},
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
