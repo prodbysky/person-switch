@@ -1,7 +1,6 @@
 #include "game_state.h"
 #include "arena.h"
 #include "bullet.h"
-#include "ecs.h"
 #include "enemy.h"
 #include "player.h"
 #include "static_config.h"
@@ -72,6 +71,10 @@ GameState game_state_init() {
     st.vfx_enabled = true;
 
     return st;
+}
+
+double screen_centered_position(double w) {
+    return (WINDOW_W / 2.0) - (w / 2.0);
 }
 void game_state_phase_change(GameState *state, GamePhase next) {
     state->phase = GP_TRANSITION;
@@ -194,17 +197,6 @@ void game_state_update(GameState *state) {
             if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){30, 124, 128, 64})) {
                 state->screen_type = IST_PLAYER_UPGRADE;
             }
-        }
-
-        switch (state->screen_type) {
-        case IST_PLAYER_CLASS_SELECT: {
-            game_state_class_select_update(state);
-            break;
-        }
-        case IST_PLAYER_UPGRADE: {
-            game_state_upgrade_update(state);
-            break;
-        }
         }
     }
 }
@@ -372,7 +364,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         .padding = {16, 16, 16, 16},
                     },
             }) {
-                // TODO: Active highlighting
                 ui_label("Press enter to start the next wave", 32, WHITE);
                 CLAY({
                     .id = CLAY_ID("ScreenSelectButtonContainer"),
@@ -425,7 +416,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 }) {
                     CLAY({
                         .id = CLAY_ID("TankClassButton"),
-                        .backgroundColor = {128, 128, 128, 200},
+                        .backgroundColor = button_color(state->selected_class == PS_TANK),
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
@@ -436,7 +427,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     }
                     CLAY({
                         .id = CLAY_ID("MoveClassButton"),
-                        .backgroundColor = {128, 128, 128, 200},
+                        .backgroundColor = button_color(state->selected_class == PS_MOVE),
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
@@ -447,7 +438,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     }
                     CLAY({
                         .id = CLAY_ID("KillerClassButton"),
-                        .backgroundColor = {128, 128, 128, 200},
+                        .backgroundColor = button_color(state->selected_class == PS_DAMAGE),
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
@@ -476,7 +467,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 }) {
                     CLAY({
                         .id = CLAY_ID("ReloadUpgradeButton"),
-                        .backgroundColor = {255, 0, 0, 50},
+                        .backgroundColor = {128, 128, 128, 200},
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
@@ -487,7 +478,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     }
                     CLAY({
                         .id = CLAY_ID("SpeedUpgradeButton"),
-                        .backgroundColor = {255, 0, 0, 50},
+                        .backgroundColor = {128, 128, 128, 200},
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
@@ -511,26 +502,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     }
 
     return Clay_EndLayout();
-    switch (state->phase) {
-    case GP_MAIN: {
-        break;
-    }
-    case GP_STARTMENU: {
-        break;
-    }
-    case GP_DEAD: {
-        break;
-    }
-    case GP_PAUSED: {
-        break;
-    }
-    case GP_TRANSITION: {
-        break;
-    }
-    case GP_AFTER_WAVE: {
-        break;
-    }
-    }
 }
 
 void game_state_frame(GameState *state) {
@@ -583,35 +554,6 @@ void game_state_frame(GameState *state) {
     }
     Clay_Raylib_Render(game_state_draw_ui(state), &state->font[0]);
     EndDrawing();
-}
-
-void game_state_class_select_update(GameState *state) {
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 200, 256, 64})) {
-            state->selected_class = PS_TANK;
-        }
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 300, 256, 64})) {
-            state->selected_class = PS_MOVE;
-        }
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 400, 256, 64})) {
-            state->selected_class = PS_DAMAGE;
-        }
-    }
-}
-
-double screen_centered_position(double w) {
-    return (WINDOW_W / 2.0) - (w / 2.0);
-}
-
-void game_state_upgrade_update(GameState *state) {
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){20, 220, 64, 64})) {
-            state->player.state.reload_time += 0.02;
-        }
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){104, 220, 64, 64})) {
-            state->player.state.movement_speed += 5.0;
-        }
-    }
 }
 
 void game_state(GameState *state) {
