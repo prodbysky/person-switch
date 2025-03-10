@@ -240,6 +240,27 @@ void handle_screen_select_button_upgrade(Clay_ElementId e_id, Clay_PointerData p
         state->screen_type = IST_PLAYER_UPGRADE;
     }
 }
+void handle_player_class_select_button_tank(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_class = PS_TANK;
+    }
+}
+void handle_player_class_select_button_move(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_class = PS_MOVE;
+    }
+}
+void handle_player_class_select_button_killer(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_class = PS_DAMAGE;
+    }
+}
 
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     Clay_BeginLayout();
@@ -378,6 +399,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
                             },
                     }) {
+                        Clay_OnHover(handle_player_class_select_button_tank, (intptr_t)state);
                         ui_label("Tank", 32, WHITE);
                     }
                     CLAY({
@@ -388,6 +410,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
                             },
                     }) {
+                        Clay_OnHover(handle_player_class_select_button_move, (intptr_t)state);
                         ui_label("Mover", 32, WHITE);
                     }
                     CLAY({
@@ -398,6 +421,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
                             },
                     }) {
+                        Clay_OnHover(handle_player_class_select_button_killer, (intptr_t)state);
                         ui_label("Killer", 32, WHITE);
                     }
                 }
