@@ -93,10 +93,6 @@ void game_state_draw_playfield(const GameState *state);
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state);
 
 
-void game_state_class_select_update(GameState* state);
-
-void game_state_upgrade_update(GameState* state);
-
 void draw_centered_text(const char* message, const Font* font, size_t size, Color color, float y);
 double screen_centered_position(double w);
 
