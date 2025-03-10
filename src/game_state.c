@@ -12,6 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CLAY_IMPLEMENTATION
+#include <clay/clay.h>
+#include <clay/clay_raylib_renderer.c>
+
 #define TRANSITION_TIME 0.25
 
 #ifndef RELEASE
