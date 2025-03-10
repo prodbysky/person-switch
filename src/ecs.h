@@ -52,7 +52,5 @@ void collision(TransformComp* transform, PhysicsComp* physics,
 
 // Draws a solid rectangle at the specified transform with the color in `SolidRectangle`
 void draw_solid(const TransformComp* transform, const SolidRectangleComp* solid_rectangle);
-// For debugging purposes
-void draw_gizmo(const TransformComp* transform, const PhysicsComp* physics, const Font* font);
 
 #endif

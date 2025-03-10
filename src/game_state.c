@@ -1,7 +1,6 @@
 #include "game_state.h"
 #include "arena.h"
 #include "bullet.h"
-#include "ecs.h"
 #include "enemy.h"
 #include "player.h"
 #include "static_config.h"
@@ -9,8 +8,13 @@
 #include "wave.h"
 #include <raylib.h>
 #include <raymath.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define CLAY_IMPLEMENTATION
+#include <clay/clay.h>
+#include <clay/clay_raylib_renderer.c>
 
 #define TRANSITION_TIME 0.25
 
@@ -18,18 +22,31 @@
 static double update_took = 0;
 #endif
 
+void clay_error_callback(Clay_ErrorData errorData) {
+    printf("%s\n", errorData.errorText.chars);
+    abort();
+}
+
 GameState game_state_init() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     InitAudioDevice();
     SetTargetFPS(120);
+
+    uint64_t clay_req_memory = Clay_MinMemorySize();
+    st.clay_memory = Clay_CreateArenaWithCapacityAndMemory(clay_req_memory, malloc(clay_req_memory));
+
+    Clay_Initialize(st.clay_memory, (Clay_Dimensions){.width = WINDOW_W, .height = WINDOW_H},
+                    (Clay_ErrorHandler){.errorHandlerFunction = clay_error_callback});
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, st.font);
+
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
     st.phase = GP_TRANSITION;
     st.after_transition = GP_STARTMENU;
-    st.font = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
-    SetTextureFilter(st.font.texture, TEXTURE_FILTER_BILINEAR);
+    st.font[0] = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
+    SetTextureFilter(st.font[0].texture, TEXTURE_FILTER_BILINEAR);
     st.player_jump_sound = LoadSound("assets/sfx/player_jump.wav");
     st.player_shoot_sound = LoadSound("assets/sfx/shoot.wav");
     st.enemy_hit_sound = LoadSound("assets/sfx/enemy_hit.wav");
@@ -54,6 +71,10 @@ GameState game_state_init() {
     st.vfx_enabled = true;
 
     return st;
+}
+
+double screen_centered_position(double w) {
+    return (WINDOW_W / 2.0) - (w / 2.0);
 }
 void game_state_phase_change(GameState *state, GamePhase next) {
     state->phase = GP_TRANSITION;
@@ -84,6 +105,10 @@ void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
 }
 
 void game_state_update(GameState *state) {
+    Vector2 mousePosition = GetMousePosition();
+    Vector2 scrollDelta = GetMouseWheelMoveV();
+    Clay_SetPointerState((Clay_Vector2){mousePosition.x, mousePosition.y}, IsMouseButtonDown(0));
+    Clay_UpdateScrollContainers(true, (Clay_Vector2){scrollDelta.x, scrollDelta.y}, GetFrameTime());
     float dt = GetFrameTime();
     state->camera.zoom *= 0.98;
     state->camera.zoom = Clamp(state->camera.zoom, 1, 999);
@@ -173,30 +198,8 @@ void game_state_update(GameState *state) {
                 state->screen_type = IST_PLAYER_UPGRADE;
             }
         }
-
-        switch (state->screen_type) {
-        case IST_PLAYER_CLASS_SELECT: {
-            game_state_class_select_update(state);
-            break;
-        }
-        case IST_PLAYER_UPGRADE: {
-            game_state_upgrade_update(state);
-            break;
-        }
-        }
     }
 }
-
-#ifndef RELEASE
-void game_state_draw_debug_stats(const GameState *state) {
-    DrawTextEx(state->font, TextFormat("Frame time: %.4f ms.", GetFrameTime()), (Vector2){10, 10}, 32, 0, WHITE);
-    DrawTextEx(state->font, TextFormat("Update took: %.4f ms.", update_took * 1000), (Vector2){10, 40}, 32, 0, WHITE);
-    DrawTextEx(state->font,
-               TextFormat("Heap usage: %u/%u (%.2f%%) Bytes", state->allocator.used, state->allocator.cap,
-                          ((float)state->allocator.used * 100.0) / state->allocator.cap),
-               (Vector2){10, 70}, 32, 0, WHITE);
-}
-#endif
 
 void game_state_draw_playfield(const GameState *state) {
     draw_stage(&state->stage);
@@ -206,102 +209,302 @@ void game_state_draw_playfield(const GameState *state) {
     player_draw(&state->player);
 }
 
-void game_state_draw_ui(const GameState *state) {
-    switch (state->phase) {
-    case GP_MAIN: {
-        DrawTextEx(state->font, TextFormat("Health: %d", state->player.state.health), (Vector2){10, 10}, 48, 0, WHITE);
-        DrawTextEx(state->font, TextFormat("Wave #%d", state->wave_number), (Vector2){10, 50}, 48, 0, WHITE);
-#ifndef RELEASE
-        draw_gizmo(&state->player.transform, &state->player.physics, &state->font);
-        for (size_t i = 0; i < state->current_wave.count; i++) {
-            const ECSEnemy *enemy = &state->current_wave.enemies[i];
-            if (!enemy->state.dead) {
-                draw_gizmo(&enemy->transform, &enemy->physics, &state->font);
-            }
-        }
-#endif
-        break;
-    }
-    case GP_STARTMENU: {
-        Vector2 font_24_size = MeasureTextEx(state->font, "A", 24, 0);
-        const float line_spacing = font_24_size.y;
-        Vector2 ui_cursor = {.x = 10, .y = 10};
-        DrawTextEx(state->font, "Press `space` to start\nthe game!", ui_cursor, 32, 0, WHITE);
-        ui_cursor.y = 90;
-        DrawTextEx(state->font, "Controls:", ui_cursor, 24, 0, WHITE);
-        ui_cursor.x += 10;
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "A: Move left", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "D: Move right", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Space: Jump", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Left arrow: Shoot to the left", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Right arrow: Shoot to the right", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "P: Pause the game", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Left bracket: Decrease master volume by 5%", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Right bracket: Increase master volume by 5%", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Slash: Toggle shaders OwO", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        DrawTextEx(state->font, "Print screen: Take screenshot", ui_cursor, 24, 0, WHITE);
-        ui_cursor.y += line_spacing;
-        break;
-    }
-    case GP_DEAD: {
-        draw_centered_text("You died!", &state->font, 32, WHITE, 300);
-        break;
-    }
-    case GP_PAUSED: {
-        break;
-    }
-    case GP_TRANSITION: {
-        break;
-    }
-    case GP_AFTER_WAVE: {
-        draw_centered_text("Press enter to start the next wave", &state->font, 32, WHITE, 100);
-        if (state->screen_type == IST_PLAYER_CLASS_SELECT) {
-            DrawRectangle(30, 30, 128, 64, GRAY);
-            DrawTextEx(state->font, "Class select", (Vector2){37, 50}, 24, 0, WHITE);
-        } else {
-            DrawRectangle(30, 30, 128, 64, WHITE);
-            DrawTextEx(state->font, "Class select", (Vector2){37, 50}, 24, 0, GRAY);
-        }
-        if (state->screen_type == IST_PLAYER_UPGRADE) {
-            DrawRectangle(30, 124, 128, 64, GRAY);
-            DrawTextEx(state->font, "Upgrade", (Vector2){60, 144}, 24, 0, WHITE);
-        } else {
-            DrawRectangle(30, 124, 128, 64, WHITE);
-            DrawTextEx(state->font, "Upgrade", (Vector2){60, 144}, 24, 0, GRAY);
-        }
-
-        switch (state->screen_type) {
-        case IST_PLAYER_CLASS_SELECT: {
-            game_state_class_select_draw(state);
-            break;
-        }
-        case IST_PLAYER_UPGRADE: {
-            game_state_upgrade_draw(state);
-            break;
-        }
-        }
-        break;
-    }
-    }
-    DrawTextEx(state->font, TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){10, 40}, 48, 0,
-               GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
-
-#ifndef RELEASE
-    game_state_draw_debug_stats(state);
-#endif
+void ui_label(const char *text, uint16_t size, Color c) {
+    Clay_String str = {.chars = text, .length = strlen(text)};
+    CLAY_TEXT(str, CLAY_TEXT_CONFIG({
+                                        .fontId = 0,
+                                        .textColor = {c.r, c.g, c.b, c.a},
+                                        .fontSize = size,
+                                    }, ));
 }
 
-void game_state_frame(const GameState *state) {
+void handle_screen_select_button_class(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->screen_type = IST_PLAYER_CLASS_SELECT;
+    }
+}
+void handle_screen_select_button_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->screen_type = IST_PLAYER_UPGRADE;
+    }
+}
+void handle_player_class_select_button_tank(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_class = PS_TANK;
+    }
+}
+void handle_player_class_select_button_move(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_class = PS_MOVE;
+    }
+}
+void handle_player_class_select_button_killer(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_class = PS_DAMAGE;
+    }
+}
+void handle_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->player.state.movement_speed += 5.0;
+    }
+}
+void handle_reload_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->player.state.reload_time += 0.02;
+    }
+}
+
+Clay_Color button_color(bool activecond) {
+    return activecond ? (Clay_Color){120, 120, 120, 255} : (Clay_Color){90, 90, 90, 255};
+}
+
+Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
+    Clay_BeginLayout();
+    CLAY({
+             .id = CLAY_ID("OuterContainer"),
+             .layout =
+                 {
+                     .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                     .sizing =
+                         {
+                             .height = CLAY_SIZING_GROW(0),
+                             .width = CLAY_SIZING_GROW(0),
+                         },
+                 },
+         }, ) {
+        switch (state->phase) {
+        case GP_MAIN: {
+            CLAY({
+                .id = CLAY_ID("PlayerInfoContainer"),
+                .layout =
+                    {
+                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .padding = {16, 16, 16, 16},
+                    },
+            }) {
+                ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE);
+                ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE);
+            }
+            break;
+        }
+        case GP_STARTMENU: {
+            CLAY({
+                .id = CLAY_ID("StartMenuContainer"),
+                .layout =
+                    {
+                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .padding = {16, 16, 16, 16},
+                    },
+            }) {
+                ui_label("Press `space` to start the game", 48, WHITE);
+                ui_label(" ", 48, WHITE);
+                ui_label("Controls:", 36, WHITE);
+                ui_label("A: Move left", 36, WHITE);
+                ui_label("D: Move right", 36, WHITE);
+                ui_label("Space: Jump", 24, WHITE);
+                ui_label("Left arrow: Shoot to the left", 24, WHITE);
+                ui_label("Right arrow: Shoot to the right", 24, WHITE);
+                ui_label("P: Pause the game", 24, WHITE);
+                ui_label("Left bracket: Decrease master volume by 5%", 24, WHITE);
+                ui_label("Right bracket: Increase master volume by 5%", 24, WHITE);
+                ui_label("Slash: Toggle shaders OwO", 24, WHITE);
+                ui_label("Print screen: Take screenshot", 24, WHITE);
+            }
+            break;
+        }
+        case GP_DEAD: {
+            CLAY({.layout = {
+                      .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                  }}) {
+                CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                }
+                CLAY({
+                    .id = CLAY_ID("DeadStatusContainer"),
+                    .layout =
+                        {
+                            .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                            .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                            .padding = {16, 16, 16, 16},
+                        },
+                }) {
+                    CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                    }
+                    ui_label("You died!", 48, WHITE);
+                    CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                    }
+                }
+                CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                }
+            }
+            break;
+        }
+        case GP_AFTER_WAVE: {
+            CLAY({
+                .layout =
+                    {
+                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .padding = {16, 16, 16, 16},
+                    },
+            }) {
+                ui_label("Press enter to start the next wave", 32, WHITE);
+                CLAY({
+                    .id = CLAY_ID("ScreenSelectButtonContainer"),
+                    .layout =
+                        {
+                            .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .childGap = 32,
+                        },
+                }) {
+                    CLAY({
+                             .id = CLAY_ID("ClassSelectScreenButton"),
+                             .layout =
+                                 {
+                                     .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
+                                 },
+                             .backgroundColor = button_color(state->screen_type == IST_PLAYER_CLASS_SELECT),
+                         }, ) {
+                        Clay_OnHover(handle_screen_select_button_class, (intptr_t)state);
+                        ui_label("Class select", 24, WHITE);
+                    }
+                    CLAY({
+                        .id = CLAY_ID("UpgradeSelectScreenButton"),
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
+                            },
+                        .backgroundColor = button_color(state->screen_type == IST_PLAYER_UPGRADE),
+                    }) {
+                        Clay_OnHover(handle_screen_select_button_upgrade, (intptr_t)state);
+                        ui_label("Upgrade", 24, WHITE);
+                    }
+                }
+            }
+            switch (state->screen_type) {
+            case IST_PLAYER_CLASS_SELECT: {
+                CLAY({
+                    .id = CLAY_ID("PlayerClassSelectContainer"),
+                    .layout =
+                        {
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .sizing =
+                                {
+                                    .width = CLAY_SIZING_GROW(0),
+                                    .height = CLAY_SIZING_GROW(0),
+                                },
+                            .childGap = 16,
+                            .padding = {16, 16, 16, 16},
+                        },
+                }) {
+                    CLAY({
+                        .id = CLAY_ID("TankClassButton"),
+                        .backgroundColor = button_color(state->selected_class == PS_TANK),
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        Clay_OnHover(handle_player_class_select_button_tank, (intptr_t)state);
+                        ui_label("Tank", 32, WHITE);
+                    }
+                    CLAY({
+                        .id = CLAY_ID("MoveClassButton"),
+                        .backgroundColor = button_color(state->selected_class == PS_MOVE),
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        Clay_OnHover(handle_player_class_select_button_move, (intptr_t)state);
+                        ui_label("Mover", 32, WHITE);
+                    }
+                    CLAY({
+                        .id = CLAY_ID("KillerClassButton"),
+                        .backgroundColor = button_color(state->selected_class == PS_DAMAGE),
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        Clay_OnHover(handle_player_class_select_button_killer, (intptr_t)state);
+                        ui_label("Killer", 32, WHITE);
+                    }
+                }
+                break;
+            }
+            case IST_PLAYER_UPGRADE: {
+                CLAY({
+                    .id = CLAY_ID("PlayerUpgradeContainer"),
+                    .layout =
+                        {
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .sizing =
+                                {
+                                    .width = CLAY_SIZING_GROW(0),
+                                    .height = CLAY_SIZING_GROW(0),
+                                },
+                            .childGap = 16,
+                            .padding = {16, 16, 16, 16},
+                        },
+                }) {
+                    CLAY({
+                        .id = CLAY_ID("ReloadUpgradeButton"),
+                        .backgroundColor = {128, 128, 128, 200},
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        Clay_OnHover(handle_reload_speed_upgrade_button, (intptr_t)state);
+                        ui_label("Reload", 24, WHITE);
+                    }
+                    CLAY({
+                        .id = CLAY_ID("SpeedUpgradeButton"),
+                        .backgroundColor = {128, 128, 128, 200},
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            },
+                    }) {
+                        Clay_OnHover(handle_speed_upgrade_button, (intptr_t)state);
+                        ui_label("Speed", 24, WHITE);
+                    }
+                }
+                break;
+            }
+            }
+            break;
+        }
+        default: {
+        }
+        }
+
+        DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
+                   GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
+    }
+
+    return Clay_EndLayout();
+}
+
+void game_state_frame(GameState *state) {
     BeginTextureMode(state->target);
     BeginMode2D(state->camera);
     ClearBackground(GetColor(0x181818ff));
@@ -349,79 +552,8 @@ void game_state_frame(const GameState *state) {
     if (state->vfx_enabled) {
         EndShaderMode();
     }
-    game_state_draw_ui(state);
+    Clay_Raylib_Render(game_state_draw_ui(state), &state->font[0]);
     EndDrawing();
-}
-
-void game_state_class_select_update(GameState *state) {
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 200, 256, 64})) {
-            state->selected_class = PS_TANK;
-        }
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 300, 256, 64})) {
-            state->selected_class = PS_MOVE;
-        }
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){screen_centered_position(256), 400, 256, 64})) {
-            state->selected_class = PS_DAMAGE;
-        }
-    }
-}
-
-double screen_centered_position(double w) {
-    return (WINDOW_W / 2.0) - (w / 2.0);
-}
-
-void game_state_class_select_draw(const GameState *state) {
-    if (state->selected_class != PS_TANK) {
-        DrawRectangle(screen_centered_position(256), 200, 256, 64, WHITE);
-        draw_centered_text("Tank", &state->font, 32, GRAY, 215);
-    } else {
-        DrawRectangle(screen_centered_position(256), 200, 256, 64, GRAY);
-        draw_centered_text("Tank", &state->font, 32, WHITE, 215);
-    }
-    if (state->selected_class != PS_MOVE) {
-        DrawRectangle(screen_centered_position(256), 300, 256, 64, WHITE);
-        draw_centered_text("Mover", &state->font, 32, GRAY, 315);
-    } else {
-        DrawRectangle(screen_centered_position(256), 300, 256, 64, GRAY);
-        draw_centered_text("Mover", &state->font, 32, WHITE, 315);
-    }
-    if (state->selected_class != PS_DAMAGE) {
-        DrawRectangle(screen_centered_position(256), 400, 256, 64, WHITE);
-        draw_centered_text("Killer", &state->font, 32, GRAY, 415);
-    } else {
-        DrawRectangle(screen_centered_position(256), 400, 256, 64, GRAY);
-        draw_centered_text("Killer", &state->font, 32, WHITE, 415);
-    }
-}
-
-void game_state_upgrade_draw(const GameState *state) {
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
-        CheckCollisionPointRec(GetMousePosition(), (Rectangle){20, 220, 64, 64})) {
-        DrawRectangle(20, 220, 64, 64, GRAY);
-        DrawTextEx(state->font, "Reload", (Vector2){24, 224}, 24, 0, WHITE);
-    } else {
-        DrawRectangle(20, 220, 64, 64, WHITE);
-        DrawTextEx(state->font, "Reload", (Vector2){24, 224}, 24, 0, GRAY);
-    }
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
-        CheckCollisionPointRec(GetMousePosition(), (Rectangle){104, 220, 64, 64})) {
-        DrawRectangle(104, 220, 64, 64, GRAY);
-        DrawTextEx(state->font, "Speed", (Vector2){108, 224}, 24, 0, WHITE);
-    } else {
-        DrawRectangle(104, 220, 64, 64, WHITE);
-        DrawTextEx(state->font, "Speed", (Vector2){108, 224}, 24, 0, GRAY);
-    }
-}
-void game_state_upgrade_update(GameState *state) {
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){20, 220, 64, 64})) {
-            state->player.state.reload_time += 0.02;
-        }
-        if (CheckCollisionPointRec(GetMousePosition(), (Rectangle){104, 220, 64, 64})) {
-            state->player.state.movement_speed += 5.0;
-        }
-    }
 }
 
 void game_state(GameState *state) {
@@ -438,9 +570,10 @@ void game_state(GameState *state) {
 
 void game_state_destroy(GameState *state) {
     arena_free(&state->allocator);
-    UnloadFont(state->font);
+    UnloadFont(state->font[0]);
     UnloadRenderTexture(state->target);
     UnloadShader(state->pixelizer);
+
     CloseAudioDevice();
     CloseWindow();
 }

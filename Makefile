@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -Werror -Iextern/raylib/src/ --extra-warnings
+CFLAGS = -Wall -Werror -Iextern/raylib/src/ -Iextern/ --extra-warnings
 LDFLAGS = -Lextern/raylib/src/ 
 LIBS = -lm -l:libraylib.a
 
