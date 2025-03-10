@@ -26,15 +26,11 @@ No lore, you are just a person trying to survive many waves
 
 Main gameplay (with shaders enabled):
 
-![pswitch_ss_5 84](https://github.com/user-attachments/assets/44827610-430a-4f45-97e3-b2e37f5c7d10)
-
-Main gameplay (without shaders):
-
-![pswitch_ss_16 28](https://github.com/user-attachments/assets/7e6530f8-93c3-4057-a40e-150d32613a8f)
+![pswitch_ss_12 96](https://github.com/user-attachments/assets/15ff777f-695c-4c89-9201-ca1206c3bbf7)
 
 Class selection screen (pops up after finishing a wave):
 
-![pswitch_ss_24 52](https://github.com/user-attachments/assets/bac0d10d-7bae-42f7-8f55-1fabc1212020)
+![pswitch_ss_18 85](https://github.com/user-attachments/assets/e667b653-6d7c-4471-b061-32d517a05450)
 
 ## Direct Dependencies
  - Raylib
