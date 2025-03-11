@@ -281,6 +281,7 @@ Clay_Color button_color(bool activecond) {
                      .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},                       \
                  },                                                                                                    \
              .backgroundColor = button_color(highlight_condition),                                                     \
+             .cornerRadius = {10, 10, 10, 10},                                                                         \
          }, ) {                                                                                                        \
         Clay_OnHover(callback, (intptr_t)state);                                                                       \
         CENTERED_ELEMENT(ui_label(text, 36, WHITE, CLAY_TEXT_ALIGN_CENTER));                                           \
@@ -378,7 +379,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
                         .layoutDirection = CLAY_LEFT_TO_RIGHT,
                         .padding = {16, 16, 16, 16},
-                        .childGap = 32,
+                        .childGap = 16,
                     },
             }) {
                 CLAY({
@@ -387,7 +388,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         {
                             .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
                             .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                            .childGap = 32,
+                            .childGap = 16,
                         },
                 }) {
                     LABELED_BUTTON("Class select", "ClassSelectScreenButton", handle_screen_select_button_class,
@@ -404,7 +405,20 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                             .childGap = 16,
                         },
                 }) {
-                    CENTERED_ELEMENT(ui_label("Press enter to start the next wave", 50, WHITE, CLAY_TEXT_ALIGN_CENTER));
+                    CLAY({
+                        .layout =
+                            {
+                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_PERCENT(0.3)},
+                                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                .childGap = 16,
+                            },
+                        .backgroundColor = {100, 100, 100, 255},
+                        .cornerRadius = {5, 5, 5, 5},
+
+                    }) {
+                        CENTERED_ELEMENT(
+                            ui_label("Press enter to start the next wave", 50, WHITE, CLAY_TEXT_ALIGN_CENTER));
+                    }
 
                     CLAY({
                         .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
@@ -412,10 +426,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                    .childGap = 8,
                                    .padding = {16, 16, 16, 16}},
                         .backgroundColor = {108, 108, 108, 120},
-                        .border = {.width = {.bottom = 10, .top = 10, .left = 10, .right = 10, .betweenChildren = 0},
-                                   .color = {100, 100, 100, 255}},
                         .scroll = {.horizontal = false, .vertical = true},
-                        .cornerRadius = {5, 5, 5, 5},
+                        .cornerRadius = {10, 10, 10, 10},
                     }) {
 
                         size_t count[ET_COUNT] = {0};
@@ -440,7 +452,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                         .height = CLAY_SIZING_GROW(0),
                                     },
                                 .childGap = 16,
-                                .padding = {16, 16, 16, 16},
                             },
                     }) {
                         LABELED_BUTTON("Tank", "TankClassButton", handle_player_class_select_button_tank,
@@ -464,7 +475,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                         .height = CLAY_SIZING_GROW(0),
                                     },
                                 .childGap = 16,
-                                .padding = {16, 16, 16, 16},
                             },
                     }) {
                         LABELED_BUTTON("Reload", "ReloadUpgradeButton", handle_reload_speed_upgrade_button, false);
