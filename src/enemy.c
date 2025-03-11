@@ -98,6 +98,9 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
             }
             state->type_specific.ranger.last_shot = GetTime();
         }
+        break;
+    }
+    case ET_COUNT: {
     }
     }
 }

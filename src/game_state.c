@@ -96,9 +96,6 @@ void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
         break;
     }
     game_state_phase_change(state, GP_MAIN);
-    state->wave_strength *= 1.1;
-    state->wave_number++;
-    state->current_wave = generate_wave(state->wave_strength);
     state->bullets = (Bullets){0};
     state->enemy_bullets = (Bullets){0};
 }
@@ -152,6 +149,10 @@ void game_state_update(GameState *state) {
 
         if (wave_is_done(&state->current_wave)) {
             game_state_phase_change(state, GP_AFTER_WAVE);
+
+            state->wave_strength *= 1.1;
+            state->wave_number++;
+            state->current_wave = generate_wave(state->wave_strength);
         }
         break;
 
@@ -269,7 +270,7 @@ void handle_reload_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd
 }
 
 Clay_Color button_color(bool activecond) {
-    return activecond ? (Clay_Color){120, 120, 120, 255} : (Clay_Color){90, 90, 90, 255};
+    return activecond ? (Clay_Color){120, 120, 120, 200} : (Clay_Color){90, 90, 90, 100};
 }
 
 #define LABELED_BUTTON(text, id_, callback, highlight_condition)                                                       \
@@ -394,7 +395,38 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     LABELED_BUTTON("Upgrades", "UpgradeSelectScreenButton", handle_screen_select_button_upgrade,
                                    state->screen_type == IST_PLAYER_UPGRADE);
                 }
-                CENTERED_ELEMENT(ui_label("Press enter to start the next wave", 50, WHITE, CLAY_TEXT_ALIGN_CENTER));
+
+                CLAY({
+                    .layout =
+                        {
+                            .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .childGap = 16,
+                        },
+                }) {
+                    CENTERED_ELEMENT(ui_label("Press enter to start the next wave", 50, WHITE, CLAY_TEXT_ALIGN_CENTER));
+
+                    CLAY({
+                        .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                   .childGap = 8,
+                                   .padding = {16, 16, 16, 16}},
+                        .backgroundColor = {108, 108, 108, 120},
+                        .border = {.width = {.bottom = 10, .top = 10, .left = 10, .right = 10, .betweenChildren = 0},
+                                   .color = {100, 100, 100, 255}},
+                        .scroll = {.horizontal = false, .vertical = true},
+                        .cornerRadius = {5, 5, 5, 5},
+                    }) {
+
+                        size_t count[ET_COUNT] = {0};
+                        for (size_t i = 0; i < state->current_wave.count; i++) {
+                            const ECSEnemy *e = &state->current_wave.enemies[i];
+                            count[e->state.type]++;
+                        }
+                        ui_label(TextFormat("x%d melee enemies", count[ET_BASIC]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label(TextFormat("x%d ranged enemies", count[ET_RANGER]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                    }
+                }
                 switch (state->screen_type) {
                 case IST_PLAYER_CLASS_SELECT: {
                     CLAY({

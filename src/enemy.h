@@ -12,6 +12,7 @@ typedef struct {
 typedef enum {
     ET_BASIC,
     ET_RANGER,
+    ET_COUNT
 } EnemyType;
 
 typedef struct {
