@@ -266,12 +266,27 @@ void handle_reload_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd
         state->player.state.reload_time += 0.02;
     }
 }
+
+void handle_continue_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+   (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        game_state_phase_change(state, GP_MAIN);
+    }
+}
+
 void handle_begin_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
     }
+}
+void handle_main_menu_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        game_state_phase_change(state, GP_STARTMENU);
 }
 void handle_show_controls_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
@@ -525,6 +540,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                 .childGap = 16,
                             },
                     }) {
+
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Reload", "ReloadUpgradeButton",
                                        handle_reload_speed_upgrade_button, false);
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Speed", "SpeedUpgradeButton",
@@ -533,6 +549,22 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     break;
                 }
                 }
+            }
+            break;
+        }
+        case GP_PAUSED: {
+            CLAY({.layout = {
+                      .sizing =
+                          {
+                              .width = CLAY_SIZING_GROW(0),
+                              .height = CLAY_SIZING_GROW(0),
+                          },
+                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                      .padding = {16, 16, 16, 16},
+                      .childGap = 16,
+                  }}) {
+                LABELED_BUTTON("Continue", "ContinueButton", handle_continue_button, false);
+                LABELED_BUTTON("Main menu", "MainMenuButton", handle_main_menu_button, false);
             }
             break;
         }
@@ -559,6 +591,8 @@ void game_state_frame(GameState *state) {
     case GP_DEAD:
         break;
     case GP_PAUSED:
+        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
+                         GetColor(0x00000040));
         game_state_draw_playfield(state);
         break;
     case GP_TRANSITION: {
