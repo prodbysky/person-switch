@@ -68,6 +68,7 @@ GameState game_state_init() {
     st.target = LoadRenderTexture(WINDOW_W, WINDOW_H);
     st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
     st.vfx_enabled = true;
+    st.main_menu_type = MMT_START;
 
     return st;
 }
@@ -157,9 +158,6 @@ void game_state_update(GameState *state) {
         break;
 
     case GP_STARTMENU:
-        if (IsKeyPressed(KEY_SPACE)) {
-            game_state_phase_change(state, GP_MAIN);
-        }
         break;
 
     case GP_DEAD:
@@ -268,17 +266,24 @@ void handle_reload_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd
         state->player.state.reload_time += 0.02;
     }
 }
+void handle_begin_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        game_state_phase_change(state, GP_MAIN);
+    }
+}
 
 Clay_Color button_color(bool activecond) {
     return activecond ? (Clay_Color){120, 120, 120, 200} : (Clay_Color){90, 90, 90, 100};
 }
 
-#define LABELED_BUTTON(text, id_, callback, highlight_condition)                                                       \
+#define LABELED_BUTTON(w, h, text, id_, callback, highlight_condition)                                                 \
     CLAY({                                                                                                             \
              .id = CLAY_ID(id_),                                                                                       \
              .layout =                                                                                                 \
                  {                                                                                                     \
-                     .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},                       \
+                     .sizing = {.width = w, .height = h},                                                              \
                  },                                                                                                    \
              .backgroundColor = button_color(highlight_condition),                                                     \
              .cornerRadius = {10, 10, 10, 10},                                                                         \
@@ -298,7 +303,6 @@ Clay_Color button_color(bool activecond) {
             .layout =                                                                                                  \
                 {                                                                                                      \
                     .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},                           \
-                    .layoutDirection = CLAY_LEFT_TO_RIGHT,                                                             \
                     .padding = {16, 16, 16, 16},                                                                       \
                 },                                                                                                     \
         }) {                                                                                                           \
@@ -352,19 +356,37 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         .padding = {16, 16, 16, 16},
                     },
             }) {
-                CENTERED_ELEMENT(ui_label("Press `space` to start the game", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));
-                ui_label(" ", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("Controls:", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("A: Move left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("D: Move right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("Space: Jump", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("Left arrow: Shoot to the left", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("Right arrow: Shoot to the right", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("P: Pause the game", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("Left bracket: Decrease master volume by 5%", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("Right bracket: Increase master volume by 5%", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("Slash: Toggle shaders OwO", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label("Print screen: Take screenshot", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                switch (state->main_menu_type) {
+                case MMT_START: {
+                    CENTERED_ELEMENT(ui_label("Persona", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));
+                    CLAY({
+                        .layout =
+                            {
+                                .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                                .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                            },
+                    }) {
+                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Play", "PlayButton",
+                                                        handle_begin_game_button, false));
+                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Controls",
+                                                        "ShowControlsButton", handle_begin_game_button, false));
+                    }
+                    break;
+                }
+                }
+                /*CENTERED_ELEMENT(ui_label("Press `space` to start the game", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));*/
+                /*ui_label(" ", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("Controls:", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("A: Move left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("D: Move right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("Space: Jump", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("Left arrow: Shoot to the left", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("Right arrow: Shoot to the right", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("P: Pause the game", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("Left bracket: Decrease master volume by 5%", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("Right bracket: Increase master volume by 5%", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("Slash: Toggle shaders OwO", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
+                /*ui_label("Print screen: Take screenshot", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
             }
             break;
         }
@@ -391,10 +413,10 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                             .childGap = 16,
                         },
                 }) {
-                    LABELED_BUTTON("Class select", "ClassSelectScreenButton", handle_screen_select_button_class,
-                                   state->screen_type == IST_PLAYER_CLASS_SELECT);
-                    LABELED_BUTTON("Upgrades", "UpgradeSelectScreenButton", handle_screen_select_button_upgrade,
-                                   state->screen_type == IST_PLAYER_UPGRADE);
+                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Class select", "ClassSelectScreenButton",
+                                   handle_screen_select_button_class, state->screen_type == IST_PLAYER_CLASS_SELECT);
+                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Upgrades", "UpgradeSelectScreenButton",
+                                   handle_screen_select_button_upgrade, state->screen_type == IST_PLAYER_UPGRADE);
                 }
 
                 CLAY({
@@ -454,12 +476,12 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                 .childGap = 16,
                             },
                     }) {
-                        LABELED_BUTTON("Tank", "TankClassButton", handle_player_class_select_button_tank,
-                                       state->selected_class == PS_TANK);
-                        LABELED_BUTTON("Mover", "MoveClassButton", handle_player_class_select_button_move,
-                                       state->selected_class == PS_MOVE);
-                        LABELED_BUTTON("Killer", "KillerClassButton", handle_player_class_select_button_killer,
-                                       state->selected_class == PS_DAMAGE);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Tank", "TankClassButton",
+                                       handle_player_class_select_button_tank, state->selected_class == PS_TANK);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Mover", "MoveClassButton",
+                                       handle_player_class_select_button_move, state->selected_class == PS_MOVE);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Killer", "KillerClassButton",
+                                       handle_player_class_select_button_killer, state->selected_class == PS_DAMAGE);
                     }
                     break;
                 }
@@ -477,8 +499,10 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                 .childGap = 16,
                             },
                     }) {
-                        LABELED_BUTTON("Reload", "ReloadUpgradeButton", handle_reload_speed_upgrade_button, false);
-                        LABELED_BUTTON("Speed", "SpeedUpgradeButton", handle_speed_upgrade_button, false);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Reload", "ReloadUpgradeButton",
+                                       handle_reload_speed_upgrade_button, false);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Speed", "SpeedUpgradeButton",
+                                       handle_speed_upgrade_button, false);
                     }
                     break;
                 }

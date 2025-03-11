@@ -23,6 +23,10 @@ typedef enum {
     IST_PLAYER_UPGRADE = 1
 } IntermissionScreenType;
 
+typedef enum {
+    MMT_START
+} MainMenuType;
+
 
 // The entire game state, sort of a `god` object
 typedef struct {
@@ -62,6 +66,8 @@ typedef struct {
     Camera2D camera;
 
     double volume_label_opacity;
+
+    MainMenuType main_menu_type;
 
     // vfx
     RenderTexture2D target;
