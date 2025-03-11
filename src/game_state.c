@@ -23,7 +23,7 @@ static double update_took = 0;
 #endif
 
 void clay_error_callback(Clay_ErrorData errorData) {
-    printf("%s\n", errorData.errorText.chars);
+    TraceLog(LOG_ERROR, "%s", errorData.errorText.chars);
 }
 
 GameState game_state_init() {
