@@ -268,7 +268,7 @@ void handle_reload_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd
 }
 
 void handle_continue_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-   (void)e_id;
+    (void)e_id;
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
@@ -287,6 +287,7 @@ void handle_main_menu_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t 
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_STARTMENU);
+    }
 }
 void handle_show_controls_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
@@ -563,8 +564,10 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                       .padding = {16, 16, 16, 16},
                       .childGap = 16,
                   }}) {
-                LABELED_BUTTON("Continue", "ContinueButton", handle_continue_button, false);
-                LABELED_BUTTON("Main menu", "MainMenuButton", handle_main_menu_button, false);
+                LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Continue", "ContinueButton",
+                               handle_continue_button, false);
+                LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Main menu", "MainMenuButton",
+                               handle_main_menu_button, false);
             }
             break;
         }
