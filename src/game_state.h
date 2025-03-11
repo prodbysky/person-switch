@@ -98,6 +98,6 @@ double screen_centered_position(double w);
 
 EnemyWave generate_wave(double strength);
 
-void ui_label(const char *text, uint16_t size, Color c);
+void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment);
 
 #endif

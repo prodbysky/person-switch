@@ -208,12 +208,13 @@ void game_state_draw_playfield(const GameState *state) {
     player_draw(&state->player);
 }
 
-void ui_label(const char *text, uint16_t size, Color c) {
+void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment) {
     Clay_String str = {.chars = text, .length = strlen(text)};
     CLAY_TEXT(str, CLAY_TEXT_CONFIG({
                                         .fontId = 0,
                                         .textColor = {c.r, c.g, c.b, c.a},
                                         .fontSize = size,
+                                        .textAlignment = aligment,
                                     }, ));
 }
 
@@ -271,6 +272,44 @@ Clay_Color button_color(bool activecond) {
     return activecond ? (Clay_Color){120, 120, 120, 255} : (Clay_Color){90, 90, 90, 255};
 }
 
+#define LABELED_BUTTON(text, id_, callback, highlight_condition)                                                       \
+    CLAY({                                                                                                             \
+             .id = CLAY_ID(id_),                                                                                       \
+             .layout =                                                                                                 \
+                 {                                                                                                     \
+                     .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},                       \
+                 },                                                                                                    \
+             .backgroundColor = button_color(highlight_condition),                                                     \
+         }, ) {                                                                                                        \
+        Clay_OnHover(callback, (intptr_t)state);                                                                       \
+        CENTERED_ELEMENT(ui_label(text, 36, WHITE, CLAY_TEXT_ALIGN_CENTER));                                           \
+    }
+
+#define CENTERED_ELEMENT(component)                                                                                    \
+    CLAY({.layout = {                                                                                                  \
+              .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},                                 \
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,                                                                   \
+          }}) {                                                                                                        \
+        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                     \
+        }                                                                                                              \
+        CLAY({                                                                                                         \
+            .layout =                                                                                                  \
+                {                                                                                                      \
+                    .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},                           \
+                    .layoutDirection = CLAY_LEFT_TO_RIGHT,                                                             \
+                    .padding = {16, 16, 16, 16},                                                                       \
+                },                                                                                                     \
+        }) {                                                                                                           \
+            CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                 \
+            }                                                                                                          \
+            component;                                                                                                 \
+            CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                 \
+            }                                                                                                          \
+        }                                                                                                              \
+        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                     \
+        }                                                                                                              \
+    }
+
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     Clay_BeginLayout();
     CLAY({
@@ -296,8 +335,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         .padding = {16, 16, 16, 16},
                     },
             }) {
-                ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE);
-                ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE);
+                ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
             }
             break;
         }
@@ -311,47 +350,24 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         .padding = {16, 16, 16, 16},
                     },
             }) {
-                ui_label("Press `space` to start the game", 48, WHITE);
-                ui_label(" ", 48, WHITE);
-                ui_label("Controls:", 36, WHITE);
-                ui_label("A: Move left", 36, WHITE);
-                ui_label("D: Move right", 36, WHITE);
-                ui_label("Space: Jump", 24, WHITE);
-                ui_label("Left arrow: Shoot to the left", 24, WHITE);
-                ui_label("Right arrow: Shoot to the right", 24, WHITE);
-                ui_label("P: Pause the game", 24, WHITE);
-                ui_label("Left bracket: Decrease master volume by 5%", 24, WHITE);
-                ui_label("Right bracket: Increase master volume by 5%", 24, WHITE);
-                ui_label("Slash: Toggle shaders OwO", 24, WHITE);
-                ui_label("Print screen: Take screenshot", 24, WHITE);
+                CENTERED_ELEMENT(ui_label("Press `space` to start the game", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));
+                ui_label(" ", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("Controls:", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("A: Move left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("D: Move right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("Space: Jump", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("Left arrow: Shoot to the left", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("Right arrow: Shoot to the right", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("P: Pause the game", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("Left bracket: Decrease master volume by 5%", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("Right bracket: Increase master volume by 5%", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("Slash: Toggle shaders OwO", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label("Print screen: Take screenshot", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);
             }
             break;
         }
         case GP_DEAD: {
-            CLAY({.layout = {
-                      .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                  }}) {
-                CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-                }
-                CLAY({
-                    .id = CLAY_ID("DeadStatusContainer"),
-                    .layout =
-                        {
-                            .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                            .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                            .padding = {16, 16, 16, 16},
-                        },
-                }) {
-                    CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-                    }
-                    ui_label("You died!", 48, WHITE);
-                    CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-                    }
-                }
-                CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-                }
-            }
+            CENTERED_ELEMENT(ui_label("You died!", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));
             break;
         }
         case GP_AFTER_WAVE: {
@@ -359,11 +375,11 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 .layout =
                     {
                         .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .layoutDirection = CLAY_LEFT_TO_RIGHT,
                         .padding = {16, 16, 16, 16},
+                        .childGap = 32,
                     },
             }) {
-                ui_label("Press enter to start the next wave", 32, WHITE);
                 CLAY({
                     .id = CLAY_ID("ScreenSelectButtonContainer"),
                     .layout =
@@ -373,122 +389,58 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                             .childGap = 32,
                         },
                 }) {
-                    CLAY({
-                             .id = CLAY_ID("ClassSelectScreenButton"),
-                             .layout =
-                                 {
-                                     .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
-                                 },
-                             .backgroundColor = button_color(state->screen_type == IST_PLAYER_CLASS_SELECT),
-                         }, ) {
-                        Clay_OnHover(handle_screen_select_button_class, (intptr_t)state);
-                        ui_label("Class select", 24, WHITE);
-                    }
-                    CLAY({
-                        .id = CLAY_ID("UpgradeSelectScreenButton"),
-                        .layout =
-                            {
-                                .sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
-                            },
-                        .backgroundColor = button_color(state->screen_type == IST_PLAYER_UPGRADE),
-                    }) {
-                        Clay_OnHover(handle_screen_select_button_upgrade, (intptr_t)state);
-                        ui_label("Upgrade", 24, WHITE);
-                    }
+                    LABELED_BUTTON("Class select", "ClassSelectScreenButton", handle_screen_select_button_class,
+                                   state->screen_type == IST_PLAYER_CLASS_SELECT);
+                    LABELED_BUTTON("Upgrades", "UpgradeSelectScreenButton", handle_screen_select_button_upgrade,
+                                   state->screen_type == IST_PLAYER_UPGRADE);
                 }
-            }
-            switch (state->screen_type) {
-            case IST_PLAYER_CLASS_SELECT: {
-                CLAY({
-                    .id = CLAY_ID("PlayerClassSelectContainer"),
-                    .layout =
-                        {
-                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                            .sizing =
-                                {
-                                    .width = CLAY_SIZING_GROW(0),
-                                    .height = CLAY_SIZING_GROW(0),
-                                },
-                            .childGap = 16,
-                            .padding = {16, 16, 16, 16},
-                        },
-                }) {
+                CENTERED_ELEMENT(ui_label("Press enter to start the next wave", 50, WHITE, CLAY_TEXT_ALIGN_CENTER));
+                switch (state->screen_type) {
+                case IST_PLAYER_CLASS_SELECT: {
                     CLAY({
-                        .id = CLAY_ID("TankClassButton"),
-                        .backgroundColor = button_color(state->selected_class == PS_TANK),
+                        .id = CLAY_ID("PlayerClassSelectContainer"),
                         .layout =
                             {
-                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                .sizing =
+                                    {
+                                        .width = CLAY_SIZING_GROW(0),
+                                        .height = CLAY_SIZING_GROW(0),
+                                    },
+                                .childGap = 16,
+                                .padding = {16, 16, 16, 16},
                             },
                     }) {
-                        Clay_OnHover(handle_player_class_select_button_tank, (intptr_t)state);
-                        ui_label("Tank", 32, WHITE);
+                        LABELED_BUTTON("Tank", "TankClassButton", handle_player_class_select_button_tank,
+                                       state->selected_class == PS_TANK);
+                        LABELED_BUTTON("Mover", "MoveClassButton", handle_player_class_select_button_move,
+                                       state->selected_class == PS_MOVE);
+                        LABELED_BUTTON("Killer", "KillerClassButton", handle_player_class_select_button_killer,
+                                       state->selected_class == PS_DAMAGE);
                     }
-                    CLAY({
-                        .id = CLAY_ID("MoveClassButton"),
-                        .backgroundColor = button_color(state->selected_class == PS_MOVE),
-                        .layout =
-                            {
-                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
-                            },
-                    }) {
-                        Clay_OnHover(handle_player_class_select_button_move, (intptr_t)state);
-                        ui_label("Mover", 32, WHITE);
-                    }
-                    CLAY({
-                        .id = CLAY_ID("KillerClassButton"),
-                        .backgroundColor = button_color(state->selected_class == PS_DAMAGE),
-                        .layout =
-                            {
-                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
-                            },
-                    }) {
-                        Clay_OnHover(handle_player_class_select_button_killer, (intptr_t)state);
-                        ui_label("Killer", 32, WHITE);
-                    }
+                    break;
                 }
-                break;
-            }
-            case IST_PLAYER_UPGRADE: {
-                CLAY({
-                    .id = CLAY_ID("PlayerUpgradeContainer"),
-                    .layout =
-                        {
-                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                            .sizing =
-                                {
-                                    .width = CLAY_SIZING_GROW(0),
-                                    .height = CLAY_SIZING_GROW(0),
-                                },
-                            .childGap = 16,
-                            .padding = {16, 16, 16, 16},
-                        },
-                }) {
+                case IST_PLAYER_UPGRADE: {
                     CLAY({
-                        .id = CLAY_ID("ReloadUpgradeButton"),
-                        .backgroundColor = {128, 128, 128, 200},
+                        .id = CLAY_ID("PlayerUpgradeContainer"),
                         .layout =
                             {
-                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                .sizing =
+                                    {
+                                        .width = CLAY_SIZING_GROW(0),
+                                        .height = CLAY_SIZING_GROW(0),
+                                    },
+                                .childGap = 16,
+                                .padding = {16, 16, 16, 16},
                             },
                     }) {
-                        Clay_OnHover(handle_reload_speed_upgrade_button, (intptr_t)state);
-                        ui_label("Reload", 24, WHITE);
+                        LABELED_BUTTON("Reload", "ReloadUpgradeButton", handle_reload_speed_upgrade_button, false);
+                        LABELED_BUTTON("Speed", "SpeedUpgradeButton", handle_speed_upgrade_button, false);
                     }
-                    CLAY({
-                        .id = CLAY_ID("SpeedUpgradeButton"),
-                        .backgroundColor = {128, 128, 128, 200},
-                        .layout =
-                            {
-                                .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
-                            },
-                    }) {
-                        Clay_OnHover(handle_speed_upgrade_button, (intptr_t)state);
-                        ui_label("Speed", 24, WHITE);
-                    }
+                    break;
                 }
-                break;
-            }
+                }
             }
             break;
         }
