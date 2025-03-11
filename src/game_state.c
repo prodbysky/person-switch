@@ -30,7 +30,7 @@ GameState game_state_init() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     InitAudioDevice();
-    SetTargetFPS(120);
+    SetWindowState(FLAG_VSYNC_HINT);
 
     uint64_t clay_req_memory = Clay_MinMemorySize();
     st.clay_memory = Clay_CreateArenaWithCapacityAndMemory(clay_req_memory, malloc(clay_req_memory));

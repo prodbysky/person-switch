@@ -7,10 +7,10 @@
 void physics(PhysicsComp *physics, float dt) {
     if (physics->grounded) {
         // Apply ground friction
-        physics->velocity.x /= 1.05;
+        physics->velocity.x /= 1 + (5 * dt);
     }
     // Apply air friction
-    physics->velocity.x /= 1.2;
+    physics->velocity.x /= (1 + (10 * dt));
 
     if (!physics->grounded) {
         physics->velocity.y += G * dt;
