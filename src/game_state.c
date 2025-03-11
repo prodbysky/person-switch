@@ -425,7 +425,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
                                    .childGap = 8,
                                    .padding = {16, 16, 16, 16}},
-                        .backgroundColor = {108, 108, 108, 120},
+                        .backgroundColor = {100, 100, 100, 255},
                         .scroll = {.horizontal = false, .vertical = true},
                         .cornerRadius = {10, 10, 10, 10},
                     }) {
