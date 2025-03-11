@@ -70,7 +70,6 @@ typedef struct {
 
     // clay ui
     Clay_Arena clay_memory;
-
 } GameState;
 
 // Initializes raylib, loads needed assets

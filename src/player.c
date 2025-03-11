@@ -127,4 +127,7 @@ void player_draw(const ECSPlayer *player) {
     if (!player->state.dead) {
         draw_solid(&player->transform, &player->draw_conf);
     }
+    if (player->state.health < 3) {
+        DrawRectangle(0, 0, WINDOW_W, WINDOW_H, GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
+    }
 }
