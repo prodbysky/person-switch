@@ -273,6 +273,20 @@ void handle_begin_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
         game_state_phase_change(state, GP_MAIN);
     }
 }
+void handle_show_controls_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->main_menu_type = MMT_CONTROLS;
+    }
+}
+void handle_show_main_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->main_menu_type = MMT_START;
+    }
+}
 
 Clay_Color button_color(bool activecond) {
     return activecond ? (Clay_Color){120, 120, 120, 200} : (Clay_Color){90, 90, 90, 100};
@@ -369,24 +383,36 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Play", "PlayButton",
                                                         handle_begin_game_button, false));
                         CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Controls",
-                                                        "ShowControlsButton", handle_begin_game_button, false));
+                                                        "ShowControlsButton", handle_show_controls_button, false));
+                    }
+                    break;
+                }
+                case MMT_CONTROLS: {
+                    CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Go back", "GoBackButton",
+                                                    handle_show_main_button, false));
+                    CLAY({.layout =
+                              {
+                                  .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                                  .layoutDirection = CLAY_TOP_TO_BOTTOM,
+
+                              },
+                          .scroll = {.vertical = true}
+
+                    }) {
+                        ui_label("A: Move left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("D: Move right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Space: Jump", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Left arrow: Shoot to the left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Right arrow: Shoot to the right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("P: Pause the game", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Left bracket: Decrease master volume by 5%", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Right bracket: Increase master volume by 5%", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Slash: Toggle shaders OwO", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Print screen: Take screenshot", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                     }
                     break;
                 }
                 }
-                /*CENTERED_ELEMENT(ui_label("Press `space` to start the game", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));*/
-                /*ui_label(" ", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("Controls:", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("A: Move left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("D: Move right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("Space: Jump", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("Left arrow: Shoot to the left", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("Right arrow: Shoot to the right", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("P: Pause the game", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("Left bracket: Decrease master volume by 5%", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("Right bracket: Increase master volume by 5%", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("Slash: Toggle shaders OwO", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
-                /*ui_label("Print screen: Take screenshot", 24, WHITE, CLAY_TEXT_ALIGN_LEFT);*/
             }
             break;
         }

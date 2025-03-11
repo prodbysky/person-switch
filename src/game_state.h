@@ -24,7 +24,8 @@ typedef enum {
 } IntermissionScreenType;
 
 typedef enum {
-    MMT_START
+    MMT_START,
+    MMT_CONTROLS,
 } MainMenuType;
 
 
