@@ -30,7 +30,7 @@ Main gameplay (with shaders enabled):
 
 Class selection screen (pops up after finishing a wave):
 
-![pswitch_ss_18 85](https://github.com/user-attachments/assets/e667b653-6d7c-4471-b061-32d517a05450)
+![pswitch_ss_8 46](https://github.com/user-attachments/assets/7a7a415b-d419-4df4-ad8d-fd8c9bc8eeea)
 
 ## Direct Dependencies
  - Raylib
