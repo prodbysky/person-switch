@@ -31,9 +31,6 @@ typedef enum {
 
 // The entire game state, sort of a `god` object
 typedef struct {
-    // Internal arena allocator which will store all internal allocations for the game
-    Arena allocator;
-
     // Player state
     ECSPlayer player;
     Bullets bullets;

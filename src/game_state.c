@@ -43,7 +43,6 @@ GameState game_state_init() {
     Clay_SetDebugModeEnabled(true);
 #endif
 
-    st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
     st.phase = GP_TRANSITION;
