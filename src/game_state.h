@@ -1,7 +1,6 @@
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
-#include "arena.h"
 #include "player.h"
 #include "raylib.h"
 #include "wave.h"
