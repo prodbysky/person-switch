@@ -366,7 +366,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 .id = CLAY_ID("PlayerInfoContainer"),
                 .layout =
                     {
-                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                        .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_PERCENT(0.3)},
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
                         .padding = {16, 16, 16, 16},
                     },
@@ -384,6 +384,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
                         .padding = {16, 16, 16, 16},
+                        .childGap = 16,
                     },
             }) {
                 switch (state->main_menu_type) {
@@ -394,18 +395,20 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                             {
                                 .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
                                 .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                                .childGap = 16,
+
                             },
                     }) {
-                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Play", "PlayButton",
-                                                        handle_begin_game_button, false));
-                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Controls",
-                                                        "ShowControlsButton", handle_show_controls_button, false));
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Play", "PlayButton",
+                                       handle_begin_game_button, false);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Controls", "ShowControlsButton",
+                                       handle_show_controls_button, false);
                     }
                     break;
                 }
                 case MMT_CONTROLS: {
-                    CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Go back", "GoBackButton",
-                                                    handle_show_main_button, false));
+                    CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Go back",
+                                                    "GoBackButton", handle_show_main_button, false));
                     CLAY({.layout =
                               {
                                   .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
