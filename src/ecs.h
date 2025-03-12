@@ -49,6 +49,7 @@ void physics_set_velocity_y(PhysicsComp* physics, float y);
 // Does collision for the passed in transform with the current stage
 void collision(TransformComp* transform, PhysicsComp* physics, 
                     const Stage* stage, float dt); 
+bool offscreen(const TransformComp* transform);
 
 // Draws a solid rectangle at the specified transform with the color in `SolidRectangle`
 void draw_solid(const TransformComp* transform, const SolidRectangleComp* solid_rectangle);

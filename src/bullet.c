@@ -16,11 +16,12 @@ void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullet
 
 void bullets_update(Bullets *bullets, float dt) {
     for (int i = 0; i < MAX_BULLETS; i++) {
-        if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
-            if (bullets->bullets[i].dir == BD_RIGHT) {
-                bullets->bullets[i].transform.rect.x += 500 * dt;
+        ECSPlayerBullet *bullet = &bullets->bullets[i];
+        if (time_delta(bullet->creation_time) < BULLET_LIFETIME) {
+            if (bullet->dir == BD_RIGHT) {
+                bullet->transform.rect.x += 500 * dt;
             } else {
-                bullets->bullets[i].transform.rect.x -= 500 * dt;
+                bullet->transform.rect.x -= 500 * dt;
             }
         }
     }

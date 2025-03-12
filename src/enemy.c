@@ -115,6 +115,11 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     }
     const float dt = GetFrameTime();
 
+    if (offscreen(&enemy->transform)) {
+        enemy->state.dead = true;
+        return;
+    }
+
     if (time_delta(enemy->state.last_hit) < INVULNERABILITY_TIME) {
         enemy->draw_conf.color = RED;
     } else {

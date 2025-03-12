@@ -102,3 +102,7 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
 void draw_solid(const TransformComp *transform, const SolidRectangleComp *solid_rectangle) {
     DrawRectangleRec(transform->rect, solid_rectangle->color);
 }
+
+bool offscreen(const TransformComp *transform) {
+    return transform->rect.y > WINDOW_H * 4;
+}
