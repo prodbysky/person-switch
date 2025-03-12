@@ -1,5 +1,4 @@
 #include "game_state.h"
-#include "arena.h"
 #include "bullet.h"
 #include "enemy.h"
 #include "player.h"
@@ -671,7 +670,6 @@ void game_state(GameState *state) {
 }
 
 void game_state_destroy(GameState *state) {
-    arena_free(&state->allocator);
     UnloadFont(state->font[0]);
     UnloadRenderTexture(state->target);
     UnloadShader(state->pixelizer);
