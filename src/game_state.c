@@ -39,6 +39,10 @@ GameState game_state_init() {
                     (Clay_ErrorHandler){.errorHandlerFunction = clay_error_callback});
     Clay_SetMeasureTextFunction(Raylib_MeasureText, st.font);
 
+#ifndef RELEASE
+    Clay_SetDebugModeEnabled(true);
+#endif
+
     st.allocator = arena_new(1024 * 4);
     st.stage = default_stage();
     st.player = ecs_player_new();
@@ -390,6 +394,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 switch (state->main_menu_type) {
                 case MMT_START: {
                     CLAY({
+                        .id = CLAY_ID("TitleTextContainer"),
                         .layout =
                             {
                                 .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.30)},
