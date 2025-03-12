@@ -699,7 +699,6 @@ Stage default_stage() {
     return st;
 }
 
-#define FAST_WEAK_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){32, 64}, 40, 3)
 #define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
 #define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 10, 3)
 
@@ -708,19 +707,14 @@ EnemyWave generate_wave(double strength) {
     size_t current_index = 0;
 
     while (strength > 0) {
-        size_t enemy_type = GetRandomValue(0, 2);
+        size_t enemy_type = GetRandomValue(0, 1);
         switch (enemy_type) {
         case 0: {
-            wave.enemies[current_index] = FAST_WEAK_ENEMY(GetRandomValue(0, 700), GetRandomValue(100, 300));
-            strength -= 0.5;
-            break;
-        }
-        case 1: {
             wave.enemies[current_index] = SLOW_STRONG_ENEMY(GetRandomValue(0, 700), GetRandomValue(100, 300));
             strength -= 1;
             break;
         }
-        case 2: {
+        case 1: {
             wave.enemies[current_index] = RANGER(GetRandomValue(0, 700), GetRandomValue(100, 300));
             strength -= 1;
             break;
