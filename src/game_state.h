@@ -67,7 +67,7 @@ typedef struct {
     MainMenuType main_menu_type;
 
     // vfx
-    RenderTexture2D target;
+    RenderTexture2D ui_frame_buffer;
     Shader pixelizer;
     bool vfx_enabled;
 
