@@ -403,6 +403,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         ui_label("Persona", 48, WHITE, CLAY_TEXT_ALIGN_CENTER);
                     };
                     CLAY({
+                        .id = CLAY_ID("TitleScreenButtonContainer"),
                         .layout =
                             {
                                 .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
@@ -421,8 +422,10 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 case MMT_CONTROLS: {
                     CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Go back",
                                                     "GoBackButton", handle_show_main_button, false));
-                    CLAY({.layout =
+                    CLAY({.id = CLAY_ID("ControlsListingContainer"),
+                          .layout =
                               {
+
                                   .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
                                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
 
@@ -453,12 +456,14 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         }
         case GP_AFTER_WAVE: {
             CLAY({
+                .id = CLAY_ID("IntermissionScreenContainer"),
                 .layout =
                     {
                         .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
                         .layoutDirection = CLAY_LEFT_TO_RIGHT,
                         .padding = {16, 16, 16, 16},
                         .childGap = 16,
+
                     },
             }) {
                 CLAY({
@@ -485,6 +490,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         },
                 }) {
                     CLAY({
+                        .id = CLAY_ID("NextWaveStartGuideContainer"),
                         .layout =
                             {
                                 .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_PERCENT(0.3)},
@@ -500,6 +506,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     }
 
                     CLAY({
+                        .id = CLAY_ID("NextWaveEnemyListContainer"),
                         .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
                                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
                                    .childGap = 8,
@@ -569,7 +576,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             break;
         }
         case GP_PAUSED: {
-            CLAY({.layout = {
+            CLAY({.id = CLAY_ID("PauseMenuContainer"),
+                  .layout = {
                       .sizing =
                           {
                               .width = CLAY_SIZING_GROW(0),
