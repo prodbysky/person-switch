@@ -389,7 +389,14 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             }) {
                 switch (state->main_menu_type) {
                 case MMT_START: {
-                    CENTERED_ELEMENT(ui_label("Persona", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));
+                    CLAY({
+                        .layout =
+                            {
+                                .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.30)},
+                            },
+                    }) {
+                        ui_label("Persona", 48, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                    };
                     CLAY({
                         .layout =
                             {
