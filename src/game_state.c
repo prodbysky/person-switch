@@ -67,7 +67,7 @@ GameState game_state_init() {
         .target = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
     };
     st.volume_label_opacity = 0.0;
-    st.ui_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
+    st.raw_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
     st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
     st.vfx_enabled = true;
     st.main_menu_type = MMT_START;
@@ -530,7 +530,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
 }
 
 void game_state_frame(GameState *state) {
-    BeginTextureMode(state->ui_frame_buffer);
+    BeginTextureMode(state->raw_frame_buffer);
     BeginMode2D(state->camera);
     ClearBackground(GetColor(0x181818ff));
     switch (state->phase) {
@@ -569,12 +569,12 @@ void game_state_frame(GameState *state) {
     if (state->vfx_enabled) {
         BeginShaderMode(state->pixelizer);
     }
-    DrawTextureRec(state->ui_frame_buffer.texture,
+    DrawTextureRec(state->raw_frame_buffer.texture,
                    (Rectangle){
                        0,
-                       (float)state->ui_frame_buffer.texture.height,
-                       (float)state->ui_frame_buffer.texture.width,
-                       -(float)state->ui_frame_buffer.texture.height,
+                       (float)state->raw_frame_buffer.texture.height,
+                       (float)state->raw_frame_buffer.texture.width,
+                       -(float)state->raw_frame_buffer.texture.height,
                    },
                    (Vector2){0, 0}, WHITE);
     if (state->vfx_enabled) {
@@ -598,7 +598,7 @@ void game_state(GameState *state) {
 
 void game_state_destroy(GameState *state) {
     UnloadFont(state->font[0]);
-    UnloadRenderTexture(state->ui_frame_buffer);
+    UnloadRenderTexture(state->raw_frame_buffer);
     UnloadShader(state->pixelizer);
 
     CloseAudioDevice();
