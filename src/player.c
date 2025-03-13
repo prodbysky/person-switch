@@ -2,6 +2,7 @@
 #include "bullet.h"
 #include "ecs.h"
 #include "enemy.h"
+#include "pickup.h"
 #include "static_config.h"
 #include "timing_utilities.h"
 #include <raylib.h>
@@ -16,6 +17,7 @@ ECSPlayer ecs_player_new() {
                 .health = 5,
                 .last_hit = 0.0,
                 .last_shot = 0.0,
+                .last_healed = 0.0,
                 .dead = false,
                 .movement_speed = 0.0,
                 .reload_time = 0.0,
@@ -27,7 +29,7 @@ ECSPlayer ecs_player_new() {
 }
 
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
-                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets) {
+                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups) {
     if (player->state.dead) {
         return;
     }
@@ -35,6 +37,8 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
 
     if (time_delta(player->state.last_hit) < INVULNERABILITY_TIME) {
         player->draw_conf.color = RED;
+    } else if (time_delta(player->state.last_healed) < INVULNERABILITY_TIME) {
+        player->draw_conf.color = GetColor(0x55dd55ff);
     } else {
         player->draw_conf.color = WHITE;
     }
@@ -43,6 +47,7 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
     physics(&player->physics, dt);
     collision(&player->transform, &player->physics, stage, dt);
     player_enemy_interaction(player, wave, enemy_bullets);
+    player_pickup_interaction(player, pickups);
     if (player->state.health <= 0) {
         player->state.dead = true;
     }
@@ -129,5 +134,23 @@ void player_draw(const ECSPlayer *player) {
     }
     if (player->state.health < 3) {
         DrawRectangle(0, 0, WINDOW_W, WINDOW_H, GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
+    }
+}
+void player_pickup_interaction(ECSPlayer *player, Pickups *pickups) {
+    for (size_t i = 0; i < MAX_PICKUPS; i++) {
+        Pickup *p = &pickups->pickups[i];
+        if (p->active) {
+            if (CheckCollisionRecs(p->transform.rect, player->transform.rect)) {
+                const double T = GetTime();
+                switch (p->type) {
+                case PT_HEALTH: {
+                    player->state.health += p->health;
+                    player->state.last_healed = T;
+                }
+                }
+                p->active = false;
+                p->picked_up_at = T;
+            }
+        }
     }
 }

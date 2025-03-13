@@ -1,6 +1,7 @@
 #include "game_state.h"
 #include "bullet.h"
 #include "enemy.h"
+#include "pickup.h"
 #include "player.h"
 #include "static_config.h"
 #include "timing_utilities.h"
@@ -71,6 +72,8 @@ GameState game_state_init() {
     st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
     st.vfx_enabled = true;
     st.main_menu_type = MMT_START;
+    st.pickups = (Pickups){0};
+    pickups_spawn(&st.pickups, health_pickup(5));
 
     return st;
 }
@@ -144,9 +147,11 @@ void game_state_update(GameState *state) {
                              PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
-                          &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets);
+                          &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets,
+                          &state->pickups);
         bullets_update(&state->bullets, dt);
         bullets_update(&state->enemy_bullets, dt);
+        pickups_update(&state->pickups, &state->stage, dt);
         if (state->player.state.dead) {
             game_state_phase_change(state, GP_DEAD);
         }
@@ -194,6 +199,7 @@ void game_state_draw_playfield(const GameState *state) {
     bullets_draw(&state->bullets);
     bullets_draw(&state->enemy_bullets);
     player_draw(&state->player);
+    pickups_draw(&state->pickups);
 }
 
 void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment) {

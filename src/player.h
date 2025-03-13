@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "ecs.h"
+#include "pickup.h"
 #include "wave.h"
 #include "bullet.h"
 
@@ -27,6 +28,7 @@ typedef struct {
     PlayerClass current_class;
     double last_hit;
     double last_shot;
+    double last_healed;
     size_t health;
     bool dead;
     float reload_time; 
@@ -45,8 +47,9 @@ ECSPlayer ecs_player_new();
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
                   const Sound *jump_sound, const Sound *shoot_sound);
 // Updates the entire player state
-void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets, 
-                  const Sound *jump_sound, const Sound* shoot_sound, Bullets* enemy_bullets);
+void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
+                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups);
 void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets* enemy_bullets);
+void player_pickup_interaction(ECSPlayer *player, Pickups* pickups);
 void player_draw(const ECSPlayer* player);
 #endif

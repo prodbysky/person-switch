@@ -1,6 +1,7 @@
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
+#include "pickup.h"
 #include "player.h"
 #include "raylib.h"
 #include "wave.h"
@@ -74,6 +75,8 @@ typedef struct {
 
     // clay ui
     Clay_Arena clay_memory;
+
+    Pickups pickups;
 } GameState;
 
 // Initializes raylib, loads needed assets
