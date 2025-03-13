@@ -68,6 +68,7 @@ GameState game_state_init() {
         .target = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
     };
     st.volume_label_opacity = 0.0;
+    st.vfx_indicator_opacity = 0.0;
     st.raw_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
     st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
     st.vfx_enabled = true;
@@ -105,7 +106,8 @@ void game_state_update(GameState *state) {
     float dt = GetFrameTime();
     state->camera.zoom *= 0.98;
     state->camera.zoom = Clamp(state->camera.zoom, 1, 999);
-    state->volume_label_opacity = Clamp(state->volume_label_opacity - 0.02, 0, 1);
+    state->volume_label_opacity = Clamp(state->volume_label_opacity / 1.01, 0, 1);
+    state->vfx_indicator_opacity = Clamp(state->vfx_indicator_opacity / 1.01, 0, 1);
 
     if (IsKeyPressed(KEY_LEFT_BRACKET)) {
         state->volume_label_opacity = 1;
@@ -119,6 +121,7 @@ void game_state_update(GameState *state) {
 
     if (IsKeyPressed(KEY_SLASH)) {
         state->vfx_enabled = !state->vfx_enabled;
+        state->vfx_indicator_opacity = 1.0;
     }
 
     if (IsKeyPressed(KEY_PRINT_SCREEN)) {
@@ -526,6 +529,13 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
 
         DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
                    GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
+        if (state->vfx_enabled) {
+            DrawTextEx(state->font[0], "VFX enabled", (Vector2){500, 40}, 48, 0,
+                       GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
+        } else {
+            DrawTextEx(state->font[0], "VFX disabled", (Vector2){500, 40}, 48, 0,
+                       GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
+        }
     }
 
     return Clay_EndLayout();

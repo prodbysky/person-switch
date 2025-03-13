@@ -65,6 +65,7 @@ typedef struct {
     Camera2D camera;
 
     double volume_label_opacity;
+    double vfx_indicator_opacity;
 
     MainMenuType main_menu_type;
 
