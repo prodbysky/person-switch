@@ -1,6 +1,7 @@
 #include "enemy.h"
 #include "bullet.h"
 #include "ecs.h"
+#include "pickup.h"
 #include "raylib.h"
 #include "static_config.h"
 #include "timing_utilities.h"
@@ -105,11 +106,15 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
     }
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets,
-                      const Sound *hit_sound, const Sound *death_sound, size_t dmg, Bullets *enemy_bullets) {
+                      const Sound *hit_sound, const Sound *death_sound, size_t dmg, Bullets *enemy_bullets,
+                      Pickups *pickups) {
     if (enemy->state.dead) {
         return;
     }
     if (enemy->state.health <= 0) {
+        if (GetRandomValue(0, 100) < 20) {
+            pickups_spawn(pickups, health_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 5));
+        }
         enemy->state.dead = true;
         PlaySound(*death_sound);
         return;
