@@ -91,16 +91,6 @@ void game_state_phase_change(GameState *state, GamePhase next) {
 void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
     state->camera.zoom = 1.5;
     state->player.state.current_class = new_class;
-    switch (new_class) {
-    case PS_TANK:
-        state->player.state.health = 10;
-        break;
-    case PS_MOVE:
-    case PS_DAMAGE:
-        state->player.state.health = 7;
-    case PS_COUNT:
-        break;
-    }
     game_state_phase_change(state, GP_MAIN);
     state->bullets = (Bullets){.bullets = {0}, .current = 0};
     state->enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
@@ -157,11 +147,13 @@ void game_state_update(GameState *state) {
         }
 
         if (wave_is_done(&state->current_wave)) {
-            game_state_phase_change(state, GP_AFTER_WAVE);
+            if (IsKeyPressed(KEY_ENTER)) {
+                game_state_phase_change(state, GP_AFTER_WAVE);
 
-            state->wave_strength *= 1.1;
-            state->wave_number++;
-            state->current_wave = generate_wave(state->wave_strength);
+                state->wave_strength *= 1.1;
+                state->wave_number++;
+                state->current_wave = generate_wave(state->wave_strength);
+            }
         }
         break;
     case GP_STARTMENU:
@@ -358,6 +350,10 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                   }}) {
                 ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+            }
+            if (wave_is_done(&state->current_wave)) {
+                CENTERED_ELEMENT(
+                    ui_label("Press enter to enter the intermission screen", 36, WHITE, CLAY_TEXT_ALIGN_CENTER));
             }
             break;
         }
