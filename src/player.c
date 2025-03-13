@@ -17,6 +17,7 @@ ECSPlayer ecs_player_new() {
                 .health = 5,
                 .last_hit = 0.0,
                 .last_shot = 0.0,
+                .last_healed = 0.0,
                 .dead = false,
                 .movement_speed = 0.0,
                 .reload_time = 0.0,
@@ -36,6 +37,8 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
 
     if (time_delta(player->state.last_hit) < INVULNERABILITY_TIME) {
         player->draw_conf.color = RED;
+    } else if (time_delta(player->state.last_healed) < INVULNERABILITY_TIME) {
+        player->draw_conf.color = GetColor(0x55dd55ff);
     } else {
         player->draw_conf.color = WHITE;
     }
@@ -138,13 +141,15 @@ void player_pickup_interaction(ECSPlayer *player, Pickups *pickups) {
         Pickup *p = &pickups->pickups[i];
         if (p->active) {
             if (CheckCollisionRecs(p->transform.rect, player->transform.rect)) {
+                const double T = GetTime();
                 switch (p->type) {
                 case PT_HEALTH: {
                     player->state.health += p->health;
+                    player->state.last_healed = T;
                 }
                 }
                 p->active = false;
-                p->picked_up_at = GetTime();
+                p->picked_up_at = T;
             }
         }
     }

@@ -28,6 +28,7 @@ typedef struct {
     PlayerClass current_class;
     double last_hit;
     double last_shot;
+    double last_healed;
     size_t health;
     bool dead;
     float reload_time; 
