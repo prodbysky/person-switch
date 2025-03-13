@@ -49,6 +49,7 @@ typedef struct {
 
     // Assets
     Font font[1];
+    Sound ui_button_click_sound;
     Sound player_jump_sound;
     Sound player_shoot_sound;
     Sound enemy_hit_sound;

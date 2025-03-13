@@ -48,6 +48,7 @@ GameState game_state_init() {
     st.after_transition = GP_STARTMENU;
     st.font[0] = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
     SetTextureFilter(st.font[0].texture, TEXTURE_FILTER_BILINEAR);
+    st.ui_button_click_sound = LoadSound("assets/sfx/button_click.wav");
     st.player_jump_sound = LoadSound("assets/sfx/player_jump.wav");
     st.player_shoot_sound = LoadSound("assets/sfx/shoot.wav");
     st.enemy_hit_sound = LoadSound("assets/sfx/enemy_hit.wav");
@@ -126,6 +127,10 @@ void game_state_update(GameState *state) {
 
     if (IsKeyPressed(KEY_PRINT_SCREEN)) {
         TakeScreenshot(TextFormat("pswitch_ss_%.2f.png", GetTime()));
+    }
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        PlaySound(state->ui_button_click_sound);
     }
 
     switch (state->phase) {
