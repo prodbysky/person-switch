@@ -1,5 +1,6 @@
 #include "bullet.h"
 #include "ecs.h"
+#include "raylib.h"
 #include "timing_utilities.h"
 
 void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, BulletDirection dir, Color c) {
