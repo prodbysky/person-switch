@@ -73,7 +73,7 @@ GameState game_state_init() {
     st.vfx_enabled = true;
     st.main_menu_type = MMT_START;
     st.pickups = (Pickups){0};
-    pickups_spawn(&st.pickups, dummy_pickup());
+    pickups_spawn(&st.pickups, health_pickup(5));
 
     return st;
 }

@@ -138,7 +138,13 @@ void player_pickup_interaction(ECSPlayer *player, Pickups *pickups) {
         Pickup *p = &pickups->pickups[i];
         if (p->active) {
             if (CheckCollisionRecs(p->transform.rect, player->transform.rect)) {
+                switch (p->type) {
+                case PT_HEALTH: {
+                    player->state.health += p->health;
+                }
+                }
                 p->active = false;
+                p->picked_up_at = GetTime();
             }
         }
     }
