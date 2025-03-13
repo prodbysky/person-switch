@@ -72,6 +72,7 @@ typedef struct {
 
     // vfx
     RenderTexture2D raw_frame_buffer;
+    RenderTexture2D final_frame_buffer;
     Shader pixelizer;
     bool vfx_enabled;
 

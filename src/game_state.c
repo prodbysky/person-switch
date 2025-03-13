@@ -71,11 +71,11 @@ GameState game_state_init() {
     st.volume_label_opacity = 0.0;
     st.vfx_indicator_opacity = 0.0;
     st.raw_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
+    st.final_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
     st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
     st.vfx_enabled = true;
     st.main_menu_type = MMT_START;
     st.pickups = (Pickups){0};
-    pickups_spawn(&st.pickups, health_pickup(200, 200, 16, 16, 5));
 
     return st;
 }
@@ -581,23 +581,44 @@ void game_state_frame(GameState *state) {
 
     EndMode2D();
     EndTextureMode();
+    if (state->vfx_enabled) {
+        BeginTextureMode(state->final_frame_buffer);
+        ClearBackground(BLACK);
+        BeginShaderMode(state->pixelizer);
+        DrawTextureRec(state->raw_frame_buffer.texture,
+                       (Rectangle){
+                           0,
+                           (float)state->raw_frame_buffer.texture.height,
+                           (float)state->raw_frame_buffer.texture.width,
+                           -(float)state->raw_frame_buffer.texture.height,
+                       },
+                       (Vector2){0, 0}, WHITE);
+        EndShaderMode();
+        EndTextureMode();
+    } else {
+        BeginTextureMode(state->final_frame_buffer);
+        ClearBackground(BLACK);
+        DrawTextureRec(state->raw_frame_buffer.texture,
+                       (Rectangle){
+                           0,
+                           (float)state->raw_frame_buffer.texture.height,
+                           (float)state->raw_frame_buffer.texture.width,
+                           -(float)state->raw_frame_buffer.texture.height,
+                       },
+                       (Vector2){0, 0}, WHITE);
+        EndTextureMode();
+    }
 
     BeginDrawing();
     ClearBackground(GetColor(0x181818ff));
-    if (state->vfx_enabled) {
-        BeginShaderMode(state->pixelizer);
-    }
-    DrawTextureRec(state->raw_frame_buffer.texture,
+    DrawTextureRec(state->final_frame_buffer.texture,
                    (Rectangle){
                        0,
-                       (float)state->raw_frame_buffer.texture.height,
-                       (float)state->raw_frame_buffer.texture.width,
-                       -(float)state->raw_frame_buffer.texture.height,
+                       (float)state->final_frame_buffer.texture.height,
+                       (float)state->final_frame_buffer.texture.width,
+                       -(float)state->final_frame_buffer.texture.height,
                    },
                    (Vector2){0, 0}, WHITE);
-    if (state->vfx_enabled) {
-        EndShaderMode();
-    }
     Clay_Raylib_Render(game_state_draw_ui(state), &state->font[0]);
     EndDrawing();
 }
@@ -617,6 +638,7 @@ void game_state(GameState *state) {
 void game_state_destroy(GameState *state) {
     UnloadFont(state->font[0]);
     UnloadRenderTexture(state->raw_frame_buffer);
+    UnloadRenderTexture(state->final_frame_buffer);
     UnloadShader(state->pixelizer);
 
     CloseAudioDevice();
