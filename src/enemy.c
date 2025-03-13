@@ -113,7 +113,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     }
     if (enemy->state.health <= 0) {
         if (GetRandomValue(0, 100) < 20) {
-            pickups_spawn(pickups, health_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 5));
+            pickups_spawn(pickups, health_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 3));
         }
         enemy->state.dead = true;
         PlaySound(*death_sound);
