@@ -32,7 +32,7 @@ void pickups_update(Pickups *pickups, const Stage *stage, float dt) {
 Pickup health_pickup(size_t health) {
     return (Pickup){.active = true,
                     .physics = DEFAULT_PHYSICS(),
-                    .transform = TRANSFORM(200, 200, 64, 64),
+                    .transform = TRANSFORM(200, 200, 16, 16),
                     .type = PT_HEALTH,
                     .health = health};
 }
