@@ -27,7 +27,7 @@ typedef struct {
     size_t current;
 } Pickups;
 
-Pickup health_pickup(size_t health);
+Pickup health_pickup(float x, float y, float w, float h, size_t health);
 
 void pickups_spawn(Pickups *pickups, Pickup p); 
 void pickups_draw(const Pickups* pickups);
