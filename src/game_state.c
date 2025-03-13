@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CLAY_IMPLEMENTATION
 #include <clay/clay.h>
 #include <clay/clay_raylib_renderer.c>
 
@@ -51,6 +50,7 @@ GameState game_state_init() {
     st.player_jump_sound = LoadSound("assets/sfx/player_jump.wav");
     st.player_shoot_sound = LoadSound("assets/sfx/shoot.wav");
     st.enemy_hit_sound = LoadSound("assets/sfx/enemy_hit.wav");
+    st.enemy_die_sound = LoadSound("assets/sfx/enemy_die.wav");
     st.phase_change_sound = LoadSound("assets/sfx/menu_switch.wav");
     st.bullets = (Bullets){.bullets = {0}, .current = 0};
     st.began_transition = GetTime();
@@ -140,8 +140,8 @@ void game_state_update(GameState *state) {
         }
         for (size_t i = 0; i < state->current_wave.count; i++) {
             ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets,
-                             &state->enemy_hit_sound, PLAYER_STATES[state->player.state.current_class].damage,
-                             &state->enemy_bullets);
+                             &state->enemy_hit_sound, &state->enemy_die_sound,
+                             PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
                           &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets);

@@ -27,7 +27,7 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(OBJS) $(SRC_DIR)/main.c
-	$(CC) $(SRC_DIR)/main.c $(OBJS) -o $(TARGET) $(CFLAGS) $(LDFLAGS) $(LIBS)
+	$(CC) $(SRC_DIR)/main.c $(OBJS) -o $(TARGET) $(CFLAGS) $(LDFLAGS) $(LIBS) src/clay.o
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 	$(CC) -c $< -o $@ $(CFLAGS)

@@ -51,6 +51,7 @@ typedef struct {
     Sound player_jump_sound;
     Sound player_shoot_sound;
     Sound enemy_hit_sound;
+    Sound enemy_die_sound;
     Sound phase_change_sound;
 
     // Intermission screen (upgrades)
