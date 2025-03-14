@@ -30,6 +30,7 @@ GameState game_state_init() {
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     InitAudioDevice();
     SetWindowState(FLAG_VSYNC_HINT);
+    SetExitKey(0);
 
     uint64_t clay_req_memory = Clay_MinMemorySize();
     st.clay_memory = Clay_CreateArenaWithCapacityAndMemory(clay_req_memory, malloc(clay_req_memory));
@@ -135,7 +136,7 @@ void game_state_update(GameState *state) {
 
     switch (state->phase) {
     case GP_MAIN:
-        if (IsKeyPressed(KEY_P)) {
+        if (IsKeyPressed(KEY_ESCAPE)) {
             game_state_phase_change(state, GP_PAUSED);
             return;
         }
@@ -268,6 +269,28 @@ void handle_continue_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t u
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
+    }
+}
+
+void handle_save_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    (void)state;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        const size_t size = sizeof(ECSPlayer) + sizeof(Pickups) + sizeof(EnemyWave) + sizeof(double) + sizeof(size_t);
+        uint8_t *data = calloc(size, 1);
+        size_t cursor = 0;
+        memcpy(data, &state->player, sizeof(ECSPlayer));
+        cursor += sizeof(ECSPlayer);
+        memcpy(data + cursor, &state->pickups, sizeof(Pickups));
+        cursor += sizeof(Pickups);
+        memcpy(data + cursor, &state->current_wave, sizeof(EnemyWave));
+        cursor += sizeof(EnemyWave);
+        memcpy(data + cursor, &state->wave_strength, sizeof(double));
+        cursor += sizeof(double);
+        memcpy(data + cursor, &state->wave_number, sizeof(size_t));
+        cursor += sizeof(size_t);
+        SaveFileData("savefile.bin", data, size);
     }
 }
 
@@ -414,7 +437,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         ui_label("Space: Jump", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Left arrow: Shoot to the left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Right arrow: Shoot to the right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                        ui_label("P: Pause the game", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Escape: Pause the game", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Left bracket: Decrease master volume by 5%", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Right bracket: Increase master volume by 5%", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Slash: Toggle shaders OwO", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
@@ -524,6 +547,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                              .childGap = 16}}) {
                 LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Continue", "ContinueButton",
                                handle_continue_button, false);
+                LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Save game", "SaveButton", handle_save_button,
+                               false);
                 LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Main menu", "MainMenuButton",
                                handle_main_menu_button, false);
             }
