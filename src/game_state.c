@@ -417,7 +417,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         case GP_MAIN: {
             CLAY({.id = CLAY_ID("PlayerInfoContainer"),
                   .layout = {
-                      .sizing = {.height = CLAY_SIZING_PERCENT(0.4), .width = CLAY_SIZING_PERCENT(0.3)},
+                      .sizing = {.height = CLAY_SIZING_PERCENT(0.4), .width = CLAY_SIZING_PERCENT(0.4)},
                       .layoutDirection = CLAY_TOP_TO_BOTTOM,
                       .padding = {16, 16, 16, 16},
                   }}) {
