@@ -291,6 +291,32 @@ void handle_save_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
         memcpy(data + cursor, &state->wave_number, sizeof(size_t));
         cursor += sizeof(size_t);
         SaveFileData("savefile.bin", data, size);
+        free(data);
+    }
+}
+
+void handle_continue_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    (void)state;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        int got_size = 0;
+        if (FileExists("savefile.bin")) {
+            uint8_t *data = LoadFileData("savefile.bin", &got_size);
+            uint8_t *data_unmoved = data;
+            memcpy(&state->player, data, sizeof(ECSPlayer));
+            data += sizeof(ECSPlayer);
+            memcpy(&state->pickups, data, sizeof(Pickups));
+            data += sizeof(Pickups);
+            memcpy(&state->current_wave, data, sizeof(EnemyWave));
+            data += sizeof(EnemyWave);
+            memcpy(&state->wave_strength, data, sizeof(double));
+            data += sizeof(double);
+            memcpy(&state->wave_number, data, sizeof(size_t));
+            data += sizeof(size_t);
+            game_state_phase_change(state, GP_MAIN);
+            MemFree(data_unmoved);
+        }
     }
 }
 
@@ -420,7 +446,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                         }
                         LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "Continue", "ContinueButton",
-                                       handle_show_controls_button, false);
+                                       handle_continue_game_button, false);
                         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                         }
                     }
