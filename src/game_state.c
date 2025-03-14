@@ -547,6 +547,26 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     return Clay_EndLayout();
 }
 
+void apply_shader(RenderTexture2D *in, RenderTexture2D *out, Shader *shader) {
+    BeginTextureMode(*out);
+    ClearBackground(BLACK);
+    if (shader != NULL) {
+        BeginShaderMode(*shader);
+    }
+    DrawTextureRec(in->texture,
+                   (Rectangle){
+                       0,
+                       (float)in->texture.height,
+                       (float)in->texture.width,
+                       -(float)in->texture.height,
+                   },
+                   (Vector2){0, 0}, WHITE);
+    if (shader != NULL) {
+        EndShaderMode();
+    }
+    EndTextureMode();
+}
+
 void game_state_frame(GameState *state) {
     BeginTextureMode(state->raw_frame_buffer);
     BeginMode2D(state->camera);
@@ -581,32 +601,11 @@ void game_state_frame(GameState *state) {
 
     EndMode2D();
     EndTextureMode();
+
     if (state->vfx_enabled) {
-        BeginTextureMode(state->final_frame_buffer);
-        ClearBackground(BLACK);
-        BeginShaderMode(state->pixelizer);
-        DrawTextureRec(state->raw_frame_buffer.texture,
-                       (Rectangle){
-                           0,
-                           (float)state->raw_frame_buffer.texture.height,
-                           (float)state->raw_frame_buffer.texture.width,
-                           -(float)state->raw_frame_buffer.texture.height,
-                       },
-                       (Vector2){0, 0}, WHITE);
-        EndShaderMode();
-        EndTextureMode();
+        apply_shader(&state->raw_frame_buffer, &state->final_frame_buffer, &state->pixelizer);
     } else {
-        BeginTextureMode(state->final_frame_buffer);
-        ClearBackground(BLACK);
-        DrawTextureRec(state->raw_frame_buffer.texture,
-                       (Rectangle){
-                           0,
-                           (float)state->raw_frame_buffer.texture.height,
-                           (float)state->raw_frame_buffer.texture.width,
-                           -(float)state->raw_frame_buffer.texture.height,
-                       },
-                       (Vector2){0, 0}, WHITE);
-        EndTextureMode();
+        apply_shader(&state->raw_frame_buffer, &state->final_frame_buffer, NULL);
     }
 
     BeginDrawing();
