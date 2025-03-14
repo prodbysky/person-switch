@@ -45,6 +45,8 @@ GameState game_state_init() {
 
     st.stage = default_stage();
     st.player = ecs_player_new();
+    st.reload_cost = 3;
+    st.speed_cost = 1;
     st.phase = GP_TRANSITION;
     st.after_transition = GP_STARTMENU;
     st.font[0] = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
@@ -256,14 +258,22 @@ void handle_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intpt
     (void)e_id;
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->player.state.movement_speed += 5.0;
+        if (state->player.state.coins >= state->speed_cost) {
+            state->player.state.movement_speed += 5.0;
+            state->player.state.coins -= state->speed_cost;
+            state->speed_cost *= 1.1;
+        }
     }
 }
 void handle_reload_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->player.state.reload_time += 0.02;
+        if (state->player.state.coins >= state->reload_cost) {
+            state->player.state.reload_time += 0.02;
+            state->player.state.coins -= state->reload_cost;
+            state->reload_cost *= 1.1;
+        }
     }
 }
 
@@ -407,11 +417,12 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         case GP_MAIN: {
             CLAY({.id = CLAY_ID("PlayerInfoContainer"),
                   .layout = {
-                      .sizing = {.height = CLAY_SIZING_PERCENT(0.2), .width = CLAY_SIZING_PERCENT(0.3)},
+                      .sizing = {.height = CLAY_SIZING_PERCENT(0.4), .width = CLAY_SIZING_PERCENT(0.3)},
                       .layoutDirection = CLAY_TOP_TO_BOTTOM,
                       .padding = {16, 16, 16, 16},
                   }}) {
                 ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                ui_label(TextFormat("Coins: %.2f", state->player.state.coins), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
             }
             if (wave_is_done(&state->current_wave)) {
@@ -561,8 +572,10 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
 
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Reload", "ReloadUpgradeButton",
                                        handle_reload_speed_upgrade_button, false);
+                        ui_label(TextFormat("Cost: %.2f", state->reload_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Speed", "SpeedUpgradeButton",
                                        handle_speed_upgrade_button, false);
+                        ui_label(TextFormat("Cost: %.2f", state->speed_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
                     }
                     break;
                 }

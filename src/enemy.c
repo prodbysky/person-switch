@@ -112,6 +112,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
         return;
     }
     if (enemy->state.health <= 0) {
+        pickups_spawn(pickups, coin_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 3));
         if (GetRandomValue(0, 100) < 20) {
             pickups_spawn(pickups, health_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 3));
         }

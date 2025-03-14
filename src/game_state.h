@@ -33,6 +33,8 @@ typedef enum {
 typedef struct {
     // Player state
     ECSPlayer player;
+    double reload_cost;
+    double speed_cost;
     Bullets bullets;
 
     // Contains platforms

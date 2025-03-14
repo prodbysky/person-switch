@@ -11,17 +11,15 @@
 ECSPlayer ecs_player_new() {
     ECSPlayer p = {
         .transform = TRANSFORM((WINDOW_W / 2.0) + 16, (WINDOW_H / 2.0) + 48, 32, 96),
-        .state =
-            {
-                .current_class = PS_MOVE,
-                .health = 5,
-                .last_hit = 0.0,
-                .last_shot = 0.0,
-                .last_healed = 0.0,
-                .dead = false,
-                .movement_speed = 0.0,
-                .reload_time = 0.0,
-            },
+        .state = {.current_class = PS_MOVE,
+                  .health = 5,
+                  .last_hit = 0.0,
+                  .last_shot = 0.0,
+                  .last_healed = 0.0,
+                  .dead = false,
+                  .movement_speed = 0.0,
+                  .reload_time = 0.0,
+                  .coins = 10},
         .physics = DEFAULT_PHYSICS(),
         .draw_conf = {.color = WHITE},
     };
@@ -146,6 +144,11 @@ void player_pickup_interaction(ECSPlayer *player, Pickups *pickups) {
                 case PT_HEALTH: {
                     player->state.health += p->health;
                     player->state.last_healed = T;
+                    break;
+                }
+                case PT_COIN: {
+                    player->state.coins += p->coin;
+                    break;
                 }
                 }
                 p->active = false;

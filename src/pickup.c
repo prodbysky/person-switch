@@ -36,3 +36,11 @@ Pickup health_pickup(float x, float y, float w, float h, size_t health) {
                     .type = PT_HEALTH,
                     .health = health};
 }
+
+Pickup coin_pickup(float x, float y, float w, float h, size_t coin) {
+    return (Pickup){.active = true,
+                    .physics = DEFAULT_PHYSICS(),
+                    .transform = TRANSFORM(x, y, w, h),
+                    .type = PT_COIN,
+                    .coin = coin};
+}

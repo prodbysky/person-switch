@@ -33,6 +33,7 @@ typedef struct {
     bool dead;
     float reload_time; 
     float movement_speed;
+    float coins;
 } PlayerStateComp;
 
 typedef struct {

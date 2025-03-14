@@ -5,6 +5,7 @@
 
 typedef enum {
     PT_HEALTH,
+    PT_COIN,
 } PickupType;
 
 typedef struct {
@@ -16,6 +17,7 @@ typedef struct {
     PickupType type;
     union {
         size_t health;
+        size_t coin;
     };
 } Pickup;
 
@@ -28,6 +30,7 @@ typedef struct {
 } Pickups;
 
 Pickup health_pickup(float x, float y, float w, float h, size_t health);
+Pickup coin_pickup(float x, float y, float w, float h, size_t coin);
 
 void pickups_spawn(Pickups *pickups, Pickup p); 
 void pickups_draw(const Pickups* pickups);
