@@ -639,7 +639,6 @@ void game_state_destroy(GameState *state) {
     UnloadRenderTexture(state->raw_frame_buffer);
     UnloadRenderTexture(state->final_frame_buffer);
     UnloadShader(state->pixelizer);
-
     CloseAudioDevice();
     CloseWindow();
 }
