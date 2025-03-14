@@ -411,12 +411,16 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                      .childGap = 16}}) {
                         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                         }
-                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.3), CLAY_SIZING_PERCENT(0.3), "Play", "PlayButton",
+                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "New", "NewButton",
                                        handle_begin_game_button, false);
                         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                         }
-                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.3), CLAY_SIZING_PERCENT(0.3), "Controls",
+                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "Controls",
                                        "ShowControlsButton", handle_show_controls_button, false);
+                        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                        }
+                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "Continue", "ContinueButton",
+                                       handle_show_controls_button, false);
                         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                         }
                     }
