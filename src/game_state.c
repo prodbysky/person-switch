@@ -77,6 +77,8 @@ GameState game_state_init() {
     st.vfx_enabled = true;
     st.main_menu_type = MMT_START;
     st.pickups = (Pickups){0};
+    st.error = "ERROR";
+    st.error_opacity = 0;
 
     return st;
 }
@@ -110,6 +112,7 @@ void game_state_update(GameState *state) {
     state->camera.zoom = Clamp(state->camera.zoom, 1, 999);
     state->volume_label_opacity = Clamp(state->volume_label_opacity / 1.01, 0, 1);
     state->vfx_indicator_opacity = Clamp(state->vfx_indicator_opacity / 1.01, 0, 1);
+    state->error_opacity = Clamp(state->error_opacity / 1.05, 0, 1);
 
     if (IsKeyPressed(KEY_LEFT_BRACKET)) {
         state->volume_label_opacity = 1;
@@ -316,6 +319,8 @@ void handle_continue_game_button(Clay_ElementId e_id, Clay_PointerData pd, intpt
             data += sizeof(size_t);
             game_state_phase_change(state, GP_MAIN);
             MemFree(data_unmoved);
+        } else {
+            flash_error(state, "Save file not found");
         }
     }
 }
@@ -597,6 +602,9 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             DrawTextEx(state->font[0], "VFX disabled", (Vector2){500, 40}, 48, 0,
                        GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
         }
+
+        DrawTextEx(state->font[0], state->error, (Vector2){200, 200}, 60, 0,
+                   GetColor(0xff000000 + (state->error_opacity * 255)));
     }
 
     return Clay_EndLayout();
@@ -701,6 +709,11 @@ void game_state_destroy(GameState *state) {
 void draw_centered_text(const char *message, const Font *font, size_t size, Color color, float y) {
     const Vector2 text_size = MeasureTextEx(*font, message, size, 0);
     DrawTextEx(*font, message, (Vector2){screen_centered_position(text_size.x), y}, size, 0, color);
+}
+
+void flash_error(GameState *state, char *message) {
+    state->error_opacity = 1.0;
+    state->error = message;
 }
 
 Stage default_stage() {
