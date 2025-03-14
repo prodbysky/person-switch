@@ -30,6 +30,7 @@ GameState game_state_init() {
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
     InitAudioDevice();
     SetWindowState(FLAG_VSYNC_HINT);
+    SetExitKey(0);
 
     uint64_t clay_req_memory = Clay_MinMemorySize();
     st.clay_memory = Clay_CreateArenaWithCapacityAndMemory(clay_req_memory, malloc(clay_req_memory));
@@ -76,6 +77,8 @@ GameState game_state_init() {
     st.vfx_enabled = true;
     st.main_menu_type = MMT_START;
     st.pickups = (Pickups){0};
+    st.error = "ERROR";
+    st.error_opacity = 0;
 
     return st;
 }
@@ -109,6 +112,7 @@ void game_state_update(GameState *state) {
     state->camera.zoom = Clamp(state->camera.zoom, 1, 999);
     state->volume_label_opacity = Clamp(state->volume_label_opacity / 1.01, 0, 1);
     state->vfx_indicator_opacity = Clamp(state->vfx_indicator_opacity / 1.01, 0, 1);
+    state->error_opacity = Clamp(state->error_opacity / 1.05, 0, 1);
 
     if (IsKeyPressed(KEY_LEFT_BRACKET)) {
         state->volume_label_opacity = 1;
@@ -135,7 +139,7 @@ void game_state_update(GameState *state) {
 
     switch (state->phase) {
     case GP_MAIN:
-        if (IsKeyPressed(KEY_P)) {
+        if (IsKeyPressed(KEY_ESCAPE)) {
             game_state_phase_change(state, GP_PAUSED);
             return;
         }
@@ -271,6 +275,56 @@ void handle_continue_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t u
     }
 }
 
+void handle_save_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    (void)state;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        const size_t size = sizeof(ECSPlayer) + sizeof(Pickups) + sizeof(EnemyWave) + sizeof(double) + sizeof(size_t);
+        uint8_t *data = calloc(size, 1);
+        size_t cursor = 0;
+        memcpy(data, &state->player, sizeof(ECSPlayer));
+        cursor += sizeof(ECSPlayer);
+        memcpy(data + cursor, &state->pickups, sizeof(Pickups));
+        cursor += sizeof(Pickups);
+        memcpy(data + cursor, &state->current_wave, sizeof(EnemyWave));
+        cursor += sizeof(EnemyWave);
+        memcpy(data + cursor, &state->wave_strength, sizeof(double));
+        cursor += sizeof(double);
+        memcpy(data + cursor, &state->wave_number, sizeof(size_t));
+        cursor += sizeof(size_t);
+        SaveFileData("savefile.bin", data, size);
+        free(data);
+    }
+}
+
+void handle_continue_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    (void)state;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        int got_size = 0;
+        if (FileExists("savefile.bin")) {
+            uint8_t *data = LoadFileData("savefile.bin", &got_size);
+            uint8_t *data_unmoved = data;
+            memcpy(&state->player, data, sizeof(ECSPlayer));
+            data += sizeof(ECSPlayer);
+            memcpy(&state->pickups, data, sizeof(Pickups));
+            data += sizeof(Pickups);
+            memcpy(&state->current_wave, data, sizeof(EnemyWave));
+            data += sizeof(EnemyWave);
+            memcpy(&state->wave_strength, data, sizeof(double));
+            data += sizeof(double);
+            memcpy(&state->wave_number, data, sizeof(size_t));
+            data += sizeof(size_t);
+            game_state_phase_change(state, GP_MAIN);
+            MemFree(data_unmoved);
+        } else {
+            flash_error(state, "Save file not found");
+        }
+    }
+}
+
 void handle_begin_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
@@ -388,12 +442,16 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                      .childGap = 16}}) {
                         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                         }
-                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.3), CLAY_SIZING_PERCENT(0.3), "Play", "PlayButton",
+                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "New", "NewButton",
                                        handle_begin_game_button, false);
                         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                         }
-                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.3), CLAY_SIZING_PERCENT(0.3), "Controls",
+                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "Controls",
                                        "ShowControlsButton", handle_show_controls_button, false);
+                        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                        }
+                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "Continue", "ContinueButton",
+                                       handle_continue_game_button, false);
                         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                         }
                     }
@@ -414,7 +472,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         ui_label("Space: Jump", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Left arrow: Shoot to the left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Right arrow: Shoot to the right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                        ui_label("P: Pause the game", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                        ui_label("Escape: Pause the game", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Left bracket: Decrease master volume by 5%", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Right bracket: Increase master volume by 5%", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Slash: Toggle shaders OwO", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
@@ -524,6 +582,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                              .childGap = 16}}) {
                 LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Continue", "ContinueButton",
                                handle_continue_button, false);
+                LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Save game", "SaveButton", handle_save_button,
+                               false);
                 LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Main menu", "MainMenuButton",
                                handle_main_menu_button, false);
             }
@@ -542,6 +602,9 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             DrawTextEx(state->font[0], "VFX disabled", (Vector2){500, 40}, 48, 0,
                        GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
         }
+
+        DrawTextEx(state->font[0], state->error, (Vector2){200, 200}, 60, 0,
+                   GetColor(0xff000000 + (state->error_opacity * 255)));
     }
 
     return Clay_EndLayout();
@@ -646,6 +709,11 @@ void game_state_destroy(GameState *state) {
 void draw_centered_text(const char *message, const Font *font, size_t size, Color color, float y) {
     const Vector2 text_size = MeasureTextEx(*font, message, size, 0);
     DrawTextEx(*font, message, (Vector2){screen_centered_position(text_size.x), y}, size, 0, color);
+}
+
+void flash_error(GameState *state, char *message) {
+    state->error_opacity = 1.0;
+    state->error = message;
 }
 
 Stage default_stage() {

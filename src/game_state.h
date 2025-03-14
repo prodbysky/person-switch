@@ -68,6 +68,9 @@ typedef struct {
     double volume_label_opacity;
     double vfx_indicator_opacity;
 
+    char* error;
+    double error_opacity;
+
     MainMenuType main_menu_type;
 
     // vfx
@@ -108,5 +111,6 @@ double screen_centered_position(double w);
 EnemyWave generate_wave(double strength);
 
 void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment);
+void flash_error(GameState* state, char* message);
 
 #endif
