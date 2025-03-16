@@ -78,6 +78,7 @@ GameState game_state_init() {
     st.volume_label_opacity = 0.0;
     st.vfx_indicator_opacity = 0.0;
     st.raw_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
+    st.ui_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
     st.final_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
     st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
     st.vfx_enabled = true;
@@ -408,7 +409,7 @@ void handle_show_main_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t 
 }
 
 Clay_Color button_color(bool activecond) {
-    return activecond ? (Clay_Color){120, 120, 120, 200} : (Clay_Color){90, 90, 90, 100};
+    return activecond ? (Clay_Color){120, 120, 120, 255} : (Clay_Color){90, 90, 90, 200};
 }
 
 #define LABELED_BUTTON(w, h, text, id_, callback, highlight_condition)                                                 \
@@ -752,8 +753,12 @@ void game_state_frame(GameState *state) {
         apply_shader(&state->raw_frame_buffer, &state->final_frame_buffer, NULL);
     }
 
+    BeginTextureMode(state->ui_frame_buffer);
+    ClearBackground(GetColor(0));
+    Clay_Raylib_Render(game_state_draw_ui(state), &state->font[0]);
+    EndTextureMode();
+
     BeginDrawing();
-    ClearBackground(GetColor(0x181818ff));
     DrawTextureRec(state->final_frame_buffer.texture,
                    (Rectangle){
                        0,
@@ -762,7 +767,14 @@ void game_state_frame(GameState *state) {
                        -(float)state->final_frame_buffer.texture.height,
                    },
                    (Vector2){0, 0}, WHITE);
-    Clay_Raylib_Render(game_state_draw_ui(state), &state->font[0]);
+    DrawTextureRec(state->ui_frame_buffer.texture,
+                   (Rectangle){
+                       0,
+                       (float)state->ui_frame_buffer.texture.height,
+                       (float)state->ui_frame_buffer.texture.width,
+                       -(float)state->ui_frame_buffer.texture.height,
+                   },
+                   (Vector2){0, 0}, WHITE);
     EndDrawing();
 }
 
@@ -781,6 +793,7 @@ void game_state(GameState *state) {
 void game_state_destroy(GameState *state) {
     UnloadFont(state->font[0]);
     UnloadRenderTexture(state->raw_frame_buffer);
+    UnloadRenderTexture(state->ui_frame_buffer);
     UnloadRenderTexture(state->final_frame_buffer);
     UnloadShader(state->pixelizer);
     CloseAudioDevice();
