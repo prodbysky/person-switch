@@ -555,11 +555,9 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                                         state->selected_stage == 2));
                     }
 
-                    CLAY({.layout =
-                              {
-                                  .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                                  .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                              }
+                    CLAY({.layout = {.sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                                     .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                                     .childGap = 16}
 
                     }) {
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Tank", "TankClassButton",
