@@ -3,6 +3,7 @@
 #include "enemy.h"
 #include "pickup.h"
 #include "player.h"
+#include "stage.h"
 #include "static_config.h"
 #include "timing_utilities.h"
 #include "wave.h"
@@ -25,6 +26,8 @@ void clay_error_callback(Clay_ErrorData errorData) {
     TraceLog(LOG_ERROR, "%s", errorData.errorText.chars);
 }
 
+static Stage (*const stages[])(void) = {stage_1, stage_2, stage_3};
+
 GameState game_state_init() {
     GameState st;
     InitWindow(WINDOW_W, WINDOW_H, "Persona");
@@ -43,7 +46,8 @@ GameState game_state_init() {
     Clay_SetDebugModeEnabled(true);
 #endif
 
-    st.stage = default_stage();
+    st.stage = stages[0]();
+    st.selected_stage = 0;
     st.player = ecs_player_new();
     st.reload_cost = 3;
     st.speed_cost = 1;
@@ -89,6 +93,9 @@ double screen_centered_position(double w) {
     return (WINDOW_W / 2.0) - (w / 2.0);
 }
 void game_state_phase_change(GameState *state, GamePhase next) {
+    if (next == GP_MAIN) {
+        state->stage = stages[state->selected_stage]();
+    }
     state->phase = GP_TRANSITION;
     state->after_transition = next;
     state->began_transition = GetTime();
@@ -178,7 +185,7 @@ void game_state_update(GameState *state) {
             game_state_phase_change(state, GP_MAIN);
             state->began_transition = GetTime();
             state->player = ecs_player_new();
-            state->stage = default_stage();
+            state->stage = stage_2();
             state->current_wave = generate_wave(state->wave_strength);
         }
         break;
@@ -284,13 +291,45 @@ void handle_continue_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t u
         game_state_phase_change(state, GP_MAIN);
     }
 }
+void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        game_state_phase_change(state, GP_MAIN);
+        state->stage = stages[state->selected_stage]();
+    }
+}
+
+void handle_stage_1_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_stage = 0;
+    }
+}
+
+void handle_stage_2_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_stage = 1;
+    }
+}
+void handle_stage_3_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->selected_stage = 2;
+    }
+}
 
 void handle_save_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
     (void)state;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        const size_t size = sizeof(ECSPlayer) + sizeof(Pickups) + sizeof(EnemyWave) + sizeof(double) + sizeof(size_t);
+        const size_t size =
+            sizeof(ECSPlayer) + sizeof(Pickups) + sizeof(EnemyWave) + sizeof(double) + sizeof(size_t) + sizeof(size_t);
         uint8_t *data = calloc(size, 1);
         size_t cursor = 0;
         memcpy(data, &state->player, sizeof(ECSPlayer));
@@ -302,6 +341,8 @@ void handle_save_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
         memcpy(data + cursor, &state->wave_strength, sizeof(double));
         cursor += sizeof(double);
         memcpy(data + cursor, &state->wave_number, sizeof(size_t));
+        cursor += sizeof(size_t);
+        memcpy(data + cursor, &state->selected_stage, sizeof(size_t));
         cursor += sizeof(size_t);
         SaveFileData("savefile.bin", data, size);
         free(data);
@@ -327,6 +368,8 @@ void handle_continue_game_button(Clay_ElementId e_id, Clay_PointerData pd, intpt
             data += sizeof(double);
             memcpy(&state->wave_number, data, sizeof(size_t));
             data += sizeof(size_t);
+            memcpy(&state->selected_stage, data, sizeof(size_t));
+            data += sizeof(size_t);
             game_state_phase_change(state, GP_MAIN);
             MemFree(data_unmoved);
         } else {
@@ -339,7 +382,7 @@ void handle_begin_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     (void)e_id;
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        game_state_phase_change(state, GP_MAIN);
+        state->main_menu_type = MMT_CONFIGGAME;
     }
 }
 void handle_main_menu_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
@@ -489,6 +532,31 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                         ui_label("Slash: Toggle shaders OwO", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Print screen: Take screenshot", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                     }
+                    break;
+                }
+                case MMT_CONFIGGAME: {
+                    CLAY({.layout =
+                              {
+                                  .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                                  .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                              }
+
+                    }) {
+                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 1",
+                                                        "Stage1Button", handle_stage_1_button,
+                                                        state->selected_stage == 0));
+                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 2",
+                                                        "Stage2Button", handle_stage_2_button,
+                                                        state->selected_stage == 1));
+                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 3",
+                                                        "Stage3Button", handle_stage_3_button,
+                                                        state->selected_stage == 2));
+                    }
+                    CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Play",
+                                                    "PlayButton", handle_start_game_button, false));
+
+                    CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Go back",
+                                                    "GoBackButton", handle_show_main_button, false));
                     break;
                 }
                 }
@@ -729,17 +797,65 @@ void flash_error(GameState *state, char *message) {
     state->error = message;
 }
 
-Stage default_stage() {
-    Stage st;
-    st.count = 1;
-    st.platforms[0] = (Platform){
-        .x = 0,
-        .y = 550,
-        .width = 800,
-        .height = 32,
+Stage stage_1() {
+    return (Stage){
+        .count = 1,
+        .platforms =
+            {
+                (Platform){
+                    .x = 0,
+                    .y = 550,
+                    .width = 800,
+                    .height = 32,
+                },
+            },
     };
-
-    return st;
+}
+Stage stage_2() {
+    return (Stage){
+        .count = 2,
+        .platforms =
+            {
+                (Platform){
+                    .x = 0,
+                    .y = 550,
+                    .width = 800,
+                    .height = 32,
+                },
+                (Platform){
+                    .x = 100,
+                    .y = 350,
+                    .width = 600,
+                    .height = 32,
+                },
+            },
+    };
+}
+Stage stage_3() {
+    return (Stage){
+        .count = 3,
+        .platforms =
+            {
+                (Platform){
+                    .x = 0,
+                    .y = 550,
+                    .width = 800,
+                    .height = 32,
+                },
+                (Platform){
+                    .x = 100,
+                    .y = 350,
+                    .width = 600,
+                    .height = 32,
+                },
+                (Platform){
+                    .x = 200,
+                    .y = 150,
+                    .width = 400,
+                    .height = 32,
+                },
+            },
+    };
 }
 
 #define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)

@@ -7,7 +7,9 @@
 #include "wave.h"
 #include <clay/clay.h>
 
-Stage default_stage();
+Stage stage_1();
+Stage stage_2();
+Stage stage_3();
 
 typedef enum {
     GP_STARTMENU = 0,
@@ -25,6 +27,7 @@ typedef enum {
 
 typedef enum {
     MMT_START,
+    MMT_CONFIGGAME,
     MMT_CONTROLS,
 } MainMenuType;
 
@@ -39,6 +42,7 @@ typedef struct {
 
     // Contains platforms
     Stage stage;
+    size_t selected_stage;
 
     EnemyWave current_wave;
     Bullets enemy_bullets;
