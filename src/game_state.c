@@ -298,6 +298,7 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
         state->stage = stages[state->selected_stage]();
+        state->player.state.current_class = state->selected_stage;
     }
 }
 
@@ -553,6 +554,22 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                                         "Stage3Button", handle_stage_3_button,
                                                         state->selected_stage == 2));
                     }
+
+                    CLAY({.layout =
+                              {
+                                  .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
+                                  .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                              }
+
+                    }) {
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Tank", "TankClassButton",
+                                       handle_player_class_select_button_tank, state->selected_class == PS_TANK);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Mover", "MoveClassButton",
+                                       handle_player_class_select_button_move, state->selected_class == PS_MOVE);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Killer", "KillerClassButton",
+                                       handle_player_class_select_button_killer, state->selected_class == PS_DAMAGE);
+                    }
+
                     CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Play",
                                                     "PlayButton", handle_start_game_button, false));
 
