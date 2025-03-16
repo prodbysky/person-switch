@@ -854,7 +854,7 @@ Stage stage_2() {
                 },
                 (Platform){
                     .x = 100,
-                    .y = 350,
+                    .y = 400,
                     .width = 600,
                     .height = 32,
                 },
@@ -874,13 +874,13 @@ Stage stage_3() {
                 },
                 (Platform){
                     .x = 100,
-                    .y = 350,
+                    .y = 400,
                     .width = 600,
                     .height = 32,
                 },
                 (Platform){
                     .x = 200,
-                    .y = 150,
+                    .y = 250,
                     .width = 400,
                     .height = 32,
                 },

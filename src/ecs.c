@@ -46,59 +46,59 @@ void physics_set_velocity_y(PhysicsComp *physics, float y) {
 }
 
 void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stage, float dt) {
-    Vector2 next_pos = {transform->rect.x + physics->velocity.x * dt, transform->rect.y + physics->velocity.y * dt};
+    float old_x = transform->rect.x;
+    float old_y = transform->rect.y;
 
-    bool on_any_platform = false;
-    Rectangle next_rect = {next_pos.x, next_pos.y, transform->rect.width, transform->rect.height};
+    float new_x = transform->rect.x + physics->velocity.x * dt;
+    float new_y = transform->rect.y + physics->velocity.y * dt;
 
+    transform->rect.x = new_x;
     for (size_t i = 0; i < stage->count; i++) {
-        if (CheckCollisionRecs(next_rect, stage->platforms[i])) {
+        if (CheckCollisionRecs(transform->rect, stage->platforms[i])) {
             const Platform *platform = &stage->platforms[i];
-            const bool from_left = next_rect.x < platform->x + platform->width;
-            const bool from_right = next_rect.x + next_rect.width > platform->x;
-            const bool from_bottom = next_rect.y + next_rect.height > platform->y;
+            if (old_x + transform->rect.width <= platform->x) {
+                transform->rect.x = platform->x - transform->rect.width;
+            } else if (old_x >= platform->x + platform->width) {
+                transform->rect.x = platform->x + platform->width;
+            }
+            physics->velocity.x = 0;
+        }
+    }
 
-            if (from_bottom && physics->velocity.y > 0) {
+    transform->rect.y = new_y;
+    bool landedOnPlatform = false;
+    const float grounded_epsilon = 2.0f;
+    for (size_t i = 0; i < stage->count; i++) {
+        if (CheckCollisionRecs(transform->rect, stage->platforms[i])) {
+            const Platform *platform = &stage->platforms[i];
+
+            if (old_y + transform->rect.height <= platform->y + grounded_epsilon && physics->velocity.y >= 0) {
+                transform->rect.y = platform->y - transform->rect.height;
                 physics->velocity.y = 0;
                 physics->grounded = true;
-                transform->rect.y = platform->y - transform->rect.height;
-                on_any_platform = true;
-            } else if (from_left && physics->velocity.x < 0) {
-                physics->velocity.x = 0;
-            } else if (from_right && physics->velocity.x > 0) {
-                physics->velocity.x = 0;
+                landedOnPlatform = true;
+            } else if (old_y >= platform->y + platform->height - grounded_epsilon && physics->velocity.y < 0) {
+                transform->rect.y = platform->y + platform->height;
+                physics->velocity.y = 0;
             }
         }
     }
-    if (physics->grounded && !on_any_platform) {
-        bool above_platform = false;
+    if (!landedOnPlatform) {
+        bool nearPlatform = false;
         for (size_t i = 0; i < stage->count; i++) {
             const Platform *platform = &stage->platforms[i];
             if (transform->rect.x + transform->rect.width > platform->x &&
                 transform->rect.x < platform->x + platform->width &&
-                transform->rect.y + transform->rect.height <= platform->y &&
-                transform->rect.y + transform->rect.height + 1 >= platform->y) {
-                above_platform = true;
+                fabs(platform->y - (transform->rect.y + transform->rect.height)) < grounded_epsilon) {
+                nearPlatform = true;
                 break;
             }
         }
-
-        if (!above_platform) {
-            physics->grounded = false;
-        }
+        physics->grounded = nearPlatform;
     }
-
-    next_pos = (Vector2){
-        .x = transform->rect.x + physics->velocity.x * dt,
-        .y = transform->rect.y + physics->velocity.y * dt,
-    };
-
-    transform->rect.x = next_pos.x;
-    transform->rect.y = next_pos.y;
 
     transform->rect.x = Clamp(transform->rect.x, 0, WINDOW_W - transform->rect.width);
 }
-
 void draw_solid(const TransformComp *transform, const SolidRectangleComp *solid_rectangle) {
     DrawRectangleRec(transform->rect, solid_rectangle->color);
 }
