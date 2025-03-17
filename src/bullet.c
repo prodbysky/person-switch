@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "timing_utilities.h"
+#include <math.h>
 
 void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, Vector2 dir, Color c) {
     const float x = origin_transform->rect.x + (origin_transform->rect.width / 2.0);
@@ -31,7 +32,13 @@ void bullets_update(Bullets *bullets, float dt) {
 void bullets_draw(const Bullets *bullets) {
     for (int i = 0; i < MAX_BULLETS; i++) {
         if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
-            draw_solid(&bullets->bullets[i].transform, &bullets->bullets[i].draw_conf);
+            Rectangle rect = bullets->bullets[i].transform.rect;
+
+            Vector2 origin = {.x = rect.width / 2.0f, .y = rect.height / 2.0f};
+
+            DrawRectanglePro(rect, origin,
+                             atan2(bullets->bullets[i].direction.y, bullets->bullets[i].direction.x) * RAD2DEG,
+                             bullets->bullets[i].draw_conf.color);
         }
     }
 }

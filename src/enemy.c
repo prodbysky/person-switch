@@ -150,6 +150,7 @@ void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transfo
                 bullets->bullets[i].creation_time = 0.0;
                 state->last_hit = GetTime();
                 physics->velocity.x += 200 * bullets->bullets[i].direction.x;
+                physics->velocity.y += 200 * bullets->bullets[i].direction.y;
                 PlaySound(*hit_sound);
                 return;
             }

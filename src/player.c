@@ -99,14 +99,12 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
                   const Sound *jump_sound, const Sound *shoot_sound) {
 
     if (time_delta(state->last_shot) > SHOOT_DELAY - state->reload_time) {
-        if (IsKeyPressed(KEY_LEFT)) {
-            bullets_spawn_bullet(transform, bullets, (Vector2){-1, 0}, PURPLE);
-            state->last_shot = GetTime();
-            PlaySound(*shoot_sound);
-        }
-
-        if (IsKeyPressed(KEY_RIGHT)) {
-            bullets_spawn_bullet(transform, bullets, (Vector2){1, 0}, PURPLE);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            const Vector2 mouse_pos = GetMousePosition();
+            const Vector2 dir = Vector2Normalize(
+                Vector2Subtract(mouse_pos, (Vector2){.x = transform->rect.x + (transform->rect.width / 2.0),
+                                                     .y = transform->rect.y + (transform->rect.height / 2.0)}));
+            bullets_spawn_bullet(transform, bullets, dir, PURPLE);
             state->last_shot = GetTime();
             PlaySound(*shoot_sound);
         }
