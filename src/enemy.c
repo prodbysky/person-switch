@@ -93,9 +93,9 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         // Shoot
         if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
             if (player_is_on_the_left) {
-                bullets_spawn_bullet(transform, enemy_bullets, BD_RIGHT, GREEN);
+                bullets_spawn_bullet(transform, enemy_bullets, (Vector2){1, 0}, GREEN);
             } else {
-                bullets_spawn_bullet(transform, enemy_bullets, BD_LEFT, GREEN);
+                bullets_spawn_bullet(transform, enemy_bullets, (Vector2){-1, 0}, GREEN);
             }
             state->type_specific.ranger.last_shot = GetTime();
         }
@@ -149,11 +149,7 @@ void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transfo
                 state->health -= dmg;
                 bullets->bullets[i].creation_time = 0.0;
                 state->last_hit = GetTime();
-                if (bullets->bullets[i].dir == BD_LEFT) {
-                    physics->velocity.x -= 200;
-                } else {
-                    physics->velocity.x += 200;
-                }
+                physics->velocity.x += 200 * bullets->bullets[i].direction.x;
                 PlaySound(*hit_sound);
                 return;
             }

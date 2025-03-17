@@ -100,13 +100,13 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
 
     if (time_delta(state->last_shot) > SHOOT_DELAY - state->reload_time) {
         if (IsKeyPressed(KEY_LEFT)) {
-            bullets_spawn_bullet(transform, bullets, BD_LEFT, PURPLE);
+            bullets_spawn_bullet(transform, bullets, (Vector2){-1, 0}, PURPLE);
             state->last_shot = GetTime();
             PlaySound(*shoot_sound);
         }
 
         if (IsKeyPressed(KEY_RIGHT)) {
-            bullets_spawn_bullet(transform, bullets, BD_RIGHT, PURPLE);
+            bullets_spawn_bullet(transform, bullets, (Vector2){1, 0}, PURPLE);
             state->last_shot = GetTime();
             PlaySound(*shoot_sound);
         }
