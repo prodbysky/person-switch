@@ -5,6 +5,7 @@
 
 #define MAX_BULLETS 100
 #define BULLET_LIFETIME 2.0
+#define BULLET_SPEED 500
 
 typedef enum {
     BD_LEFT,
@@ -14,7 +15,7 @@ typedef enum {
 typedef struct {
     TransformComp transform;
     SolidRectangleComp draw_conf;
-    BulletDirection dir;
+    Vector2 direction;
     double creation_time;
 } ECSPlayerBullet;
 
@@ -26,7 +27,7 @@ typedef struct {
 // Spawns a bullet according to `dir`
 // NOTES:
 // Hard limit of `MAX_BULLETS` (if more are spawned then they will be overriden)
-void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, BulletDirection dir, Color c);
+void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, Vector2 dir, Color c);
 
 void bullets_update(Bullets *bullets, float dt);
 void bullets_draw(const Bullets *bullets);

@@ -43,7 +43,7 @@ ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health
 }
 
 void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformComp *transform, PhysicsComp *physics,
-              const TransformComp *player_transform, Bullets *enemy_bullets) {
+              const TransformComp *player_transform, const PhysicsComp *player_physics, Bullets *enemy_bullets) {
     switch (state->type) {
     case ET_BASIC: {
         float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
@@ -92,11 +92,18 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
 
         // Shoot
         if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
-            if (player_is_on_the_left) {
-                bullets_spawn_bullet(transform, enemy_bullets, BD_RIGHT, GREEN);
-            } else {
-                bullets_spawn_bullet(transform, enemy_bullets, BD_LEFT, GREEN);
-            }
+            const Vector2 player_center =
+                (Vector2){.x = player_transform->rect.x + (player_transform->rect.width / 2.0),
+                          .y = player_transform->rect.y + (player_transform->rect.height / 2.0)};
+            const float dst =
+                Vector2Distance(player_center, (Vector2){.x = transform->rect.x + (transform->rect.width / 2.0),
+                                                         .y = transform->rect.y + (transform->rect.height / 2.0)});
+            const double time = (dst / BULLET_SPEED) - 1;
+            const Vector2 prediction = Vector2Add(player_center, Vector2Scale(player_physics->velocity, time));
+            const Vector2 dir = Vector2Normalize(
+                Vector2Subtract(prediction, (Vector2){.x = transform->rect.x + (transform->rect.width / 2.0),
+                                                      .y = transform->rect.y + (transform->rect.height / 2.0)}));
+            bullets_spawn_bullet(transform, enemy_bullets, dir, GREEN);
             state->type_specific.ranger.last_shot = GetTime();
         }
         break;
@@ -105,9 +112,9 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
     }
     }
 }
-void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform, Bullets *bullets,
-                      const Sound *hit_sound, const Sound *death_sound, size_t dmg, Bullets *enemy_bullets,
-                      Pickups *pickups) {
+void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform,
+                      const PhysicsComp *player_physics, Bullets *bullets, const Sound *hit_sound,
+                      const Sound *death_sound, size_t dmg, Bullets *enemy_bullets, Pickups *pickups) {
     if (enemy->state.dead) {
         return;
     }
@@ -133,7 +140,8 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
         enemy->draw_conf.color = BLUE;
     }
     physics(&enemy->physics, dt);
-    enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform, enemy_bullets);
+    enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform, player_physics,
+             enemy_bullets);
     collision(&enemy->transform, &enemy->physics, stage, dt);
     enemy_bullet_interaction(&enemy->physics, &enemy->transform, bullets, &enemy->state, hit_sound, dmg);
 }
@@ -149,11 +157,8 @@ void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transfo
                 state->health -= dmg;
                 bullets->bullets[i].creation_time = 0.0;
                 state->last_hit = GetTime();
-                if (bullets->bullets[i].dir == BD_LEFT) {
-                    physics->velocity.x -= 200;
-                } else {
-                    physics->velocity.x += 200;
-                }
+                physics->velocity.x += 200 * bullets->bullets[i].direction.x;
+                physics->velocity.y += 200 * bullets->bullets[i].direction.y;
                 PlaySound(*hit_sound);
                 return;
             }
