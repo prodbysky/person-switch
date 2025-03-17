@@ -92,11 +92,13 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
 
         // Shoot
         if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
-            if (player_is_on_the_left) {
-                bullets_spawn_bullet(transform, enemy_bullets, (Vector2){1, 0}, GREEN);
-            } else {
-                bullets_spawn_bullet(transform, enemy_bullets, (Vector2){-1, 0}, GREEN);
-            }
+            const Vector2 dir = Vector2Normalize(
+                Vector2Subtract((Vector2){.x = player_transform->rect.x + (player_transform->rect.width / 2.0),
+                                          .y = player_transform->rect.y + (player_transform->rect.height / 2.0)},
+                                (Vector2){.x = transform->rect.x + (transform->rect.width / 2.0),
+                                          .y = transform->rect.y + (transform->rect.height / 2.0)}));
+
+            bullets_spawn_bullet(transform, enemy_bullets, dir, GREEN);
             state->type_specific.ranger.last_shot = GetTime();
         }
         break;
