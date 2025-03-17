@@ -154,8 +154,8 @@ void game_state_update(GameState *state) {
             return;
         }
         for (size_t i = 0; i < state->current_wave.count; i++) {
-            ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform, &state->bullets,
-                             &state->enemy_hit_sound, &state->enemy_die_sound,
+            ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform,
+                             &state->player.physics, &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound,
                              PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets,
                              &state->pickups);
         }

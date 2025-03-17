@@ -5,6 +5,7 @@
 
 #define MAX_BULLETS 100
 #define BULLET_LIFETIME 2.0
+#define BULLET_SPEED 500
 
 typedef enum {
     BD_LEFT,

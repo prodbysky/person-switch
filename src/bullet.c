@@ -21,7 +21,8 @@ void bullets_update(Bullets *bullets, float dt) {
     for (int i = 0; i < MAX_BULLETS; i++) {
         ECSPlayerBullet *bullet = &bullets->bullets[i];
         if (time_delta(bullet->creation_time) < BULLET_LIFETIME) {
-            const Vector2 movement_delta = Vector2Multiply(bullet->direction, (Vector2){dt * 500, dt * 500});
+            const Vector2 movement_delta =
+                Vector2Multiply(bullet->direction, (Vector2){dt * BULLET_SPEED, dt * BULLET_SPEED});
             const Vector2 next_pos =
                 Vector2Add(movement_delta, (Vector2){bullet->transform.rect.x, bullet->transform.rect.y});
             bullet->transform.rect.x = next_pos.x;
