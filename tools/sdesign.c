@@ -1,11 +1,12 @@
 #include <clay/clay.h>
 #include <clay/clay_raylib_renderer.c>
 #include <raylib.h>
+#include <stdio.h>
 
 void go_into_full_screen();
 void handle_clay_errors(Clay_ErrorData errorData);
 Clay_RenderCommandArray build_ui();
-void text(Clay_String str, Clay_Color color);
+void text(Clay_String str, Clay_Color color, Clay_TextAlignment alligment);
 void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizing, Clay_String label,
             Clay_Color background_color, Clay_Color label_color,
             void (*on_hover)(Clay_ElementId, Clay_PointerData, intptr_t));
@@ -182,9 +183,9 @@ void add_object_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     }
 }
 
-void text(Clay_String str, Clay_Color color) {
+void text(Clay_String str, Clay_Color color, Clay_TextAlignment alligment) {
     CLAY_TEXT(str, CLAY_TEXT_CONFIG({
-                       .textAlignment = CLAY_TEXT_ALIGN_CENTER,
+                       .textAlignment = alligment,
                        .textColor = color,
                        .fontSize = 32,
                        .fontId = 0,
@@ -201,7 +202,7 @@ void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizin
                      .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}},
           .backgroundColor = background_color}) {
         Clay_OnHover(on_hover, 0);
-        text(label, label_color);
+        text(label, label_color, CLAY_TEXT_ALIGN_CENTER);
     }
 }
 
@@ -258,6 +259,21 @@ Clay_RenderCommandArray build_ui() {
                     .cornerRadius = {16, 16, 16, 16},
                     .backgroundColor = {100, 100, 100, 255},
                 }) {
+                    CLAY({
+                        .id = CLAY_IDI("ObjectTransform", i),
+                        .layout = {.layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                   .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                                   .padding = {16, 16, 16, 16}},
+                        .cornerRadius = {16, 16, 16, 16},
+                        .backgroundColor = {150, 150, 150, 255},
+                    }) {
+
+                        const char *formatted = TextFormat("x: %.2f \ny: %.2f \nw: %.2f \nh: %.2f", objects[i].x,
+                                                           objects[i].y, objects[i].width, objects[i].height);
+                        Clay_String str = {.chars = formatted, .length = strlen(formatted)};
+
+                        text(str, CLAY_WHITE, CLAY_TEXT_ALIGN_LEFT);
+                    }
                 }
             }
         }
