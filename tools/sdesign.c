@@ -9,7 +9,7 @@ void handle_clay_errors(Clay_ErrorData errorData);
 static bool running = true;
 static Rectangle objects[50] = {0};
 static size_t object_count = 0;
-static size_t selected = 0xffff; // No rectangle selected initially
+static size_t selected = 0xffff;
 
 int main() {
     InitWindow(1920, 1080, "SDesign");
@@ -138,6 +138,23 @@ void close_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) 
     }
 }
 
+void dump_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    (void)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        printf("{\n");
+        for (size_t i = 0; i < object_count; i++) {
+            printf("(Rectangle){\n");
+            printf("\t.x = %f\n", objects[i].x);
+            printf("\t.y = %f\n", objects[i].y);
+            printf("\t.width = %f\n", objects[i].width);
+            printf("\t.height = %f\n", objects[i].height);
+            printf("},\n");
+        }
+        printf("}\n");
+    }
+}
+
 void add_object_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     (void)ud;
@@ -161,7 +178,8 @@ Clay_RenderCommandArray build_ui() {
         CLAY({.id = CLAY_ID("Toolbar"),
               .layout = {.layoutDirection = CLAY_LEFT_TO_RIGHT,
                          .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.1)},
-                         .padding = {16, 16, 16, 16}},
+                         .padding = {16, 16, 16, 16},
+                         .childGap = 16},
               .cornerRadius = {16, 16, 16, 16},
               .backgroundColor = {50, 50, 50, 255}}) {
             CLAY({.id = CLAY_ID("QuitButton"),
@@ -169,6 +187,12 @@ Clay_RenderCommandArray build_ui() {
                   .layout = {.sizing = {CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0)}},
                   .backgroundColor = {20, 20, 20, 255}}) {
                 Clay_OnHover(close_button_action, 0);
+            }
+            CLAY({.id = CLAY_ID("DumpButton"),
+                  .cornerRadius = {16, 16, 16, 16},
+                  .layout = {.sizing = {CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0)}},
+                  .backgroundColor = {20, 20, 20, 255}}) {
+                Clay_OnHover(dump_button_action, 0);
             }
         }
         CLAY({.id = CLAY_ID("ObjectList"),
