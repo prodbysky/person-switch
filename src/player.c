@@ -83,7 +83,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
         }
     }
     for (size_t i = 0; i < MAX_BULLETS; i++) {
-        if (time_delta(enemy_bullets->bullets[i].creation_time) > BULLET_LIFETIME) {
+        if (!enemy_bullets->bullets[i].active) {
             continue;
         }
         if (CheckCollisionRecs(player->transform.rect, enemy_bullets->bullets[i].transform.rect) &&

@@ -152,10 +152,10 @@ void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transfo
         return;
     }
     for (int i = 0; i < MAX_BULLETS; i++) {
-        if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
+        if (bullets->bullets[i].active) {
             if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
                 state->health -= dmg;
-                bullets->bullets[i].creation_time = 0.0;
+                bullets->bullets[i].active = false;
                 state->last_hit = GetTime();
                 physics->velocity.x += 200 * bullets->bullets[i].direction.x;
                 physics->velocity.y += 200 * bullets->bullets[i].direction.y;

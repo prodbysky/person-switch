@@ -17,6 +17,7 @@ typedef struct {
     SolidRectangleComp draw_conf;
     Vector2 direction;
     double creation_time;
+    bool active;
 } ECSPlayerBullet;
 
 typedef struct {

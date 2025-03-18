@@ -2,7 +2,6 @@
 #include "ecs.h"
 #include "raylib.h"
 #include "raymath.h"
-#include "timing_utilities.h"
 #include <math.h>
 
 void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, Vector2 dir, Color c) {
@@ -13,6 +12,7 @@ void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullet
         .creation_time = GetTime(),
         .transform = TRANSFORM(x, y, 16, 8),
         .draw_conf = {.color = c},
+        .active = true,
     };
     bullets->current = (bullets->current + 1) % MAX_BULLETS;
 }
@@ -20,7 +20,7 @@ void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullet
 void bullets_update(Bullets *bullets, float dt) {
     for (int i = 0; i < MAX_BULLETS; i++) {
         ECSPlayerBullet *bullet = &bullets->bullets[i];
-        if (time_delta(bullet->creation_time) < BULLET_LIFETIME) {
+        if (bullet->active) {
             const Vector2 movement_delta =
                 Vector2Multiply(bullet->direction, (Vector2){dt * BULLET_SPEED, dt * BULLET_SPEED});
             const Vector2 next_pos =
@@ -32,7 +32,7 @@ void bullets_update(Bullets *bullets, float dt) {
 }
 void bullets_draw(const Bullets *bullets) {
     for (int i = 0; i < MAX_BULLETS; i++) {
-        if (time_delta(bullets->bullets[i].creation_time) < BULLET_LIFETIME) {
+        if (bullets->bullets[i].active) {
             Rectangle rect = bullets->bullets[i].transform.rect;
 
             Vector2 origin = {.x = rect.width / 2.0f, .y = rect.height / 2.0f};
