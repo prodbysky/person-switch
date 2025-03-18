@@ -186,7 +186,7 @@ void game_state_update(GameState *state) {
             game_state_phase_change(state, GP_MAIN);
             state->began_transition = GetTime();
             state->player = ecs_player_new();
-            state->stage = stage_2();
+            state->stage = stages[state->selected_stage]();
             state->current_wave = generate_wave(state->wave_strength);
         }
         break;
