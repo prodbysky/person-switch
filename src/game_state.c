@@ -162,8 +162,8 @@ void game_state_update(GameState *state) {
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
                           &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets,
                           &state->pickups);
-        bullets_update(&state->bullets, dt);
-        bullets_update(&state->enemy_bullets, dt);
+        bullets_update(&state->bullets, dt, &state->stage);
+        bullets_update(&state->enemy_bullets, dt, &state->stage);
         pickups_update(&state->pickups, &state->stage, dt);
         if (state->player.state.dead) {
             game_state_phase_change(state, GP_DEAD);

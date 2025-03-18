@@ -2,6 +2,7 @@
 #include "ecs.h"
 #include "raylib.h"
 #include "raymath.h"
+#include "stage.h"
 #include <math.h>
 
 void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, Vector2 dir, Color c) {
@@ -17,10 +18,19 @@ void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullet
     bullets->current = (bullets->current + 1) % MAX_BULLETS;
 }
 
-void bullets_update(Bullets *bullets, float dt) {
+void bullets_update(Bullets *bullets, float dt, const Stage *stage) {
     for (int i = 0; i < MAX_BULLETS; i++) {
         ECSPlayerBullet *bullet = &bullets->bullets[i];
         if (bullet->active) {
+            for (size_t j = 0; j < stage->count; j++) {
+                if (CheckCollisionRecs(stage->platforms[j], bullet->transform.rect)) {
+                    bullet->active = false;
+                    break;
+                }
+            }
+            if (!bullet->active) {
+                continue;
+            }
             const Vector2 movement_delta =
                 Vector2Multiply(bullet->direction, (Vector2){dt * BULLET_SPEED, dt * BULLET_SPEED});
             const Vector2 next_pos =
