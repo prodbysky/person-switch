@@ -689,21 +689,20 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         default: {
         }
         }
-
-        DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
-                   GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
-        if (state->vfx_enabled) {
-            DrawTextEx(state->font[0], "VFX enabled", (Vector2){500, 40}, 48, 0,
-                       GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
-        } else {
-            DrawTextEx(state->font[0], "VFX disabled", (Vector2){500, 40}, 48, 0,
-                       GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
-        }
-
-        DrawTextEx(state->font[0], state->error, (Vector2){200, 200}, 60, 0,
-                   GetColor(0xff000000 + (state->error_opacity * 255)));
     }
 
+    DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
+               GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
+    if (state->vfx_enabled) {
+        DrawTextEx(state->font[0], "VFX enabled", (Vector2){500, 40}, 48, 0,
+                   GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
+    } else {
+        DrawTextEx(state->font[0], "VFX disabled", (Vector2){500, 40}, 48, 0,
+                   GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
+    }
+
+    DrawTextEx(state->font[0], state->error, (Vector2){200, 200}, 60, 0,
+               GetColor(0xff000000 + (state->error_opacity * 255)));
     return Clay_EndLayout();
 }
 
