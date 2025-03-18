@@ -3,13 +3,19 @@
 #include <raylib.h>
 
 void go_into_full_screen();
-Clay_RenderCommandArray build_ui();
 void handle_clay_errors(Clay_ErrorData errorData);
+Clay_RenderCommandArray build_ui();
+void text(Clay_String str, Clay_Color color);
+void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizing, Clay_String label,
+            Clay_Color background_color, Clay_Color label_color,
+            void (*on_hover)(Clay_ElementId, Clay_PointerData, intptr_t));
 
 static bool running = true;
 static Rectangle objects[50] = {0};
 static size_t object_count = 0;
 static size_t selected = 0xffff;
+
+#define CLAY_WHITE (Clay_Color){255, 255, 255, 255}
 
 int main() {
     InitWindow(1920, 1080, "SDesign");
@@ -43,6 +49,9 @@ int main() {
 
         if (IsKeyPressed(KEY_F11)) {
             go_into_full_screen();
+        }
+        if (IsKeyPressed(KEY_F10)) {
+            Clay_SetDebugModeEnabled(!Clay_IsDebugModeEnabled());
         }
 
         if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
@@ -173,6 +182,29 @@ void add_object_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     }
 }
 
+void text(Clay_String str, Clay_Color color) {
+    CLAY_TEXT(str, CLAY_TEXT_CONFIG({
+                       .textAlignment = CLAY_TEXT_ALIGN_CENTER,
+                       .textColor = color,
+                       .fontSize = 32,
+                       .fontId = 0,
+                   }));
+}
+
+void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizing, Clay_String label,
+            Clay_Color background_color, Clay_Color label_color,
+            void (*on_hover)(Clay_ElementId, Clay_PointerData, intptr_t)) {
+    CLAY({.id = id,
+          .cornerRadius = {16, 16, 16, 16},
+          .layout = {.sizing = {x_sizing, y_sizing},
+                     .padding = {16, 16, 16, 16},
+                     .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}},
+          .backgroundColor = background_color}) {
+        Clay_OnHover(on_hover, 0);
+        text(label, label_color);
+    }
+}
+
 Clay_RenderCommandArray build_ui() {
     Clay_BeginLayout();
     CLAY({.id = CLAY_ID("Root"),
@@ -187,37 +219,10 @@ Clay_RenderCommandArray build_ui() {
                          .childGap = 16},
               .cornerRadius = {16, 16, 16, 16},
               .backgroundColor = {50, 50, 50, 255}}) {
-            CLAY({.id = CLAY_ID("QuitButton"),
-                  .cornerRadius = {16, 16, 16, 16},
-                  .layout = {.sizing = {CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0)},
-                             .padding = {16, 16, 16, 16},
-                             .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}},
-                  .backgroundColor = {20, 20, 20, 255}}) {
-                Clay_OnHover(close_button_action, 0);
-                CLAY_TEXT(CLAY_STRING("X"), CLAY_TEXT_CONFIG({
-                                                .textAlignment = CLAY_TEXT_ALIGN_CENTER,
-                                                .textColor = {255, 255, 255, 255},
-                                                .fontSize = 32,
-                                                .fontId = 0,
-                                            }));
-            }
-            CLAY({.id = CLAY_ID("DumpButton"),
-                  .cornerRadius = {16, 16, 16, 16},
-                  .layout =
-                      {
-                          .sizing = {CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0)},
-                          .padding = {16, 16, 16, 16},
-                          .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
-                      },
-                  .backgroundColor = {20, 20, 20, 255}}) {
-                Clay_OnHover(dump_button_action, 0);
-                CLAY_TEXT(CLAY_STRING("Save"), CLAY_TEXT_CONFIG({
-                                                   .textAlignment = CLAY_TEXT_ALIGN_CENTER,
-                                                   .textColor = {255, 255, 255, 255},
-                                                   .fontSize = 32,
-                                                   .fontId = 0,
-                                               }));
-            }
+            button(CLAY_ID("QuitButton"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("X"),
+                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, close_button_action);
+            button(CLAY_ID("DumpButton"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("Save"),
+                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, dump_button_action);
         }
         CLAY({
             .id = CLAY_ID("ObjectControls"),
@@ -230,24 +235,8 @@ Clay_RenderCommandArray build_ui() {
                 },
             .backgroundColor = {50, 50, 50, 255},
         }) {
-            CLAY({.id = CLAY_ID("AddObject"),
-                  .layout =
-                      {
-                          .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                          .sizing = {CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_GROW(0)},
-                          .padding = {16, 16, 16, 16},
-                          .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
-                      },
-                  .cornerRadius = {16, 16, 16, 16},
-                  .backgroundColor = {20, 20, 20, 255}}) {
-                Clay_OnHover(add_object_button_action, 0);
-                CLAY_TEXT(CLAY_STRING("Add"), CLAY_TEXT_CONFIG({
-                                                  .textAlignment = CLAY_TEXT_ALIGN_CENTER,
-                                                  .textColor = {255, 255, 255, 255},
-                                                  .fontSize = 32,
-                                                  .fontId = 0,
-                                              }));
-            }
+            button(CLAY_ID("AddObject"), CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_GROW(0), CLAY_STRING("Add"),
+                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, add_object_button_action);
         }
         CLAY({.id = CLAY_ID("ObjectList"),
               .layout =
@@ -262,6 +251,7 @@ Clay_RenderCommandArray build_ui() {
               .scroll = {.vertical = true}}) {
             for (size_t i = 0; i < object_count; i++) {
                 CLAY({
+                    .id = CLAY_IDI("Object", i),
                     .layout = {.layoutDirection = CLAY_TOP_TO_BOTTOM,
                                .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(400)},
                                .padding = {16, 16, 16, 16}},
