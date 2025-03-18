@@ -71,7 +71,6 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
     for (size_t i = 0; i < stage->count; i++) {
         if (CheckCollisionRecs(transform->rect, stage->platforms[i])) {
             const Platform *platform = &stage->platforms[i];
-
             if (old_y + transform->rect.height <= platform->y + grounded_epsilon && physics->velocity.y >= 0) {
                 transform->rect.y = platform->y - transform->rect.height;
                 physics->velocity.y = 0;
@@ -96,13 +95,7 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
         }
         physics->grounded = nearPlatform;
     }
-
-    transform->rect.x = Clamp(transform->rect.x, 0, WINDOW_W - transform->rect.width);
 }
 void draw_solid(const TransformComp *transform, const SolidRectangleComp *solid_rectangle) {
     DrawRectangleRec(transform->rect, solid_rectangle->color);
-}
-
-bool offscreen(const TransformComp *transform) {
-    return transform->rect.y > WINDOW_H * 4;
 }
