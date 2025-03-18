@@ -28,7 +28,6 @@ int main() {
         const Vector2 scroll_delta = GetMouseWheelMoveV();
         const Vector2 mouse_pos = GetMousePosition();
 
-        // Update Clay UI
         {
             const bool mouse_left = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
             const float dt = GetFrameTime();
@@ -37,18 +36,15 @@ int main() {
             Clay_UpdateScrollContainers(true, (Clay_Vector2){scroll_delta.x, scroll_delta.y}, dt);
         }
 
-        // Fullscreen toggle
         if (IsKeyPressed(KEY_F11)) {
             go_into_full_screen();
         }
 
-        // Camera movement
         if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
             const Vector2 mouse_delta = GetMouseDelta();
             camera.target = Vector2Subtract(camera.target, Vector2Scale(mouse_delta, 1.0 / camera.zoom));
         }
 
-        // Camera zoom
         if (IsKeyDown(KEY_LEFT_CONTROL)) {
             if (scroll_delta.y != 0) {
                 camera.zoom += scroll_delta.y * 0.1;
@@ -56,15 +52,13 @@ int main() {
         }
         camera.zoom = Clamp(camera.zoom, 0.2, 4);
 
-        // Rectangle interaction
         Vector2 world_mouse_pos = GetScreenToWorld2D(mouse_pos, camera);
         for (size_t i = 0; i < object_count; i++) {
             if (CheckCollisionPointRec(world_mouse_pos, objects[i])) {
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    selected = i; // Select the rectangle
+                    selected = i;
                 }
 
-                // Move the selected rectangle
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                     if (selected != 0xffff) {
                         const Vector2 mouse_delta = GetMouseDelta();
@@ -86,7 +80,6 @@ int main() {
                 }
             }
 
-            // Deselect if clicking outside any rectangle
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 bool clicked_on_rectangle = false;
                 for (size_t i = 0; i < object_count; i++) {
@@ -96,7 +89,7 @@ int main() {
                     }
                 }
                 if (!clicked_on_rectangle) {
-                    selected = 0xffff; // Deselect
+                    selected = 0xffff;
                 }
             }
         }
@@ -109,11 +102,9 @@ int main() {
         DrawLineEx((Vector2){0, -3000}, (Vector2){0, 3000}, 5, GRAY);
         DrawLineEx((Vector2){-3000, 0}, (Vector2){3000, 0}, 5, GRAY);
 
-        // Draw all rectangles
         for (size_t i = 0; i < object_count; i++) {
             DrawRectangleRec(objects[i], WHITE);
             if (i == selected) {
-                // Highlight the selected rectangle
                 DrawRectangleLinesEx(objects[i], 2, RED);
             }
         }
