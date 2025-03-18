@@ -70,7 +70,7 @@ GameState game_state_init() {
     st.current_wave = generate_wave(2);
     st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
     st.camera = (Camera2D){
-        .zoom = 1,
+        .zoom = 0.75,
         .offset = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
         .rotation = 0,
         .target = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
@@ -104,7 +104,6 @@ void game_state_phase_change(GameState *state, GamePhase next) {
 }
 
 void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
-    state->camera.zoom = 1.5;
     state->player.state.current_class = new_class;
     game_state_phase_change(state, GP_MAIN);
     state->bullets = (Bullets){.bullets = {0}, .current = 0};
@@ -118,8 +117,15 @@ void game_state_update(GameState *state) {
     Clay_UpdateScrollContainers(true, (Clay_Vector2){scrollDelta.x, scrollDelta.y}, GetFrameTime());
 
     float dt = GetFrameTime();
-    state->camera.zoom *= 0.98;
-    state->camera.zoom = Clamp(state->camera.zoom, 1, 999);
+    const float smoothing_factor = 0.02f;
+
+    // Calculate the desired camera target position (player's position)
+    Vector2 desired_camera_target = (Vector2){state->player.transform.rect.x, state->player.transform.rect.y};
+
+    // Smoothly interpolate the current camera target towards the desired target
+    state->camera.target.x = Lerp(state->camera.target.x, desired_camera_target.x, smoothing_factor);
+    state->camera.target.y = Lerp(state->camera.target.y, desired_camera_target.y, smoothing_factor);
+
     state->volume_label_opacity = Clamp(state->volume_label_opacity / 1.01, 0, 1);
     state->vfx_indicator_opacity = Clamp(state->vfx_indicator_opacity / 1.01, 0, 1);
     state->error_opacity = Clamp(state->error_opacity / 1.05, 0, 1);
@@ -160,8 +166,8 @@ void game_state_update(GameState *state) {
                              &state->pickups);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
-                          &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets,
-                          &state->pickups);
+                          &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets, &state->pickups,
+                          &state->camera);
         bullets_update(&state->bullets, dt, &state->stage);
         bullets_update(&state->enemy_bullets, dt, &state->stage);
         pickups_update(&state->pickups, &state->stage, dt);
@@ -733,19 +739,31 @@ void game_state_frame(GameState *state) {
     switch (state->phase) {
     case GP_MAIN:
         game_state_draw_playfield(state);
-
         break;
     case GP_STARTMENU:
     case GP_DEAD:
         break;
     case GP_PAUSED:
-        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
-                         GetColor(0x00000040));
         game_state_draw_playfield(state);
         break;
     case GP_TRANSITION: {
-        double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
         game_state_draw_playfield(state);
+        break;
+    }
+    case GP_AFTER_WAVE:
+        game_state_draw_playfield(state);
+    }
+
+    EndMode2D();
+
+    switch (state->phase) {
+    case GP_PAUSED: {
+        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
+                         GetColor(0x00000040));
+        break;
+    }
+    case GP_TRANSITION: {
+        double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
         if (t < 0.5)
             DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
                              GetColor(0xffffff00 + (t * 255)));
@@ -754,11 +772,16 @@ void game_state_frame(GameState *state) {
                              GetColor(0xffffff40 - (t * 255)));
         break;
     }
-    case GP_AFTER_WAVE:
-        game_state_draw_playfield(state);
+    case GP_MAIN: {
+        if (state->player.state.health < 3) {
+            DrawRectangle(0, 0, WINDOW_W, WINDOW_H, GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
+        }
+        break;
+    }
+    default: {
+    }
     }
 
-    EndMode2D();
     EndTextureMode();
 
     if (state->vfx_enabled) {

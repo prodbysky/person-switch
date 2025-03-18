@@ -27,7 +27,8 @@ ECSPlayer ecs_player_new() {
 }
 
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
-                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups) {
+                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups,
+                       const Camera2D *camera) {
     if (player->state.dead) {
         return;
     }
@@ -41,7 +42,7 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
         player->draw_conf.color = WHITE;
     }
 
-    player_input(&player->state, &player->physics, &player->transform, bullets, jump_sound, shoot_sound);
+    player_input(&player->state, &player->physics, &player->transform, bullets, jump_sound, shoot_sound, camera);
     physics(&player->physics, dt);
     collision(&player->transform, &player->physics, stage, dt);
     player_enemy_interaction(player, wave, enemy_bullets);
@@ -96,11 +97,11 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
 }
 
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
-                  const Sound *jump_sound, const Sound *shoot_sound) {
+                  const Sound *jump_sound, const Sound *shoot_sound, const Camera2D *camera) {
 
     if (time_delta(state->last_shot) > SHOOT_DELAY - state->reload_time) {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            const Vector2 mouse_pos = GetMousePosition();
+            const Vector2 mouse_pos = GetScreenToWorld2D(GetMousePosition(), *camera);
             const Vector2 dir = Vector2Normalize(
                 Vector2Subtract(mouse_pos, (Vector2){.x = transform->rect.x + (transform->rect.width / 2.0),
                                                      .y = transform->rect.y + (transform->rect.height / 2.0)}));
@@ -127,9 +128,6 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
 void player_draw(const ECSPlayer *player) {
     if (!player->state.dead) {
         draw_solid(&player->transform, &player->draw_conf);
-    }
-    if (player->state.health < 3) {
-        DrawRectangle(0, 0, WINDOW_W, WINDOW_H, GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
     }
 }
 void player_pickup_interaction(ECSPlayer *player, Pickups *pickups) {

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "ecs.h"
 #include "pickup.h"
+#include "raylib.h"
 #include "wave.h"
 #include "bullet.h"
 
@@ -46,11 +47,11 @@ typedef struct {
 ECSPlayer ecs_player_new();
 // Handles player input
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
-                  const Sound *jump_sound, const Sound *shoot_sound);
+                  const Sound *jump_sound, const Sound *shoot_sound, const Camera2D *camera);
 // Updates the entire player state
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
-                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups);
+                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups, const Camera2D* camera);
 void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets* enemy_bullets);
 void player_pickup_interaction(ECSPlayer *player, Pickups* pickups);
-void player_draw(const ECSPlayer* player);
+void player_draw(const ECSPlayer *player);
 #endif
