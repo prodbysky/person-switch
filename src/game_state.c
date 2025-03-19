@@ -1,6 +1,7 @@
 #include "game_state.h"
 #include "bullet.h"
 #include "enemy.h"
+#include "particles.h"
 #include "pickup.h"
 #include "player.h"
 #include "stage.h"
@@ -161,7 +162,7 @@ void game_state_update(GameState *state) {
             ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform,
                              &state->player.physics, &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound,
                              PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets,
-                             &state->pickups);
+                             &state->pickups, &state->particles);
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
                           &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets, &state->pickups,
@@ -182,6 +183,7 @@ void game_state_update(GameState *state) {
                 state->current_wave = generate_wave(state->wave_strength, &state->stage);
             }
         }
+        particles_update(&state->particles, &state->stage, dt);
         break;
     case GP_STARTMENU:
         break;
@@ -221,6 +223,7 @@ void game_state_draw_playfield(const GameState *state) {
     bullets_draw(&state->enemy_bullets);
     player_draw(&state->player);
     pickups_draw(&state->pickups);
+    particles_draw(&state->particles);
 }
 
 void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment) {

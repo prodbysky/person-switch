@@ -1,6 +1,7 @@
 #include "enemy.h"
 #include "bullet.h"
 #include "ecs.h"
+#include "particles.h"
 #include "pickup.h"
 #include "raylib.h"
 #include "static_config.h"
@@ -49,11 +50,9 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
                                  (player_transform->rect.x + (player_transform->rect.width / 2.0)));
 
-        // Jump if we can and the player bottom y position is higher than our y top position
         if ((player_transform->rect.y + player_transform->rect.height < transform->rect.y) && physics->grounded) {
             physics->velocity.y = -200;
         }
-        // If close enough to the player then just return
         if (x_pos_delta < 50) {
             return;
         }
@@ -114,7 +113,8 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform,
                       const PhysicsComp *player_physics, Bullets *bullets, const Sound *hit_sound,
-                      const Sound *death_sound, size_t dmg, Bullets *enemy_bullets, Pickups *pickups) {
+                      const Sound *death_sound, size_t dmg, Bullets *enemy_bullets, Pickups *pickups,
+                      Particles *particles) {
     if (enemy->state.dead) {
         return;
     }
@@ -123,6 +123,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
         if (GetRandomValue(0, 100) < 20) {
             pickups_spawn(pickups, health_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 3));
         }
+        particles_spawn_n_in_dir(particles, 10, RED, (Vector2){0, -0.5}, *(Vector2 *)&enemy->transform);
         enemy->state.dead = true;
         PlaySound(*death_sound);
         return;
