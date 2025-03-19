@@ -43,7 +43,8 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
         player->draw_conf.color = WHITE;
     }
 
-    player_input(&player->state, &player->physics, &player->transform, bullets, jump_sound, shoot_sound, camera);
+    player_input(&player->state, &player->physics, &player->transform, bullets, jump_sound, shoot_sound, camera,
+                 particles);
     physics(&player->physics, dt);
     collision(&player->transform, &player->physics, stage, dt);
     player_enemy_interaction(player, wave, enemy_bullets, particles);
@@ -103,7 +104,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
 }
 
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
-                  const Sound *jump_sound, const Sound *shoot_sound, const Camera2D *camera) {
+                  const Sound *jump_sound, const Sound *shoot_sound, const Camera2D *camera, Particles *particles) {
 
     if (time_delta(state->last_shot) > SHOOT_DELAY - state->reload_time) {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -128,6 +129,10 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
         physics->velocity.y = -PLAYER_STATES[state->current_class].jump_power;
         PlaySound(*jump_sound);
         physics->grounded = false;
+        Vector2 pos = *(Vector2 *)transform;
+        pos.y += transform->rect.height / 2.0;
+        pos.x += transform->rect.width / 2.0;
+        particles_spawn_n_in_dir(particles, 5, WHITE, (Vector2){0, 1}, pos);
     }
 }
 

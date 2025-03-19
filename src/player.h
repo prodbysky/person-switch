@@ -48,7 +48,7 @@ typedef struct {
 ECSPlayer ecs_player_new();
 // Handles player input
 void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
-                  const Sound *jump_sound, const Sound *shoot_sound, const Camera2D *camera);
+                  const Sound *jump_sound, const Sound *shoot_sound, const Camera2D *camera, Particles *particles);
 // Updates the entire player state
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
                        const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups, const Camera2D* camera, Particles* particles);
