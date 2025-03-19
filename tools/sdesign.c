@@ -160,6 +160,7 @@ int main(int argc, char **argv) {
         }
 
         DrawCircleV(stage.spawn, 25, GREEN);
+        DrawRectangle(stage.spawn.x, stage.spawn.y, 32, 96, WHITE);
         if (selected == 51) {
             DrawCircleLinesV(stage.spawn, 25, RED);
         }

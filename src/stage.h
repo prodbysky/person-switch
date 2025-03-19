@@ -5,6 +5,7 @@
 typedef Rectangle Platform;
 
 typedef struct {
+    Vector2 spawn;
     Platform platforms[50];
     size_t count;
 } Stage;

@@ -96,6 +96,8 @@ double screen_centered_position(double w) {
 void game_state_phase_change(GameState *state, GamePhase next) {
     if (next == GP_MAIN) {
         state->stage = stages[state->selected_stage]();
+        state->player.transform.rect.x = state->stage.spawn.x;
+        state->player.transform.rect.y = state->stage.spawn.y;
     }
     state->phase = GP_TRANSITION;
     state->after_transition = next;
@@ -194,6 +196,8 @@ void game_state_update(GameState *state) {
             state->player = ecs_player_new();
             state->stage = stages[state->selected_stage]();
             state->current_wave = generate_wave(state->wave_strength);
+            state->player.transform.rect.x = state->stage.spawn.x;
+            state->player.transform.rect.y = state->stage.spawn.y;
         }
         break;
     case GP_PAUSED:
@@ -304,7 +308,9 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
         state->stage = stages[state->selected_stage]();
-        state->player.state.current_class = state->selected_stage;
+        state->player.state.current_class = state->selected_class;
+        state->player.transform.rect.x = state->stage.spawn.x;
+        state->player.transform.rect.y = state->stage.spawn.y;
     }
 }
 
@@ -848,15 +854,31 @@ void flash_error(GameState *state, char *message) {
 }
 
 Stage stage_1() {
-    return (Stage){.count = 1,
-                   .platforms = {
-                       (Rectangle){
-                           .x = 6.000003,
-                           .y = 532.000061,
-                           .width = 1314.000000,
-                           .height = 64.000000,
-                       },
-                   }};
+    return (Stage){
+        .spawn = (Vector2){705.00, 141.67},
+        .platforms =
+            {
+                (Rectangle){
+                    .x = 3.33,
+                    .y = 710.00,
+                    .width = 2134.00,
+                    .height = 64.00,
+                },
+                (Rectangle){
+                    .x = 1101.67,
+                    .y = 540.00,
+                    .width = 254.00,
+                    .height = 64.00,
+                },
+                (Rectangle){
+                    .x = 1436.66,
+                    .y = 468.33,
+                    .width = 324.00,
+                    .height = 64.00,
+                },
+            },
+        .count = 3,
+    };
 }
 Stage stage_2() {
     return (Stage){
