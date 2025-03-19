@@ -96,8 +96,6 @@ double screen_centered_position(double w) {
 void game_state_phase_change(GameState *state, GamePhase next) {
     if (next == GP_MAIN) {
         state->stage = stages[state->selected_stage]();
-        state->player.transform.rect.x = state->stage.spawn.x;
-        state->player.transform.rect.y = state->stage.spawn.y;
     }
     state->phase = GP_TRANSITION;
     state->after_transition = next;
