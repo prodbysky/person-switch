@@ -15,10 +15,17 @@ static bool running = true;
 static Rectangle objects[50] = {0};
 static size_t object_count = 0;
 static size_t selected = 0xffff;
+static char *out = NULL;
 
 #define CLAY_WHITE (Clay_Color){255, 255, 255, 255}
 
-int main() {
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        TraceLog(LOG_ERROR, "Provide the output file to write the stage to");
+        return 1;
+    }
+    out = argv[1];
+
     InitWindow(1920, 1080, "SDesign");
     SetExitKey(KEY_NULL);
     SetWindowState(FLAG_WINDOW_RESIZABLE);
@@ -157,16 +164,18 @@ void dump_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        printf("{\n");
+        FILE *file = fopen(out, "w");
+        fprintf(file, "{\n");
         for (size_t i = 0; i < object_count; i++) {
-            printf("(Rectangle){\n");
-            printf("\t.x = %f\n", objects[i].x);
-            printf("\t.y = %f\n", objects[i].y);
-            printf("\t.width = %f\n", objects[i].width);
-            printf("\t.height = %f\n", objects[i].height);
-            printf("},\n");
+            fprintf(file, "(Rectangle){\n");
+            fprintf(file, "\t.x = %f,\n", objects[i].x);
+            fprintf(file, "\t.y = %f,\n", objects[i].y);
+            fprintf(file, "\t.width = %f,\n", objects[i].width);
+            fprintf(file, "\t.height = %f,\n", objects[i].height);
+            fprintf(file, "},\n");
         }
-        printf("}\n");
+        fprintf(file, "}\n");
+        fclose(file);
     }
 }
 

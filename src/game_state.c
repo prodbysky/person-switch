@@ -848,18 +848,15 @@ void flash_error(GameState *state, char *message) {
 }
 
 Stage stage_1() {
-    return (Stage){
-        .count = 1,
-        .platforms =
-            {
-                (Platform){
-                    .x = 0,
-                    .y = 550,
-                    .width = 800,
-                    .height = 32,
-                },
-            },
-    };
+    return (Stage){.count = 1,
+                   .platforms = {
+                       (Rectangle){
+                           .x = 6.000003,
+                           .y = 532.000061,
+                           .width = 1314.000000,
+                           .height = 64.000000,
+                       },
+                   }};
 }
 Stage stage_2() {
     return (Stage){
