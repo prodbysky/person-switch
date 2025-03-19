@@ -17,10 +17,14 @@ static size_t selected = 0xffff;
 static char *out = NULL;
 Camera2D camera = {.zoom = 1, .offset = {960, 540}, .target = {0, 0}, .rotation = 0};
 
+#define SPAWN_SELECT 100
+
 static struct {
     Vector2 spawn;
     Rectangle platforms[50];
+    Rectangle enemy_spawns[20];
     size_t count;
+    size_t count_sp;
 } stage;
 
 #define CLAY_WHITE (Clay_Color){255, 255, 255, 255}
@@ -84,12 +88,12 @@ int main(int argc, char **argv) {
         Vector2 world_mouse_pos = GetScreenToWorld2D(mouse_pos, camera);
         if (CheckCollisionPointCircle(world_mouse_pos, stage.spawn, 25)) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                selected = 51;
+                selected = SPAWN_SELECT;
             }
 
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                 const Vector2 mouse_delta = GetMouseDelta();
-                if (selected == 51) {
+                if (selected == SPAWN_SELECT) {
                     stage.spawn.x += mouse_delta.x / camera.zoom;
                     stage.spawn.y += mouse_delta.y / camera.zoom;
                 }
@@ -104,13 +108,13 @@ int main(int argc, char **argv) {
 
                     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                         const Vector2 mouse_delta = GetMouseDelta();
-                        if (selected != 0xffff && selected != 51) {
+                        if (selected != 0xffff && selected != SPAWN_SELECT) {
                             stage.platforms[selected].x += mouse_delta.x / camera.zoom;
                             stage.platforms[selected].y += mouse_delta.y / camera.zoom;
                         }
                     }
 
-                    if (selected != 0xffff && selected != 51) {
+                    if (selected != 0xffff && selected != SPAWN_SELECT) {
                         if (IsKeyDown(KEY_LEFT_SHIFT)) {
                             if (scroll_delta.y != 0) {
                                 stage.platforms[selected].width += scroll_delta.y * 10;
@@ -119,6 +123,34 @@ int main(int argc, char **argv) {
                         if (IsKeyDown(KEY_LEFT_ALT)) {
                             if (scroll_delta.y != 0) {
                                 stage.platforms[selected].height += scroll_delta.y * 10;
+                            }
+                        }
+                    }
+                }
+            }
+            for (size_t i = 0; i < stage.count_sp; i++) {
+                if (CheckCollisionPointRec(world_mouse_pos, stage.enemy_spawns[i])) {
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                        selected = i + 50;
+                    }
+
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                        const Vector2 mouse_delta = GetMouseDelta();
+                        if (selected != 0xffff && selected != SPAWN_SELECT && selected > 49) {
+                            stage.enemy_spawns[selected - 50].x += mouse_delta.x / camera.zoom;
+                            stage.enemy_spawns[selected - 50].y += mouse_delta.y / camera.zoom;
+                        }
+                    }
+
+                    if (selected != 0xffff && selected != SPAWN_SELECT && selected > 49) {
+                        if (IsKeyDown(KEY_LEFT_SHIFT)) {
+                            if (scroll_delta.y != 0) {
+                                stage.enemy_spawns[selected - 50].width += scroll_delta.y * 10;
+                            }
+                        }
+                        if (IsKeyDown(KEY_LEFT_ALT)) {
+                            if (scroll_delta.y != 0) {
+                                stage.enemy_spawns[selected - 50].height += scroll_delta.y * 10;
                             }
                         }
                     }
@@ -135,6 +167,12 @@ int main(int argc, char **argv) {
             }
             for (size_t i = 0; i < stage.count && b; i++) {
                 if (CheckCollisionPointRec(world_mouse_pos, stage.platforms[i])) {
+                    clicked_on_anything = true;
+                    b = false;
+                }
+            }
+            for (size_t i = 0; i < stage.count_sp && b; i++) {
+                if (CheckCollisionPointRec(world_mouse_pos, stage.enemy_spawns[i])) {
                     clicked_on_anything = true;
                     b = false;
                 }
@@ -159,9 +197,15 @@ int main(int argc, char **argv) {
             }
         }
 
+        for (size_t i = 0; i < stage.count_sp; i++) {
+            DrawRectangleRec(stage.enemy_spawns[i], GetColor(0x00ff0066));
+            if (i == selected) {
+                DrawRectangleLinesEx(stage.enemy_spawns[i], 2, RED);
+            }
+        }
         DrawCircleV(stage.spawn, 25, GREEN);
         DrawRectangle(stage.spawn.x, stage.spawn.y, 32, 96, WHITE);
-        if (selected == 51) {
+        if (selected == SPAWN_SELECT) {
             DrawCircleLinesV(stage.spawn, 25, RED);
         }
 
@@ -211,7 +255,19 @@ void dump_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
             fprintf(file, "},\n");
         }
         fprintf(file, "},\n");
-        fprintf(file, ".count = %zu\n", stage.count);
+        fprintf(file, ".count = %zu\n,", stage.count);
+
+        fprintf(file, ".spawns = {");
+        for (size_t i = 0; i < stage.count_sp; i++) {
+            fprintf(file, "(Rectangle){\n");
+            fprintf(file, "\t.x = %.2f,\n", stage.enemy_spawns[i].x);
+            fprintf(file, "\t.y = %.2f,\n", stage.enemy_spawns[i].y);
+            fprintf(file, "\t.width = %.2f,\n", stage.enemy_spawns[i].width);
+            fprintf(file, "\t.height = %.2f,\n", stage.enemy_spawns[i].height);
+            fprintf(file, "},\n");
+        }
+        fprintf(file, "},\n");
+        fprintf(file, ".count_sp = %zu\n", stage.count_sp);
         fprintf(file, "}");
         fclose(file);
     }
@@ -222,6 +278,18 @@ void add_platform_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr
     (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         stage.platforms[stage.count++] = (Rectangle){
+            .x = 0,
+            .y = 0,
+            .width = 64,
+            .height = 64,
+        };
+    }
+}
+void add_spawn_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    (void)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        stage.enemy_spawns[stage.count_sp++] = (Rectangle){
             .x = 0,
             .y = 0,
             .width = 64,
@@ -285,6 +353,8 @@ Clay_RenderCommandArray build_ui() {
         }) {
             button(CLAY_ID("AddPlatform"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Plat."),
                    (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, add_platform_button_action);
+            button(CLAY_ID("AddSpawn"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Spawn."),
+                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, add_spawn_button_action);
         }
     }
     return Clay_EndLayout();
