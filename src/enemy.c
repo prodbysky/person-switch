@@ -139,11 +139,11 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform, player_physics,
              enemy_bullets);
     collision(&enemy->transform, &enemy->physics, stage, dt);
-    enemy_bullet_interaction(&enemy->physics, &enemy->transform, bullets, &enemy->state, hit_sound, dmg);
+    enemy_bullet_interaction(&enemy->physics, &enemy->transform, bullets, &enemy->state, hit_sound, dmg, particles);
 }
 
 void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transform, Bullets *bullets, EnemyState *state,
-                              const Sound *hit_sound, size_t dmg) {
+                              const Sound *hit_sound, size_t dmg, Particles *particles) {
     if (state->health <= 0) {
         return;
     }
@@ -155,6 +155,11 @@ void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transfo
                 state->last_hit = GetTime();
                 physics->velocity.x += 200 * bullets->bullets[i].direction.x;
                 physics->velocity.y += 200 * bullets->bullets[i].direction.y;
+
+                Vector2 pos = *(Vector2 *)transform;
+                pos.y += transform->rect.height / 2.0;
+                pos.x += transform->rect.width / 2.0;
+                particles_spawn_n_in_dir(particles, 5, RED, Vector2Rotate(bullets->bullets[i].direction, PI), pos);
                 PlaySound(*hit_sound);
                 return;
             }
