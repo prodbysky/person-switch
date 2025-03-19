@@ -3,6 +3,7 @@
 
 #include "pickup.h"
 #include "player.h"
+#include "particles.h"
 #include "raylib.h"
 #include "wave.h"
 #include <clay/clay.h>
@@ -90,6 +91,7 @@ typedef struct {
     Clay_Arena clay_memory;
 
     Pickups pickups;
+    Particles particles;
 } GameState;
 
 // Initializes raylib, loads needed assets
