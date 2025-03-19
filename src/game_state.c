@@ -227,7 +227,7 @@ void game_state_draw_playfield(const GameState *state) {
 
     const float arrow_length = 50.0f;
     const float arrow_thickness = 5.0f;
-    const Color arrow_color = GetColor(0xff000055);
+    Color arrow_color = GetColor(0xff000055);
     for (size_t i = 0; i < state->current_wave.count; i++) {
         if (state->current_wave.enemies[i].state.dead) {
             continue;
@@ -236,6 +236,25 @@ void game_state_draw_playfield(const GameState *state) {
             Vector2Normalize((Vector2){state->current_wave.enemies[i].transform.rect.x -
                                            (state->player.transform.rect.x + state->player.transform.rect.width / 2),
                                        state->current_wave.enemies[i].transform.rect.y -
+                                           (state->player.transform.rect.y + state->player.transform.rect.height / 2)});
+
+        Vector2 arrow_end = {
+            (state->player.transform.rect.x + state->player.transform.rect.width / 2) + direction.x * arrow_length,
+            (state->player.transform.rect.y + state->player.transform.rect.height / 2) + direction.y * arrow_length};
+
+        DrawLineEx((Vector2){state->player.transform.rect.x + state->player.transform.rect.width / 2,
+                             state->player.transform.rect.y + state->player.transform.rect.height / 2},
+                   arrow_end, arrow_thickness, arrow_color);
+    }
+    arrow_color = GetColor(0x00ff0055);
+    for (size_t i = 0; i < MAX_PICKUPS; i++) {
+        if (!state->pickups.pickups[i].active) {
+            continue;
+        }
+        Vector2 direction =
+            Vector2Normalize((Vector2){state->pickups.pickups[i].transform.rect.x -
+                                           (state->player.transform.rect.x + state->player.transform.rect.width / 2),
+                                       state->pickups.pickups[i].transform.rect.y -
                                            (state->player.transform.rect.y + state->player.transform.rect.height / 2)});
 
         Vector2 arrow_end = {
