@@ -1,6 +1,7 @@
 #ifndef BULLET_H
 #define BULLET_H
 
+#include "particles.h"
 #include "ecs.h"
 
 #define MAX_BULLETS 100
@@ -30,7 +31,7 @@ typedef struct {
 // Hard limit of `MAX_BULLETS` (if more are spawned then they will be overriden)
 void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, Vector2 dir, Color c);
 
-void bullets_update(Bullets *bullets, float dt, const Stage* stage);
+void bullets_update(Bullets *bullets, float dt, const Stage *stage, Particles *particles);
 void bullets_draw(const Bullets *bullets);
 
 #endif

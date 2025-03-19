@@ -1,5 +1,6 @@
 #include "bullet.h"
 #include "ecs.h"
+#include "particles.h"
 #include "raylib.h"
 #include "raymath.h"
 #include "stage.h"
@@ -18,12 +19,14 @@ void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullet
     bullets->current = (bullets->current + 1) % MAX_BULLETS;
 }
 
-void bullets_update(Bullets *bullets, float dt, const Stage *stage) {
+void bullets_update(Bullets *bullets, float dt, const Stage *stage, Particles *particles) {
     for (int i = 0; i < MAX_BULLETS; i++) {
         ECSPlayerBullet *bullet = &bullets->bullets[i];
         if (bullet->active) {
             for (size_t j = 0; j < stage->count; j++) {
                 if (CheckCollisionRecs(stage->platforms[j], bullet->transform.rect)) {
+                    particles_spawn_n_in_dir(particles, 5, bullet->draw_conf.color,
+                                             Vector2Rotate(bullet->direction, PI), *(Vector2 *)&bullet->transform);
                     bullet->active = false;
                     break;
                 }
