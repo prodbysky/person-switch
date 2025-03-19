@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <clay/clay.h>
 #include <clay/clay_raylib_renderer.c>
 #include <raylib.h>
@@ -12,14 +13,22 @@ void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizin
             void (*on_hover)(Clay_ElementId, Clay_PointerData, intptr_t));
 
 static bool running = true;
-static Rectangle objects[50] = {0};
-static size_t object_count = 0;
 static size_t selected = 0xffff;
 static char *out = NULL;
+Camera2D camera = {.zoom = 1, .offset = {960, 540}, .target = {0, 0}, .rotation = 0};
+
+static struct {
+    Vector2 spawn;
+    Rectangle platforms[50];
+    size_t count;
+} stage;
 
 #define CLAY_WHITE (Clay_Color){255, 255, 255, 255}
 
 int main(int argc, char **argv) {
+    stage.count = 0;
+    stage.spawn = (Vector2){0, 0};
+
     if (argc < 2) {
         TraceLog(LOG_ERROR, "Provide the output file to write the stage to");
         return 1;
@@ -28,10 +37,8 @@ int main(int argc, char **argv) {
 
     InitWindow(1920, 1080, "SDesign");
     SetExitKey(KEY_NULL);
-    SetWindowState(FLAG_WINDOW_RESIZABLE);
+    SetWindowState(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
     SetWindowMinSize(800, 450);
-
-    Camera2D camera = {.zoom = 1, .offset = {960, 540}, .target = {0, 0}, .rotation = 0};
 
     const int min_mem_clay = Clay_MinMemorySize();
     Clay_Arena clay_arena = Clay_CreateArenaWithCapacityAndMemory(min_mem_clay, malloc(min_mem_clay));
@@ -75,44 +82,65 @@ int main(int argc, char **argv) {
         camera.zoom = Clamp(camera.zoom, 0.2, 4);
 
         Vector2 world_mouse_pos = GetScreenToWorld2D(mouse_pos, camera);
-        for (size_t i = 0; i < object_count; i++) {
-            if (CheckCollisionPointRec(world_mouse_pos, objects[i])) {
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    selected = i;
-                }
+        if (CheckCollisionPointCircle(world_mouse_pos, stage.spawn, 25)) {
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                selected = 51;
+            }
 
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-                    if (selected != 0xffff) {
-                        const Vector2 mouse_delta = GetMouseDelta();
-                        objects[selected].x += mouse_delta.x / camera.zoom;
-                        objects[selected].y += mouse_delta.y / camera.zoom;
-                    }
-                }
-
-                if (IsKeyDown(KEY_LEFT_SHIFT)) {
-                    if (scroll_delta.y != 0) {
-                        objects[selected].width += scroll_delta.y * 10;
-                    }
-                }
-
-                if (IsKeyDown(KEY_LEFT_ALT)) {
-                    if (scroll_delta.y != 0) {
-                        objects[selected].height += scroll_delta.y * 10;
-                    }
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                const Vector2 mouse_delta = GetMouseDelta();
+                if (selected == 51) {
+                    stage.spawn.x += mouse_delta.x / camera.zoom;
+                    stage.spawn.y += mouse_delta.y / camera.zoom;
                 }
             }
 
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                bool clicked_on_rectangle = false;
-                for (size_t i = 0; i < object_count; i++) {
-                    if (CheckCollisionPointRec(world_mouse_pos, objects[i])) {
-                        clicked_on_rectangle = true;
-                        break;
+        } else {
+            for (size_t i = 0; i < stage.count; i++) {
+                if (CheckCollisionPointRec(world_mouse_pos, stage.platforms[i])) {
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                        selected = i;
+                    }
+
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                        const Vector2 mouse_delta = GetMouseDelta();
+                        if (selected != 0xffff && selected != 51) {
+                            stage.platforms[selected].x += mouse_delta.x / camera.zoom;
+                            stage.platforms[selected].y += mouse_delta.y / camera.zoom;
+                        }
+                    }
+
+                    if (selected != 0xffff && selected != 51) {
+                        if (IsKeyDown(KEY_LEFT_SHIFT)) {
+                            if (scroll_delta.y != 0) {
+                                stage.platforms[selected].width += scroll_delta.y * 10;
+                            }
+                        }
+                        if (IsKeyDown(KEY_LEFT_ALT)) {
+                            if (scroll_delta.y != 0) {
+                                stage.platforms[selected].height += scroll_delta.y * 10;
+                            }
+                        }
                     }
                 }
-                if (!clicked_on_rectangle) {
-                    selected = 0xffff;
+            }
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            bool clicked_on_anything = false;
+            bool b = true;
+            if (CheckCollisionPointCircle(GetScreenToWorld2D(GetMousePosition(), camera), stage.spawn, 25)) {
+                clicked_on_anything = true;
+                b = false;
+            }
+            for (size_t i = 0; i < stage.count && b; i++) {
+                if (CheckCollisionPointRec(world_mouse_pos, stage.platforms[i])) {
+                    clicked_on_anything = true;
+                    b = false;
                 }
+            }
+            if (!clicked_on_anything) {
+                selected = 0xffff;
             }
         }
 
@@ -124,11 +152,16 @@ int main(int argc, char **argv) {
         DrawLineEx((Vector2){0, -3000}, (Vector2){0, 3000}, 5, GRAY);
         DrawLineEx((Vector2){-3000, 0}, (Vector2){3000, 0}, 5, GRAY);
 
-        for (size_t i = 0; i < object_count; i++) {
-            DrawRectangleRec(objects[i], WHITE);
+        for (size_t i = 0; i < stage.count; i++) {
+            DrawRectangleRec(stage.platforms[i], WHITE);
             if (i == selected) {
-                DrawRectangleLinesEx(objects[i], 2, RED);
+                DrawRectangleLinesEx(stage.platforms[i], 2, RED);
             }
+        }
+
+        DrawCircleV(stage.spawn, 25, GREEN);
+        if (selected == 51) {
+            DrawCircleLinesV(stage.spawn, 25, RED);
         }
 
         EndMode2D();
@@ -165,25 +198,29 @@ void dump_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         FILE *file = fopen(out, "w");
-        fprintf(file, "{\n");
-        for (size_t i = 0; i < object_count; i++) {
+        fprintf(file, "Stage stage {\n");
+        fprintf(file, ".spawn = (Vector2){%.2f, %.2f},\n", stage.spawn.x, stage.spawn.y);
+        fprintf(file, ".platforms = {");
+        for (size_t i = 0; i < stage.count; i++) {
             fprintf(file, "(Rectangle){\n");
-            fprintf(file, "\t.x = %f,\n", objects[i].x);
-            fprintf(file, "\t.y = %f,\n", objects[i].y);
-            fprintf(file, "\t.width = %f,\n", objects[i].width);
-            fprintf(file, "\t.height = %f,\n", objects[i].height);
+            fprintf(file, "\t.x = %.2f,\n", stage.platforms[i].x);
+            fprintf(file, "\t.y = %.2f,\n", stage.platforms[i].y);
+            fprintf(file, "\t.width = %.2f,\n", stage.platforms[i].width);
+            fprintf(file, "\t.height = %.2f,\n", stage.platforms[i].height);
             fprintf(file, "},\n");
         }
-        fprintf(file, "}\n");
+        fprintf(file, "},\n");
+        fprintf(file, ".count = %zu\n", stage.count);
+        fprintf(file, "}");
         fclose(file);
     }
 }
 
-void add_object_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+void add_platform_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        objects[object_count++] = (Rectangle){
+        stage.platforms[stage.count++] = (Rectangle){
             .x = 0,
             .y = 0,
             .width = 64,
@@ -245,46 +282,8 @@ Clay_RenderCommandArray build_ui() {
                 },
             .backgroundColor = {50, 50, 50, 255},
         }) {
-            button(CLAY_ID("AddObject"), CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_GROW(0), CLAY_STRING("Add"),
-                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, add_object_button_action);
-        }
-        CLAY({.id = CLAY_ID("ObjectList"),
-              .layout =
-                  {
-                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                      .sizing = {CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_GROW(0)},
-                      .padding = {16, 16, 16, 16},
-                      .childGap = 16,
-                  },
-              .cornerRadius = {16, 16, 16, 16},
-              .backgroundColor = {50, 50, 50, 255},
-              .scroll = {.vertical = true}}) {
-            for (size_t i = 0; i < object_count; i++) {
-                CLAY({
-                    .id = CLAY_IDI("Object", i),
-                    .layout = {.layoutDirection = CLAY_TOP_TO_BOTTOM,
-                               .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(400)},
-                               .padding = {16, 16, 16, 16}},
-                    .cornerRadius = {16, 16, 16, 16},
-                    .backgroundColor = {100, 100, 100, 255},
-                }) {
-                    CLAY({
-                        .id = CLAY_IDI("ObjectTransform", i),
-                        .layout = {.layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                   .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                                   .padding = {16, 16, 16, 16}},
-                        .cornerRadius = {16, 16, 16, 16},
-                        .backgroundColor = {150, 150, 150, 255},
-                    }) {
-
-                        const char *formatted = TextFormat("x: %.2f \ny: %.2f \nw: %.2f \nh: %.2f", objects[i].x,
-                                                           objects[i].y, objects[i].width, objects[i].height);
-                        Clay_String str = {.chars = formatted, .length = strlen(formatted)};
-
-                        text(str, CLAY_WHITE, CLAY_TEXT_ALIGN_LEFT);
-                    }
-                }
-            }
+            button(CLAY_ID("AddPlatform"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Plat."),
+                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, add_platform_button_action);
         }
     }
     return Clay_EndLayout();
