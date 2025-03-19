@@ -119,10 +119,8 @@ void game_state_update(GameState *state) {
     float dt = GetFrameTime();
     const float smoothing_factor = 0.02f;
 
-    // Calculate the desired camera target position (player's position)
     Vector2 desired_camera_target = (Vector2){state->player.transform.rect.x, state->player.transform.rect.y};
 
-    // Smoothly interpolate the current camera target towards the desired target
     state->camera.target.x = Lerp(state->camera.target.x, desired_camera_target.x, smoothing_factor);
     state->camera.target.y = Lerp(state->camera.target.y, desired_camera_target.y, smoothing_factor);
 
