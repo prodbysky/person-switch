@@ -115,7 +115,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state);
 void draw_centered_text(const char* message, const Font* font, size_t size, Color color, float y);
 double screen_centered_position(double w);
 
-EnemyWave generate_wave(double strength);
+EnemyWave generate_wave(double strength, const Stage *stage);
 
 void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment);
 void flash_error(GameState* state, char* message);

@@ -67,7 +67,7 @@ GameState game_state_init() {
     st.selected_class = PS_MOVE;
     st.wave_strength = 2;
     st.wave_number = 1;
-    st.current_wave = generate_wave(2);
+    st.current_wave = generate_wave(2, &st.stage);
     st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
     st.camera = (Camera2D){
         .zoom = 0.75,
@@ -181,7 +181,7 @@ void game_state_update(GameState *state) {
 
                 state->wave_strength *= 1.1;
                 state->wave_number++;
-                state->current_wave = generate_wave(state->wave_strength);
+                state->current_wave = generate_wave(state->wave_strength, &state->stage);
             }
         }
         break;
@@ -193,7 +193,9 @@ void game_state_update(GameState *state) {
             state->began_transition = GetTime();
             state->player = ecs_player_new();
             state->stage = stages[state->selected_stage]();
-            state->current_wave = generate_wave(state->wave_strength);
+            state->current_wave = generate_wave(state->wave_strength, &state->stage);
+            state->player.transform.rect.x = state->stage.spawn.x;
+            state->player.transform.rect.y = state->stage.spawn.y;
         }
         break;
     case GP_PAUSED:
@@ -304,7 +306,9 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
         state->stage = stages[state->selected_stage]();
-        state->player.state.current_class = state->selected_stage;
+        state->player.state.current_class = state->selected_class;
+        state->player.transform.rect.x = state->stage.spawn.x;
+        state->player.transform.rect.y = state->stage.spawn.y;
     }
 }
 
@@ -848,18 +852,39 @@ void flash_error(GameState *state, char *message) {
 }
 
 Stage stage_1() {
-    return (Stage){
-        .count = 1,
-        .platforms =
-            {
-                (Platform){
-                    .x = 0,
-                    .y = 550,
-                    .width = 800,
-                    .height = 32,
-                },
-            },
-    };
+    return (Stage){.spawn = (Vector2){420.00, 306.67},
+                   .platforms =
+                       {
+                           (Rectangle){
+                               .x = 3.33,
+                               .y = 665.00,
+                               .width = 1214.00,
+                               .height = 24.00,
+                           },
+                           (Rectangle){
+                               .x = 1.67,
+                               .y = 3.33,
+                               .width = 24.00,
+                               .height = 674.00,
+                           },
+                           (Rectangle){
+                               .x = 1183.33,
+                               .y = 3.33,
+                               .width = 34.00,
+                               .height = 684.00,
+                           },
+                       },
+                   .count = 3,
+                   .spawns =
+                       {
+                           (Rectangle){
+                               .x = 38.34,
+                               .y = 10.00,
+                               .width = 194.00,
+                               .height = 214.00,
+                           },
+                       },
+                   .count_sp = 1};
 }
 Stage stage_2() {
     return (Stage){
@@ -911,20 +936,25 @@ Stage stage_3() {
 #define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
 #define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 10, 3)
 
-EnemyWave generate_wave(double strength) {
+EnemyWave generate_wave(double strength, const Stage *stage) {
     EnemyWave wave = {.count = 0};
     size_t current_index = 0;
 
     while (strength > 0) {
         size_t enemy_type = GetRandomValue(0, 1);
+        size_t which_area = GetRandomValue(0, stage->count_sp - 1);
+        Vector2 pos = (Vector2){
+            GetRandomValue(stage->spawns[which_area].x, stage->spawns[which_area].x + stage->spawns[which_area].width),
+            GetRandomValue(stage->spawns[which_area].y, stage->spawns[which_area].y + stage->spawns[which_area].height),
+        };
         switch (enemy_type) {
         case 0: {
-            wave.enemies[current_index] = SLOW_STRONG_ENEMY(GetRandomValue(0, 700), GetRandomValue(100, 300));
+            wave.enemies[current_index] = SLOW_STRONG_ENEMY(pos.x, pos.y);
             strength -= 1;
             break;
         }
         case 1: {
-            wave.enemies[current_index] = RANGER(GetRandomValue(0, 700), GetRandomValue(100, 300));
+            wave.enemies[current_index] = RANGER(pos.x, pos.y);
             strength -= 1;
             break;
         }
