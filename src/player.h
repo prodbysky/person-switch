@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "ecs.h"
+#include "particles.h"
 #include "pickup.h"
 #include "raylib.h"
 #include "wave.h"
@@ -50,8 +51,8 @@ void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformC
                   const Sound *jump_sound, const Sound *shoot_sound, const Camera2D *camera);
 // Updates the entire player state
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
-                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups, const Camera2D* camera);
-void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets* enemy_bullets);
+                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups, const Camera2D* camera, Particles* particles);
+void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets *enemy_bullets, Particles *particles);
 void player_pickup_interaction(ECSPlayer *player, Pickups* pickups);
 void player_draw(const ECSPlayer *player);
 #endif

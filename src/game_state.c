@@ -166,7 +166,7 @@ void game_state_update(GameState *state) {
         }
         ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
                           &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets, &state->pickups,
-                          &state->camera);
+                          &state->camera, &state->particles);
         bullets_update(&state->bullets, dt, &state->stage);
         bullets_update(&state->enemy_bullets, dt, &state->stage);
         pickups_update(&state->pickups, &state->stage, dt);

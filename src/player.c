@@ -2,6 +2,7 @@
 #include "bullet.h"
 #include "ecs.h"
 #include "enemy.h"
+#include "particles.h"
 #include "pickup.h"
 #include "static_config.h"
 #include "timing_utilities.h"
@@ -28,7 +29,7 @@ ECSPlayer ecs_player_new() {
 
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
                        const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups,
-                       const Camera2D *camera) {
+                       const Camera2D *camera, Particles *particles) {
     if (player->state.dead) {
         return;
     }
@@ -45,14 +46,14 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
     player_input(&player->state, &player->physics, &player->transform, bullets, jump_sound, shoot_sound, camera);
     physics(&player->physics, dt);
     collision(&player->transform, &player->physics, stage, dt);
-    player_enemy_interaction(player, wave, enemy_bullets);
+    player_enemy_interaction(player, wave, enemy_bullets, particles);
     player_pickup_interaction(player, pickups);
     if (player->state.health <= 0) {
         player->state.dead = true;
     }
 }
 
-void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets *enemy_bullets) {
+void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets *enemy_bullets, Particles *particles) {
     const float KNOCKBACK_FORCE = 500.0f;
 
     for (size_t i = 0; i < wave->count; i++) {
@@ -84,13 +85,18 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
         }
     }
     for (size_t i = 0; i < MAX_BULLETS; i++) {
-        if (!enemy_bullets->bullets[i].active) {
+        const ECSPlayerBullet *b = &enemy_bullets->bullets[i];
+        if (!b->active) {
             continue;
         }
-        if (CheckCollisionRecs(player->transform.rect, enemy_bullets->bullets[i].transform.rect) &&
+        if (CheckCollisionRecs(player->transform.rect, b->transform.rect) &&
             time_delta(player->state.last_hit) > INVULNERABILITY_TIME) {
             player->state.last_hit = GetTime();
             player->state.health--;
+            Vector2 dir = Vector2Rotate(b->direction, PI);
+            dir.y *= 2;
+            dir.x *= 0.2;
+            particles_spawn_n_in_dir(particles, 20, RED, dir, *(Vector2 *)&player->transform);
             return;
         }
     }
