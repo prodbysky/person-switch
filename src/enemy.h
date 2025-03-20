@@ -31,8 +31,6 @@ typedef struct {
     } type_specific;
 } EnemyState;
 
-
-
 typedef struct {
     EnemyState state;
     EnemyConfigComp enemy_conf;
