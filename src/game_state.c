@@ -118,9 +118,12 @@ void game_state_update(GameState *state) {
     Clay_UpdateScrollContainers(true, (Clay_Vector2){scrollDelta.x, scrollDelta.y}, GetFrameTime());
 
     float dt = GetFrameTime();
-    const float smoothing_factor = 0.02f;
+    const float smoothing_factor = 2.0f * GetFrameTime();
 
     Vector2 desired_camera_target = (Vector2){state->player.transform.rect.x, state->player.transform.rect.y};
+    desired_camera_target =
+        Vector2Add(desired_camera_target,
+                   Vector2Scale(Vector2Subtract((Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0}, mousePosition), -0.5));
 
     state->camera.target.x = Lerp(state->camera.target.x, desired_camera_target.x, smoothing_factor);
     state->camera.target.y = Lerp(state->camera.target.y, desired_camera_target.y, smoothing_factor);
