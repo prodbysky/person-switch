@@ -65,7 +65,7 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
 
     transform->rect.y = new_y;
     bool landedOnPlatform = false;
-    const float grounded_epsilon = 2.0f;
+    const float grounded_epsilon = 0.5f;
     for (size_t i = 0; i < stage->count; i++) {
         if (CheckCollisionRecs(transform->rect, stage->platforms[i])) {
             const Platform *platform = &stage->platforms[i];
