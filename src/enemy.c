@@ -123,7 +123,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     if (enemy->state.health <= 0) {
         pickups_spawn(pickups, coin_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 3));
         if (GetRandomValue(0, 100) < 20) {
-            pickups_spawn(pickups, health_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 3));
+            pickups_spawn(pickups, health_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 1));
         }
         particles_spawn_n_in_dir(particles, 10, RED, (Vector2){0, -0.5}, *(Vector2 *)&enemy->transform);
         enemy->state.dead = true;
