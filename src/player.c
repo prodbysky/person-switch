@@ -11,7 +11,7 @@
 
 ECSPlayer ecs_player_new() {
     ECSPlayer p = {
-        .transform = TRANSFORM((WINDOW_W / 2.0) + 16, (WINDOW_H / 2.0) + 48, 32, 96),
+        .transform = TRANSFORM((GetMonitorWidth(0) / 2.0) + 16, (GetMonitorHeight(0) / 2.0) + 48, 32, 96),
         .state = {.current_class = PS_MOVE,
                   .health = 5,
                   .last_hit = 0.0,

@@ -31,15 +31,17 @@ static Stage (*const stages[])(void) = {stage_1, stage_2, stage_3};
 
 GameState game_state_init() {
     GameState st;
-    InitWindow(WINDOW_W, WINDOW_H, "Persona");
+    InitWindow(100, 100, "Persona");
     InitAudioDevice();
     SetWindowState(FLAG_VSYNC_HINT);
+    SetWindowSize(GetMonitorWidth(0), GetMonitorHeight(0));
+    ToggleFullscreen();
     SetExitKey(0);
 
     uint64_t clay_req_memory = Clay_MinMemorySize();
     st.clay_memory = Clay_CreateArenaWithCapacityAndMemory(clay_req_memory, malloc(clay_req_memory));
 
-    Clay_Initialize(st.clay_memory, (Clay_Dimensions){.width = WINDOW_W, .height = WINDOW_H},
+    Clay_Initialize(st.clay_memory, (Clay_Dimensions){GetMonitorWidth(0), GetMonitorHeight(0)},
                     (Clay_ErrorHandler){.errorHandlerFunction = clay_error_callback});
     Clay_SetMeasureTextFunction(Raylib_MeasureText, st.font);
 
@@ -72,15 +74,15 @@ GameState game_state_init() {
     st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
     st.camera = (Camera2D){
         .zoom = 0.75,
-        .offset = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
+        .offset = (Vector2){GetMonitorWidth(0) / 2.0, GetMonitorHeight(0) / 2.0},
         .rotation = 0,
-        .target = (Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0},
+        .target = (Vector2){GetMonitorWidth(0) / 2.0, GetMonitorHeight(0) / 2.0},
     };
     st.volume_label_opacity = 0.0;
     st.vfx_indicator_opacity = 0.0;
-    st.raw_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
-    st.ui_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
-    st.final_frame_buffer = LoadRenderTexture(WINDOW_W, WINDOW_H);
+    st.raw_frame_buffer = LoadRenderTexture(GetMonitorWidth(0), GetMonitorHeight(0));
+    st.ui_frame_buffer = LoadRenderTexture(GetMonitorWidth(0), GetMonitorHeight(0));
+    st.final_frame_buffer = LoadRenderTexture(GetMonitorWidth(0), GetMonitorHeight(0));
     st.pixelizer = LoadShader(NULL, "assets/shaders/pixelizer.fs");
     st.vfx_enabled = true;
     st.main_menu_type = MMT_START;
@@ -92,7 +94,7 @@ GameState game_state_init() {
 }
 
 double screen_centered_position(double w) {
-    return (WINDOW_W / 2.0) - (w / 2.0);
+    return (GetMonitorWidth(0) / 2.0) - (w / 2.0);
 }
 void game_state_phase_change(GameState *state, GamePhase next) {
     if (next == GP_MAIN) {
@@ -121,9 +123,10 @@ void game_state_update(GameState *state) {
     const float smoothing_factor = 2.0f * GetFrameTime();
 
     Vector2 desired_camera_target = (Vector2){state->player.transform.rect.x, state->player.transform.rect.y};
-    desired_camera_target =
-        Vector2Add(desired_camera_target,
-                   Vector2Scale(Vector2Subtract((Vector2){WINDOW_W / 2.0, WINDOW_H / 2.0}, mousePosition), -0.5));
+    desired_camera_target = Vector2Add(
+        desired_camera_target,
+        Vector2Scale(Vector2Subtract((Vector2){GetMonitorWidth(0) / 2.0, GetMonitorHeight(0) / 2.0}, mousePosition),
+                     -0.5));
 
     state->camera.target.x = Lerp(state->camera.target.x, desired_camera_target.x, smoothing_factor);
     state->camera.target.y = Lerp(state->camera.target.y, desired_camera_target.y, smoothing_factor);
@@ -766,6 +769,10 @@ void apply_shader(RenderTexture2D *in, RenderTexture2D *out, Shader *shader) {
     ClearBackground(BLACK);
     if (shader != NULL) {
         BeginShaderMode(*shader);
+        const float w = GetMonitorWidth(0);
+        const float h = GetMonitorHeight(0);
+        SetShaderValue(*shader, GetShaderLocation(*shader, "renderWidth"), &w, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(*shader, GetShaderLocation(*shader, "renderHeight"), &h, SHADER_UNIFORM_FLOAT);
     }
     DrawTextureRec(in->texture,
                    (Rectangle){
@@ -807,23 +814,24 @@ void game_state_frame(GameState *state) {
 
     switch (state->phase) {
     case GP_PAUSED: {
-        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
-                         GetColor(0x00000040));
+        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
+                         Vector2Zero(), 0, GetColor(0x00000040));
         break;
     }
     case GP_TRANSITION: {
         double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
         if (t < 0.5)
-            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
-                             GetColor(0xffffff00 + (t * 255)));
+            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
+                             Vector2Zero(), 0, GetColor(0xffffff00 + (t * 255)));
         else
-            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = WINDOW_W, .height = WINDOW_H}, Vector2Zero(), 0,
-                             GetColor(0xffffff40 - (t * 255)));
+            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
+                             Vector2Zero(), 0, GetColor(0xffffff40 - (t * 255)));
         break;
     }
     case GP_MAIN: {
         if (state->player.state.health < 3) {
-            DrawRectangle(0, 0, WINDOW_W, WINDOW_H, GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
+            DrawRectangle(0, 0, GetMonitorWidth(0), GetMonitorHeight(0),
+                          GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
         }
         break;
     }
