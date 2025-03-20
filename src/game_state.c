@@ -1,5 +1,6 @@
 #include "game_state.h"
 #include "bullet.h"
+#include "ecs.h"
 #include "enemy.h"
 #include "particles.h"
 #include "pickup.h"
@@ -18,10 +19,6 @@
 #include <clay/clay_raylib_renderer.c>
 
 #define TRANSITION_TIME 0.25
-
-#ifndef RELEASE
-static double update_took = 0;
-#endif
 
 void clay_error_callback(Clay_ErrorData errorData) {
     TraceLog(LOG_ERROR, "%s", errorData.errorText.chars);
@@ -92,44 +89,94 @@ GameState game_state_init() {
 
     return st;
 }
-
-double screen_centered_position(double w) {
-    return (GetMonitorWidth(0) / 2.0) - (w / 2.0);
+void game_state(GameState *state) {
+    game_state_update(state);
+    game_state_frame(state);
 }
-void game_state_phase_change(GameState *state, GamePhase next) {
-    if (next == GP_MAIN) {
-        state->stage = stages[state->selected_stage]();
+
+void game_state_frame(GameState *state) {
+    BeginTextureMode(state->raw_frame_buffer);
+    BeginMode2D(state->camera);
+    ClearBackground(GetColor(0x181818ff));
+    switch (state->phase) {
+    case GP_PAUSED:
+    case GP_TRANSITION:
+    case GP_AFTER_WAVE:
+    case GP_MAIN:
+        game_state_draw_playfield(state);
+        break;
+    case GP_DEAD:
+    case GP_STARTMENU:
+        break;
     }
-    state->phase = GP_TRANSITION;
-    state->after_transition = next;
-    state->began_transition = GetTime();
-    PlaySound(state->phase_change_sound);
-}
 
-void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
-    state->player.state.current_class = new_class;
-    game_state_phase_change(state, GP_MAIN);
-    state->bullets = (Bullets){.bullets = {0}, .current = 0};
-    state->enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
+    EndMode2D();
+
+    switch (state->phase) {
+    case GP_PAUSED: {
+        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
+                         Vector2Zero(), 0, GetColor(0x00000040));
+        break;
+    }
+    case GP_TRANSITION: {
+        double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
+        if (t < 0.5)
+            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
+                             Vector2Zero(), 0, GetColor(0xffffff00 + (t * 255)));
+        else
+            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
+                             Vector2Zero(), 0, GetColor(0xffffff40 - (t * 255)));
+        break;
+    }
+    case GP_MAIN: {
+        if (state->player.state.health < 3) {
+            DrawRectangle(0, 0, GetMonitorWidth(0), GetMonitorHeight(0),
+                          GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
+        }
+        break;
+    }
+    default: {
+    }
+    }
+
+    EndTextureMode();
+
+    if (state->vfx_enabled) {
+        apply_shader(&state->raw_frame_buffer, &state->final_frame_buffer, &state->pixelizer);
+    } else {
+        apply_shader(&state->raw_frame_buffer, &state->final_frame_buffer, NULL);
+    }
+
+    BeginTextureMode(state->ui_frame_buffer);
+    ClearBackground(GetColor(0));
+    Clay_Raylib_Render(game_state_draw_ui(state), &state->font[0]);
+    EndTextureMode();
+
+    BeginDrawing();
+    DrawTextureRec(state->final_frame_buffer.texture,
+                   (Rectangle){
+                       0,
+                       (float)state->final_frame_buffer.texture.height,
+                       (float)state->final_frame_buffer.texture.width,
+                       -(float)state->final_frame_buffer.texture.height,
+                   },
+                   (Vector2){0, 0}, WHITE);
+    DrawTextureRec(state->ui_frame_buffer.texture,
+                   (Rectangle){
+                       0,
+                       (float)state->ui_frame_buffer.texture.height,
+                       (float)state->ui_frame_buffer.texture.width,
+                       -(float)state->ui_frame_buffer.texture.height,
+                   },
+                   (Vector2){0, 0}, WHITE);
+    EndDrawing();
 }
 
 void game_state_update(GameState *state) {
-    Vector2 mousePosition = GetMousePosition();
-    Vector2 scrollDelta = GetMouseWheelMoveV();
-    Clay_SetPointerState((Clay_Vector2){mousePosition.x, mousePosition.y}, IsMouseButtonDown(0));
-    Clay_UpdateScrollContainers(true, (Clay_Vector2){scrollDelta.x, scrollDelta.y}, GetFrameTime());
+    game_state_update_ui_internals();
+    game_state_update_camera(&state->camera, &state->player.transform);
 
-    float dt = GetFrameTime();
-    const float smoothing_factor = 2.0f * GetFrameTime();
-
-    Vector2 desired_camera_target = (Vector2){state->player.transform.rect.x, state->player.transform.rect.y};
-    desired_camera_target = Vector2Add(
-        desired_camera_target,
-        Vector2Scale(Vector2Subtract((Vector2){GetMonitorWidth(0) / 2.0, GetMonitorHeight(0) / 2.0}, mousePosition),
-                     -0.5));
-
-    state->camera.target.x = Lerp(state->camera.target.x, desired_camera_target.x, smoothing_factor);
-    state->camera.target.y = Lerp(state->camera.target.y, desired_camera_target.y, smoothing_factor);
+    const float dt = GetFrameTime();
 
     state->volume_label_opacity = Clamp(state->volume_label_opacity / 1.01, 0, 1);
     state->vfx_indicator_opacity = Clamp(state->vfx_indicator_opacity / 1.01, 0, 1);
@@ -220,6 +267,54 @@ void game_state_update(GameState *state) {
             game_state_start_new_wave(state, state->selected_class);
         }
     }
+}
+
+void game_state_destroy(GameState *state) {
+    UnloadFont(state->font[0]);
+    UnloadRenderTexture(state->raw_frame_buffer);
+    UnloadRenderTexture(state->ui_frame_buffer);
+    UnloadRenderTexture(state->final_frame_buffer);
+    UnloadShader(state->pixelizer);
+    CloseAudioDevice();
+    CloseWindow();
+}
+
+void game_state_phase_change(GameState *state, GamePhase next) {
+    if (next == GP_MAIN) {
+        state->stage = stages[state->selected_stage]();
+    }
+    state->phase = GP_TRANSITION;
+    state->after_transition = next;
+    state->began_transition = GetTime();
+    PlaySound(state->phase_change_sound);
+}
+
+void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
+    state->player.state.current_class = new_class;
+    game_state_phase_change(state, GP_MAIN);
+    state->bullets = (Bullets){.bullets = {0}, .current = 0};
+    state->enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
+}
+
+void game_state_update_ui_internals() {
+    Vector2 mousePosition = GetMousePosition();
+    Vector2 scrollDelta = GetMouseWheelMoveV();
+    Clay_SetPointerState((Clay_Vector2){mousePosition.x, mousePosition.y}, IsMouseButtonDown(0));
+    Clay_UpdateScrollContainers(true, (Clay_Vector2){scrollDelta.x, scrollDelta.y}, GetFrameTime());
+}
+
+void game_state_update_camera(Camera2D *camera, const TransformComp *target) {
+    const float smoothing_factor = 2.0f * GetFrameTime();
+    const Vector2 mouse_position = GetMousePosition();
+
+    Vector2 desired_camera_target = (Vector2){target->rect.x, target->rect.y};
+    desired_camera_target = Vector2Add(
+        desired_camera_target,
+        Vector2Scale(Vector2Subtract((Vector2){GetMonitorWidth(0) / 2.0, GetMonitorHeight(0) / 2.0}, mouse_position),
+                     -0.5));
+
+    camera->target.x = Lerp(camera->target.x, desired_camera_target.x, smoothing_factor);
+    camera->target.y = Lerp(camera->target.y, desired_camera_target.y, smoothing_factor);
 }
 
 void game_state_draw_playfield(const GameState *state) {
@@ -471,59 +566,13 @@ Clay_Color button_color(bool activecond) {
     return activecond ? (Clay_Color){120, 120, 120, 255} : (Clay_Color){90, 90, 90, 200};
 }
 
-#define LABELED_BUTTON(w, h, text, id_, callback, highlight_condition)                                                 \
-    CLAY({                                                                                                             \
-             .id = CLAY_ID(id_),                                                                                       \
-             .layout =                                                                                                 \
-                 {                                                                                                     \
-                     .sizing = {.width = w, .height = h},                                                              \
-                 },                                                                                                    \
-             .backgroundColor = button_color(highlight_condition),                                                     \
-             .cornerRadius = {10, 10, 10, 10},                                                                         \
-         }, ) {                                                                                                        \
-        Clay_OnHover(callback, (intptr_t)state);                                                                       \
-        CENTERED_ELEMENT(ui_label(text, 36, WHITE, CLAY_TEXT_ALIGN_CENTER));                                           \
-    }
-
-#define CENTERED_ELEMENT(component)                                                                                    \
-    CLAY({.layout = {                                                                                                  \
-              .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},                                 \
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,                                                                   \
-          }}) {                                                                                                        \
-        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                     \
-        }                                                                                                              \
-        CLAY({                                                                                                         \
-            .layout =                                                                                                  \
-                {                                                                                                      \
-                    .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},                           \
-                    .padding = {16, 16, 16, 16},                                                                       \
-                },                                                                                                     \
-        }) {                                                                                                           \
-            CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                 \
-            }                                                                                                          \
-            component;                                                                                                 \
-            CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                 \
-            }                                                                                                          \
-        }                                                                                                              \
-        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                     \
-        }                                                                                                              \
-    }
-
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     Clay_BeginLayout();
-    CLAY({.id = CLAY_ID("OuterContainer"),
-          .layout = {
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-              .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-          }}) {
+    ui_container(CLAY_ID("OuterContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), 0, 0) {
         switch (state->phase) {
         case GP_MAIN: {
-            CLAY({.id = CLAY_ID("PlayerInfoContainer"),
-                  .layout = {
-                      .sizing = {.height = CLAY_SIZING_PERCENT(0.4), .width = CLAY_SIZING_PERCENT(0.4)},
-                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                      .padding = {16, 16, 16, 16},
-                  }}) {
+            ui_container(CLAY_ID("PlayerInfoContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_PERCENT(0.4),
+                         CLAY_SIZING_PERCENT(0.4), 16, 0) {
                 ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 ui_label(TextFormat("Coins: %.2f", state->player.state.coins), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
@@ -535,52 +584,31 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             break;
         }
         case GP_STARTMENU: {
-            CLAY({.id = CLAY_ID("StartMenuContainer"),
-                  .layout = {
-                      .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                      .padding = {16, 16, 16, 16},
-                      .childGap = 16,
-                  }}) {
+            ui_container(CLAY_ID("StartMenuContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0),
+                         16, 16) {
                 switch (state->main_menu_type) {
                 case MMT_START: {
-                    CLAY({.id = CLAY_ID("TitleTextContainer"),
-                          .layout = {
-                              .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                          }}) {
+                    ui_container(CLAY_ID("TitleTextContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
+                                 CLAY_SIZING_GROW(0), 0, 0) {
                         ui_label("Persona", 48, WHITE, CLAY_TEXT_ALIGN_CENTER);
                     };
-                    CLAY({.id = CLAY_ID("TitleScreenButtonContainer"),
-                          .layout = {.sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                                     .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                                     .childGap = 16}}) {
-                        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-                        }
-                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "New", "NewButton",
+
+                    ui_container(CLAY_ID("TitleScreenButtonContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
+                                 CLAY_SIZING_GROW(0), 16, 16) {
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.5), "New", "NewButton",
                                        handle_begin_game_button, false);
-                        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-                        }
-                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "Controls",
-                                       "ShowControlsButton", handle_show_controls_button, false);
-                        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-                        }
-                        LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(0.3), "Continue", "ContinueButton",
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.5), "Continue", "ContinueButton",
                                        handle_continue_game_button, false);
-                        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-                        }
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.5), "Controls", "ShowControlsButton",
+                                       handle_show_controls_button, false);
                     }
                     break;
                 }
                 case MMT_CONTROLS: {
                     CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Go back",
                                                     "GoBackButton", handle_show_main_button, false));
-                    CLAY({.id = CLAY_ID("ControlsListingContainer"),
-                          .layout =
-                              {
-                                  .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                                  .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                              },
-                          .scroll = {.vertical = true}}) {
+                    ui_container(CLAY_ID("ControlsListingContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0),
+                                 CLAY_SIZING_GROW(0), 16, 16) {
                         ui_label("A: Move left", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("D: Move right", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                         ui_label("Space: Jump", 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
@@ -595,13 +623,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     break;
                 }
                 case MMT_CONFIGGAME: {
-                    CLAY({.layout =
-                              {
-                                  .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                                  .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                              }
-
-                    }) {
+                    ui_container(CLAY_ID("StageSelectContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
+                                 CLAY_SIZING_GROW(0), 0, 0) {
                         CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 1",
                                                         "Stage1Button", handle_stage_1_button,
                                                         state->selected_stage == 0));
@@ -613,11 +636,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                                         state->selected_stage == 2));
                     }
 
-                    CLAY({.layout = {.sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                                     .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                                     .childGap = 16}
-
-                    }) {
+                    ui_container(CLAY_ID("ClassSelectContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
+                                 CLAY_SIZING_GROW(0), 0, 16) {
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Tank", "TankClassButton",
                                        handle_player_class_select_button_tank, state->selected_class == PS_TANK);
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Mover", "MoveClassButton",
@@ -642,61 +662,36 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             break;
         }
         case GP_AFTER_WAVE: {
-            CLAY({.id = CLAY_ID("IntermissionScreenContainer"),
-                  .layout = {.sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},
-                             .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                             .padding = {16, 16, 16, 16},
-                             .childGap = 16}}) {
-                CLAY({.id = CLAY_ID("ScreenSelectButtonContainer"),
-                      .layout = {.sizing = {.width = CLAY_SIZING_FIXED(128), .height = CLAY_SIZING_GROW(0)},
-                                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                 .childGap = 16}}) {
+            ui_container(CLAY_ID("IntermissionScreenContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
+                         CLAY_SIZING_GROW(0), 16, 16) {
+                ui_container(CLAY_ID("ScreenSelectButtonContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_PERCENT(0.1),
+                             CLAY_SIZING_GROW(0), 0, 16) {
                     LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Class select", "ClassSelectScreenButton",
                                    handle_screen_select_button_class, state->screen_type == IST_PLAYER_CLASS_SELECT);
                     LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Upgrades", "UpgradeSelectScreenButton",
                                    handle_screen_select_button_upgrade, state->screen_type == IST_PLAYER_UPGRADE);
                 }
 
-                CLAY({.layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                CLAY({.id = CLAY_ID("NextWaveEnemyListContainer"),
+                      .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
                                  .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                 .childGap = 16}}) {
-                    CLAY({.id = CLAY_ID("NextWaveStartGuideContainer"),
-                          .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_PERCENT(0.3)},
-                                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                     .childGap = 16},
-                          .backgroundColor = {100, 100, 100, 255},
-                          .cornerRadius = {5, 5, 5, 5}}) {
-                        CENTERED_ELEMENT(
-                            ui_label("Press enter to start the next wave", 50, WHITE, CLAY_TEXT_ALIGN_CENTER));
+                                 .childGap = 8,
+                                 .padding = {16, 16, 16, 16}},
+                      .backgroundColor = {100, 100, 100, 255},
+                      .scroll = {.horizontal = false, .vertical = true},
+                      .cornerRadius = {10, 10, 10, 10}}) {
+                    size_t count[ET_COUNT] = {0};
+                    for (size_t i = 0; i < state->current_wave.count; i++) {
+                        const ECSEnemy *e = &state->current_wave.enemies[i];
+                        count[e->state.type]++;
                     }
-
-                    CLAY({.id = CLAY_ID("NextWaveEnemyListContainer"),
-                          .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
-                                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                     .childGap = 8,
-                                     .padding = {16, 16, 16, 16}},
-                          .backgroundColor = {100, 100, 100, 255},
-                          .scroll = {.horizontal = false, .vertical = true},
-                          .cornerRadius = {10, 10, 10, 10}}) {
-                        size_t count[ET_COUNT] = {0};
-                        for (size_t i = 0; i < state->current_wave.count; i++) {
-                            const ECSEnemy *e = &state->current_wave.enemies[i];
-                            count[e->state.type]++;
-                        }
-                        ui_label(TextFormat("x%d melee enemies", count[ET_BASIC]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                        ui_label(TextFormat("x%d ranged enemies", count[ET_RANGER]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                    }
+                    ui_label(TextFormat("x%d melee enemies", count[ET_BASIC]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                    ui_label(TextFormat("x%d ranged enemies", count[ET_RANGER]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 }
                 switch (state->screen_type) {
                 case IST_PLAYER_CLASS_SELECT: {
-                    CLAY({.id = CLAY_ID("PlayerClassSelectContainer"),
-                          .layout = {.layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                     .sizing =
-                                         {
-                                             .width = CLAY_SIZING_GROW(0),
-                                             .height = CLAY_SIZING_GROW(0),
-                                         },
-                                     .childGap = 16}}) {
+                    ui_container(CLAY_ID("PlayerClassSelectContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0),
+                                 CLAY_SIZING_GROW(0), 0, 16) {
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Tank", "TankClassButton",
                                        handle_player_class_select_button_tank, state->selected_class == PS_TANK);
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Mover", "MoveClassButton",
@@ -707,11 +702,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     break;
                 }
                 case IST_PLAYER_UPGRADE: {
-                    CLAY({.id = CLAY_ID("PlayerUpgradeContainer"),
-                          .layout = {.layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                     .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
-                                     .childGap = 16}}) {
-
+                    ui_container(CLAY_ID("PlayerUpgradeContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0),
+                                 CLAY_SIZING_GROW(0), 0, 16) {
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Reload", "ReloadUpgradeButton",
                                        handle_reload_speed_upgrade_button, false);
                         ui_label(TextFormat("Cost: %.2f", state->reload_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
@@ -726,15 +718,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             break;
         }
         case GP_PAUSED: {
-            CLAY({.id = CLAY_ID("PauseMenuContainer"),
-                  .layout = {.sizing =
-                                 {
-                                     .width = CLAY_SIZING_GROW(0),
-                                     .height = CLAY_SIZING_GROW(0),
-                                 },
-                             .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                             .padding = {16, 16, 16, 16},
-                             .childGap = 16}}) {
+            ui_container(CLAY_ID("PauseMenuContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0),
+                         16, 16) {
                 LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Continue", "ContinueButton",
                                handle_continue_button, false);
                 LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Save game", "SaveButton", handle_save_button,
@@ -786,112 +771,6 @@ void apply_shader(RenderTexture2D *in, RenderTexture2D *out, Shader *shader) {
         EndShaderMode();
     }
     EndTextureMode();
-}
-
-void game_state_frame(GameState *state) {
-    BeginTextureMode(state->raw_frame_buffer);
-    BeginMode2D(state->camera);
-    ClearBackground(GetColor(0x181818ff));
-    switch (state->phase) {
-    case GP_MAIN:
-        game_state_draw_playfield(state);
-        break;
-    case GP_STARTMENU:
-    case GP_DEAD:
-        break;
-    case GP_PAUSED:
-        game_state_draw_playfield(state);
-        break;
-    case GP_TRANSITION: {
-        game_state_draw_playfield(state);
-        break;
-    }
-    case GP_AFTER_WAVE:
-        game_state_draw_playfield(state);
-    }
-
-    EndMode2D();
-
-    switch (state->phase) {
-    case GP_PAUSED: {
-        DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
-                         Vector2Zero(), 0, GetColor(0x00000040));
-        break;
-    }
-    case GP_TRANSITION: {
-        double t = (GetTime() - state->began_transition) * 1.0 / TRANSITION_TIME;
-        if (t < 0.5)
-            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
-                             Vector2Zero(), 0, GetColor(0xffffff00 + (t * 255)));
-        else
-            DrawRectanglePro((Rectangle){.x = 0, .y = 0, .width = GetMonitorWidth(0), .height = GetMonitorHeight(0)},
-                             Vector2Zero(), 0, GetColor(0xffffff40 - (t * 255)));
-        break;
-    }
-    case GP_MAIN: {
-        if (state->player.state.health < 3) {
-            DrawRectangle(0, 0, GetMonitorWidth(0), GetMonitorHeight(0),
-                          GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
-        }
-        break;
-    }
-    default: {
-    }
-    }
-
-    EndTextureMode();
-
-    if (state->vfx_enabled) {
-        apply_shader(&state->raw_frame_buffer, &state->final_frame_buffer, &state->pixelizer);
-    } else {
-        apply_shader(&state->raw_frame_buffer, &state->final_frame_buffer, NULL);
-    }
-
-    BeginTextureMode(state->ui_frame_buffer);
-    ClearBackground(GetColor(0));
-    Clay_Raylib_Render(game_state_draw_ui(state), &state->font[0]);
-    EndTextureMode();
-
-    BeginDrawing();
-    DrawTextureRec(state->final_frame_buffer.texture,
-                   (Rectangle){
-                       0,
-                       (float)state->final_frame_buffer.texture.height,
-                       (float)state->final_frame_buffer.texture.width,
-                       -(float)state->final_frame_buffer.texture.height,
-                   },
-                   (Vector2){0, 0}, WHITE);
-    DrawTextureRec(state->ui_frame_buffer.texture,
-                   (Rectangle){
-                       0,
-                       (float)state->ui_frame_buffer.texture.height,
-                       (float)state->ui_frame_buffer.texture.width,
-                       -(float)state->ui_frame_buffer.texture.height,
-                   },
-                   (Vector2){0, 0}, WHITE);
-    EndDrawing();
-}
-
-void game_state(GameState *state) {
-#ifndef RELEASE
-    double pre_update = GetTime();
-#endif
-    game_state_update(state);
-#ifndef RELEASE
-    double post_update = GetTime();
-    update_took = post_update - pre_update;
-#endif
-    game_state_frame(state);
-}
-
-void game_state_destroy(GameState *state) {
-    UnloadFont(state->font[0]);
-    UnloadRenderTexture(state->raw_frame_buffer);
-    UnloadRenderTexture(state->ui_frame_buffer);
-    UnloadRenderTexture(state->final_frame_buffer);
-    UnloadShader(state->pixelizer);
-    CloseAudioDevice();
-    CloseWindow();
 }
 
 void draw_centered_text(const char *message, const Font *font, size_t size, Color color, float y) {
@@ -1016,4 +895,8 @@ EnemyWave generate_wave(double strength, const Stage *stage) {
     }
     wave.count = current_index;
     return wave;
+}
+
+double screen_centered_position(double w) {
+    return (GetMonitorWidth(0) / 2.0) - (w / 2.0);
 }

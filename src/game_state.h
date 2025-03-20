@@ -113,13 +113,65 @@ void game_state_frame(GameState *state);
 void game_state_draw_playfield(const GameState *state); 
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state);
 
+void game_state_update_ui_internals();
+void game_state_update_camera(Camera2D *camera, const TransformComp *target);
+
+void game_state_phase_change(GameState *state, GamePhase next);
 
 void draw_centered_text(const char* message, const Font* font, size_t size, Color color, float y);
 double screen_centered_position(double w);
 
 EnemyWave generate_wave(double strength, const Stage *stage);
 
+void apply_shader(RenderTexture2D *in, RenderTexture2D *out, Shader *shader);
+
 void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment);
 void flash_error(GameState* state, char* message);
+#define ui_container(id_, dir, width, height, pad, c_gap)  \
+    CLAY({ \
+        .id = id_, \
+        .layout = { \
+            .sizing = {width, height}, \
+            .layoutDirection = dir, \
+            .childGap = c_gap, \
+            .padding = {pad, pad, pad, pad}, \
+        } \
+    }) 
+#define LABELED_BUTTON(w, h, text, id_, callback, highlight_condition)                                                 \
+    CLAY({                                                                                                             \
+             .id = CLAY_ID(id_),                                                                                       \
+             .layout =                                                                                                 \
+                 {                                                                                                     \
+                     .sizing = {.width = w, .height = h},                                                              \
+                 },                                                                                                    \
+             .backgroundColor = button_color(highlight_condition),                                                     \
+             .cornerRadius = {10, 10, 10, 10},                                                                         \
+         }, ) {                                                                                                        \
+        Clay_OnHover(callback, (intptr_t)state);                                                                       \
+        CENTERED_ELEMENT(ui_label(text, 36, WHITE, CLAY_TEXT_ALIGN_CENTER));                                           \
+    }
 
+#define CENTERED_ELEMENT(component)                                                                                    \
+    CLAY({.layout = {                                                                                                  \
+              .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},                                 \
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,                                                                   \
+          }}) {                                                                                                        \
+        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                     \
+        }                                                                                                              \
+        CLAY({                                                                                                         \
+            .layout =                                                                                                  \
+                {                                                                                                      \
+                    .sizing = {.height = CLAY_SIZING_GROW(0), .width = CLAY_SIZING_GROW(0)},                           \
+                    .padding = {16, 16, 16, 16},                                                                       \
+                },                                                                                                     \
+        }) {                                                                                                           \
+            CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                 \
+            }                                                                                                          \
+            component;                                                                                                 \
+            CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                 \
+            }                                                                                                          \
+        }                                                                                                              \
+        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {                                     \
+        }                                                                                                              \
+    }
 #endif
