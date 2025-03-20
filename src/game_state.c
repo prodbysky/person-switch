@@ -65,9 +65,9 @@ GameState game_state_init() {
     st.began_transition = GetTime();
     st.screen_type = IST_PLAYER_CLASS_SELECT;
     st.selected_class = PS_MOVE;
-    st.wave_strength = 2;
+    st.wave_strength = 5;
     st.wave_number = 1;
-    st.current_wave = generate_wave(2, &st.stage);
+    st.current_wave = generate_wave(st.wave_strength, &st.stage);
     st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
     st.camera = (Camera2D){
         .zoom = 0.75,
@@ -890,8 +890,8 @@ Stage stage_3() {
     };
 }
 
-#define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 10)
-#define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 10, 3)
+#define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 50)
+#define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 20, 3)
 
 EnemyWave generate_wave(double strength, const Stage *stage) {
     EnemyWave wave = {.count = 0};
