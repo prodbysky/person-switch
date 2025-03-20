@@ -26,6 +26,7 @@ ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health)
                          (EnemyState){
                              .type = ET_BASIC,
                              .health = health,
+                             .max_health = health,
                              .dead = false,
                              .last_hit = 0.0,
                          });
@@ -36,6 +37,7 @@ ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health
                          (EnemyState){
                              .type = ET_RANGER,
                              .health = health,
+                             .max_health = health,
                              .dead = false,
                              .last_hit = 0.0,
                              .type_specific.ranger.reload_time = reload_time,
