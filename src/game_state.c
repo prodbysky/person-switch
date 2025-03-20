@@ -268,6 +268,7 @@ void game_state_update_gp_main(GameState *state, float dt) {
     }
     particles_update(&state->particles, &state->stage, dt);
 }
+
 void game_state_update_gp_dead(GameState *state, float dt) {
     (void)dt;
     if (IsKeyPressed(KEY_SPACE)) {
@@ -280,12 +281,14 @@ void game_state_update_gp_dead(GameState *state, float dt) {
         state->player.transform.rect.y = state->stage.spawn.y;
     }
 }
+
 void game_state_update_gp_paused(GameState *state, float dt) {
     (void)dt;
     if (IsKeyPressed(KEY_P)) {
         game_state_phase_change(state, GP_MAIN);
     }
 }
+
 void game_state_update_gp_transition(GameState *state, float dt) {
     (void)dt;
     if (time_delta(state->began_transition) > TRANSITION_TIME) {
@@ -293,6 +296,7 @@ void game_state_update_gp_transition(GameState *state, float dt) {
         return;
     }
 }
+
 void game_state_update_gp_after_wave(GameState *state, float dt) {
     (void)dt;
     if (IsKeyDown(KEY_ENTER)) {
