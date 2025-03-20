@@ -207,65 +207,22 @@ void game_state_update(GameState *state) {
 
     switch (state->phase) {
     case GP_MAIN:
-        if (IsKeyPressed(KEY_ESCAPE)) {
-            game_state_phase_change(state, GP_PAUSED);
-            return;
-        }
-        for (size_t i = 0; i < state->current_wave.count; i++) {
-            ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform,
-                             &state->player.physics, &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound,
-                             PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets,
-                             &state->pickups, &state->particles);
-        }
-        ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets,
-                          &state->player_jump_sound, &state->player_shoot_sound, &state->enemy_bullets, &state->pickups,
-                          &state->camera, &state->particles);
-        bullets_update(&state->bullets, dt, &state->stage, &state->particles);
-        bullets_update(&state->enemy_bullets, dt, &state->stage, &state->particles);
-        pickups_update(&state->pickups, &state->stage, dt);
-        if (state->player.state.dead) {
-            game_state_phase_change(state, GP_DEAD);
-        }
-
-        if (wave_is_done(&state->current_wave)) {
-            if (IsKeyPressed(KEY_ENTER)) {
-                game_state_phase_change(state, GP_AFTER_WAVE);
-
-                state->wave_strength *= 1.1;
-                state->wave_number++;
-                state->current_wave = generate_wave(state->wave_strength, &state->stage);
-            }
-        }
-        particles_update(&state->particles, &state->stage, dt);
+        game_state_update_gp_main(state, dt);
         break;
     case GP_STARTMENU:
         break;
     case GP_DEAD:
-        if (IsKeyPressed(KEY_SPACE)) {
-            game_state_phase_change(state, GP_MAIN);
-            state->began_transition = GetTime();
-            state->player = ecs_player_new();
-            state->stage = stages[state->selected_stage]();
-            state->current_wave = generate_wave(state->wave_strength, &state->stage);
-            state->player.transform.rect.x = state->stage.spawn.x;
-            state->player.transform.rect.y = state->stage.spawn.y;
-        }
+        game_state_update_gp_dead(state, dt);
         break;
     case GP_PAUSED:
-        if (IsKeyPressed(KEY_P)) {
-            game_state_phase_change(state, GP_MAIN);
-        }
+        game_state_update_gp_paused(state, dt);
         break;
     case GP_TRANSITION:
-        if (time_delta(state->began_transition) > TRANSITION_TIME) {
-            state->phase = state->after_transition;
-            return;
-        }
+        game_state_update_gp_transition(state, dt);
         break;
     case GP_AFTER_WAVE:
-        if (IsKeyDown(KEY_ENTER)) {
-            game_state_start_new_wave(state, state->selected_class);
-        }
+        game_state_update_gp_after_wave(state, dt);
+        break;
     }
 }
 
@@ -277,6 +234,70 @@ void game_state_destroy(GameState *state) {
     UnloadShader(state->pixelizer);
     CloseAudioDevice();
     CloseWindow();
+}
+
+void game_state_update_gp_main(GameState *state, float dt) {
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        game_state_phase_change(state, GP_PAUSED);
+        return;
+    }
+    for (size_t i = 0; i < state->current_wave.count; i++) {
+        ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform,
+                         &state->player.physics, &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound,
+                         PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets,
+                         &state->pickups, &state->particles);
+    }
+    ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets, &state->player_jump_sound,
+                      &state->player_shoot_sound, &state->enemy_bullets, &state->pickups, &state->camera,
+                      &state->particles);
+    bullets_update(&state->bullets, dt, &state->stage, &state->particles);
+    bullets_update(&state->enemy_bullets, dt, &state->stage, &state->particles);
+    pickups_update(&state->pickups, &state->stage, dt);
+    if (state->player.state.dead) {
+        game_state_phase_change(state, GP_DEAD);
+    }
+
+    if (wave_is_done(&state->current_wave)) {
+        if (IsKeyPressed(KEY_ENTER)) {
+            game_state_phase_change(state, GP_AFTER_WAVE);
+
+            state->wave_strength *= 1.1;
+            state->wave_number++;
+            state->current_wave = generate_wave(state->wave_strength, &state->stage);
+        }
+    }
+    particles_update(&state->particles, &state->stage, dt);
+}
+void game_state_update_gp_dead(GameState *state, float dt) {
+    (void)dt;
+    if (IsKeyPressed(KEY_SPACE)) {
+        game_state_phase_change(state, GP_MAIN);
+        state->began_transition = GetTime();
+        state->player = ecs_player_new();
+        state->stage = stages[state->selected_stage]();
+        state->current_wave = generate_wave(state->wave_strength, &state->stage);
+        state->player.transform.rect.x = state->stage.spawn.x;
+        state->player.transform.rect.y = state->stage.spawn.y;
+    }
+}
+void game_state_update_gp_paused(GameState *state, float dt) {
+    (void)dt;
+    if (IsKeyPressed(KEY_P)) {
+        game_state_phase_change(state, GP_MAIN);
+    }
+}
+void game_state_update_gp_transition(GameState *state, float dt) {
+    (void)dt;
+    if (time_delta(state->began_transition) > TRANSITION_TIME) {
+        state->phase = state->after_transition;
+        return;
+    }
+}
+void game_state_update_gp_after_wave(GameState *state, float dt) {
+    (void)dt;
+    if (IsKeyDown(KEY_ENTER)) {
+        game_state_start_new_wave(state, state->selected_class);
+    }
 }
 
 void game_state_phase_change(GameState *state, GamePhase next) {

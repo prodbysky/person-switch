@@ -113,6 +113,13 @@ void game_state_frame(GameState *state);
 void game_state_draw_playfield(const GameState *state); 
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state);
 
+
+void game_state_update_gp_main(GameState *state, float dt);
+void game_state_update_gp_dead(GameState *state, float dt);
+void game_state_update_gp_paused(GameState *state, float dt);
+void game_state_update_gp_transition(GameState *state, float dt);
+void game_state_update_gp_after_wave(GameState *state, float dt);
+
 void game_state_update_ui_internals();
 void game_state_update_camera(Camera2D *camera, const TransformComp *target);
 
