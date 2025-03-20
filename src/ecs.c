@@ -14,8 +14,6 @@ void physics(PhysicsComp *physics, float dt) {
 
     if (!physics->grounded) {
         physics->velocity.y += G * dt;
-    } else {
-        physics->velocity.y = 0;
     }
     physics->velocity.x = Clamp(physics->velocity.x, -300, 300);
     physics->velocity.y = Clamp(physics->velocity.y, -800, 800);
@@ -61,7 +59,7 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
             } else if (old_x >= platform->x + platform->width) {
                 transform->rect.x = platform->x + platform->width;
             }
-            physics->velocity.x = 0;
+            physics->velocity.x = physics->velocity.x * -0.2;
         }
     }
 
@@ -73,12 +71,12 @@ void collision(TransformComp *transform, PhysicsComp *physics, const Stage *stag
             const Platform *platform = &stage->platforms[i];
             if (old_y + transform->rect.height <= platform->y + grounded_epsilon && physics->velocity.y >= 0) {
                 transform->rect.y = platform->y - transform->rect.height;
-                physics->velocity.y = 0;
+                physics->velocity.y = physics->velocity.y * -0.2;
                 physics->grounded = true;
                 landedOnPlatform = true;
             } else if (old_y >= platform->y + platform->height - grounded_epsilon && physics->velocity.y < 0) {
                 transform->rect.y = platform->y + platform->height;
-                physics->velocity.y = 0;
+                physics->velocity.y = physics->velocity.y * -0.2;
             }
         }
     }
