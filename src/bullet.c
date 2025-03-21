@@ -6,21 +6,14 @@
 #include "stage.h"
 #include <math.h>
 
-void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, Vector2 dir, Color c) {
-    const Vector2 pos = transform_center(origin_transform);
-    bullets->bullets[bullets->current] = (ECSPlayerBullet){
-        .direction = dir,
-        .creation_time = GetTime(),
-        .transform = TRANSFORM(pos.x, pos.y, 16, 8),
-        .draw_conf = {.color = c},
-        .active = true,
-    };
+void bullets_spawn_bullet(Bullets *bullets, Bullet b) {
+    bullets->bullets[bullets->current] = b;
     bullets->current = (bullets->current + 1) % MAX_BULLETS;
 }
 
 void bullets_update(Bullets *bullets, float dt, const Stage *stage, Particles *particles) {
     for (int i = 0; i < MAX_BULLETS; i++) {
-        ECSPlayerBullet *bullet = &bullets->bullets[i];
+        Bullet *bullet = &bullets->bullets[i];
         if (bullet->active) {
             for (size_t j = 0; j < stage->count; j++) {
                 if (CheckCollisionRecs(stage->platforms[j], bullet->transform.rect)) {
@@ -34,7 +27,7 @@ void bullets_update(Bullets *bullets, float dt, const Stage *stage, Particles *p
                 continue;
             }
             const Vector2 movement_delta =
-                Vector2Multiply(bullet->direction, (Vector2){dt * BULLET_SPEED, dt * BULLET_SPEED});
+                Vector2Multiply(bullet->direction, (Vector2){dt * bullet->speed, dt * bullet->speed});
             const Vector2 next_pos =
                 Vector2Add(movement_delta, (Vector2){bullet->transform.rect.x, bullet->transform.rect.y});
             bullet->transform.rect.x = next_pos.x;

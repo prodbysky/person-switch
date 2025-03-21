@@ -3,10 +3,11 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <raylib.h>
+#include "weapon.h"
 #include "ecs.h"
 #include "particles.h"
 #include "pickup.h"
-#include "raylib.h"
 #include "wave.h"
 #include "bullet.h"
 
@@ -43,7 +44,8 @@ typedef struct {
     PhysicsComp physics;
     PlayerStateComp state;
     SolidRectangleComp draw_conf;
-    Sound shoot_sound;
+    size_t selected;
+    Weapon weapons[2];
     Sound jump_sound;
 } ECSPlayer;
 

@@ -6,9 +6,9 @@
 #include "pickup.h"
 #include "player.h"
 #include "stage.h"
-#include "static_config.h"
 #include "timing_utilities.h"
 #include "wave.h"
+#include "weapon.h"
 #include <raylib.h>
 #include <raymath.h>
 #include <stdint.h>
@@ -46,7 +46,6 @@ GameState game_state_init() {
     Clay_SetDebugModeEnabled(true);
 #endif
 
-    st.stage = stages[0]();
     st.selected_stage = 0;
     st.player = ecs_player_new();
     st.reload_cost = 3;
@@ -65,7 +64,6 @@ GameState game_state_init() {
     st.selected_class = PS_MOVE;
     st.wave_strength = 5;
     st.wave_number = 1;
-    st.current_wave = generate_wave(st.wave_strength, &st.stage);
     st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
     st.camera = (Camera2D){
         .zoom = 0.75,
@@ -242,8 +240,7 @@ void game_state_update_gp_main(GameState *state, float dt) {
     for (size_t i = 0; i < state->current_wave.count; i++) {
         ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform,
                          &state->player.physics, &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound,
-                         PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets,
-                         &state->pickups, &state->particles);
+                         &state->enemy_bullets, &state->pickups, &state->particles);
     }
     ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets, &state->enemy_bullets,
                       &state->pickups, &state->camera, &state->particles);
@@ -440,7 +437,7 @@ void handle_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intpt
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         if (state->player.state.coins >= state->speed_cost) {
-            state->player.state.movement_speed += 5.0;
+            state->player.state.movement_speed += 10.0;
             state->player.state.coins -= state->speed_cost;
             state->speed_cost *= 1.1;
         }
@@ -471,6 +468,10 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
         state->stage = stages[state->selected_stage]();
+        game_state_start_new_wave(state, state->selected_class);
+        state->wave_strength *= 1.1;
+        state->wave_number++;
+        state->current_wave = generate_wave(state->wave_strength, &state->stage);
         state->player.state.current_class = state->selected_class;
         state->player.transform.rect.x = state->stage.spawn.x;
         state->player.transform.rect.y = state->stage.spawn.y;
@@ -598,6 +599,18 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 ui_label(TextFormat("Coins: %.2f", state->player.state.coins), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                switch (state->player.selected) {
+                case WT_PISTOL: {
+                    ui_label("Pistol", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                    ui_label("AR", 48, GRAY, CLAY_TEXT_ALIGN_LEFT);
+                    break;
+                }
+                case WT_AR: {
+                    ui_label("Pistol", 48, GRAY, CLAY_TEXT_ALIGN_LEFT);
+                    ui_label("AR", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                    break;
+                }
+                }
             }
             if (wave_is_done(&state->current_wave)) {
                 CENTERED_ELEMENT(

@@ -26,7 +26,8 @@ void wave_draw(const EnemyWave *wave) {
                 (Rectangle){
                     .x = enemy->transform.rect.x - enemy->transform.rect.width / 2.0,
                     .y = enemy->transform.rect.y - 32,
-                    .width = ((enemy->transform.rect.width * 2) / (float)enemy->state.max_health) * enemy->state.health,
+                    .width = ((enemy->transform.rect.width * 2) / (float)enemy->state.health.max) *
+                             enemy->state.health.current,
                     .height = 16,
                 },
                 RED);

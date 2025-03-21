@@ -25,8 +25,7 @@ ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health)
     return ecs_enemy_new(pos, size, speed,
                          (EnemyState){
                              .type = ET_BASIC,
-                             .health = health,
-                             .max_health = health,
+                             .health = HEALTH(health, health),
                              .dead = false,
                              .last_hit = 0.0,
                          });
@@ -36,13 +35,32 @@ ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health
     return ecs_enemy_new(pos, size, speed,
                          (EnemyState){
                              .type = ET_RANGER,
-                             .health = health,
-                             .max_health = health,
+                             .health = HEALTH(health, health),
                              .dead = false,
                              .last_hit = 0.0,
                              .type_specific.ranger.reload_time = reload_time,
                              .type_specific.ranger.last_shot = 0.0,
                          });
+}
+void ranger_bullet_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp *victim_health) {
+    victim_health->current -= this->damage;
+    this->active = false;
+    victim_physics->velocity.x += 200 * this->direction.x;
+    victim_physics->velocity.y += 200 * this->direction.y;
+}
+
+#define RANGER_BULLET_SPEED 600
+static Bullet ranger_create_bullet(Vector2 pos, Color c, Vector2 dir) {
+    return (Bullet){
+        .direction = dir,
+        .creation_time = GetTime(),
+        .transform = TRANSFORM(pos.x, pos.y, 16, 10),
+        .draw_conf = {.color = c},
+        .active = true,
+        .damage = 1,
+        .on_hit = ranger_bullet_on_hit,
+        .speed = RANGER_BULLET_SPEED,
+    };
 }
 
 void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformComp *transform, PhysicsComp *physics,
@@ -95,10 +113,10 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
             const Vector2 player_center = transform_center(player_transform);
             const float dst = Vector2Distance(player_center, transform_center(transform));
-            const double time = (dst / BULLET_SPEED) - 1;
+            const double time = (dst / RANGER_BULLET_SPEED) - 1;
             const Vector2 prediction = Vector2Add(player_center, Vector2Scale(player_physics->velocity, time));
             const Vector2 dir = Vector2Normalize(Vector2Subtract(prediction, transform_center(transform)));
-            bullets_spawn_bullet(transform, enemy_bullets, dir, GREEN);
+            bullets_spawn_bullet(enemy_bullets, ranger_create_bullet(transform_center(transform), PINK, dir));
             state->type_specific.ranger.last_shot = GetTime();
         }
         break;
@@ -109,12 +127,11 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform,
                       const PhysicsComp *player_physics, Bullets *bullets, const Sound *hit_sound,
-                      const Sound *death_sound, size_t dmg, Bullets *enemy_bullets, Pickups *pickups,
-                      Particles *particles) {
+                      const Sound *death_sound, Bullets *enemy_bullets, Pickups *pickups, Particles *particles) {
     if (enemy->state.dead) {
         return;
     }
-    if (enemy->state.health <= 0) {
+    if (enemy->state.health.current <= 0) {
         pickups_spawn(pickups, coin_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 3));
         if (GetRandomValue(0, 100) < 20) {
             pickups_spawn(pickups, health_pickup(enemy->transform.rect.x, enemy->transform.rect.y, 16, 16, 1));
@@ -135,19 +152,19 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform, player_physics,
              enemy_bullets);
     collision(&enemy->transform, &enemy->physics, stage, dt);
-    enemy_bullet_interaction(&enemy->physics, &enemy->transform, bullets, &enemy->state, hit_sound, dmg, particles);
+    enemy_bullet_interaction(&enemy->physics, &enemy->state.health, &enemy->transform, bullets, &enemy->state,
+                             hit_sound, particles);
 }
 
-void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transform, Bullets *bullets, EnemyState *state,
-                              const Sound *hit_sound, size_t dmg, Particles *particles) {
-    if (state->health <= 0) {
+void enemy_bullet_interaction(PhysicsComp *physics, HealthComp *health, const TransformComp *transform,
+                              Bullets *bullets, EnemyState *state, const Sound *hit_sound, Particles *particles) {
+    if (state->health.current <= 0) {
         return;
     }
     for (int i = 0; i < MAX_BULLETS; i++) {
         if (bullets->bullets[i].active) {
             if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
-                state->health -= dmg;
-                bullets->bullets[i].active = false;
+                bullets->bullets[i].on_hit(&bullets->bullets[i], physics, health);
                 state->last_hit = GetTime();
                 physics->velocity.x += 200 * bullets->bullets[i].direction.x;
                 physics->velocity.y += 200 * bullets->bullets[i].direction.y;

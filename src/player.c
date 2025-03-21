@@ -6,27 +6,26 @@
 #include "pickup.h"
 #include "static_config.h"
 #include "timing_utilities.h"
+#include "weapon.h"
 #include <raylib.h>
 #include <raymath.h>
 
 ECSPlayer ecs_player_new() {
-    return (ECSPlayer){
-        .transform = TRANSFORM((GetMonitorWidth(0) / 2.0) + 16, (GetMonitorHeight(0) / 2.0) + 48, 32, 96),
-        .state = {.current_class = PS_MOVE,
-                  .health = 5,
-                  .last_hit = 0.0,
-                  .last_shot = 0.0,
-                  .last_healed = 0.0,
-                  .dead = false,
-                  .movement_speed = 0.0,
-                  .reload_time = 0.0,
-                  .coins = 10},
-        .physics = DEFAULT_PHYSICS(),
-        .draw_conf = {.color = WHITE},
+    return (ECSPlayer){.transform =
+                           TRANSFORM((GetMonitorWidth(0) / 2.0) + 16, (GetMonitorHeight(0) / 2.0) + 48, 32, 96),
+                       .state = {.current_class = PS_MOVE,
+                                 .health = 5,
+                                 .last_hit = 0.0,
+                                 .last_healed = 0.0,
+                                 .dead = false,
+                                 .movement_speed = 0.0,
+                                 .coins = 10},
+                       .physics = DEFAULT_PHYSICS(),
+                       .draw_conf = {.color = WHITE},
 
-        .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
-        .shoot_sound = LoadSound("assets/sfx/shoot.wav"),
-    };
+                       .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
+                       .selected = 1,
+                       .weapons = {create_pistol(), create_ar()}};
 }
 
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
@@ -84,7 +83,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
         }
     }
     for (size_t i = 0; i < MAX_BULLETS; i++) {
-        const ECSPlayerBullet *b = &enemy_bullets->bullets[i];
+        const Bullet *b = &enemy_bullets->bullets[i];
         if (!b->active) {
             continue;
         }
@@ -104,25 +103,26 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
 void player_input(ECSPlayer *player, Bullets *bullets, const Camera2D *camera, Particles *particles) {
     if (time_delta(player->state.last_shot) > SHOOT_DELAY - player->state.reload_time) {
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-            const Vector2 mouse_pos = GetScreenToWorld2D(GetMousePosition(), *camera);
-            const Vector2 dir = Vector2Normalize(Vector2Subtract(mouse_pos, transform_center(&player->transform)));
-            bullets_spawn_bullet(&player->transform, bullets, dir, PURPLE);
-            player->state.last_shot = GetTime();
-            PlaySound(player->shoot_sound);
+            player->weapons[player->selected].try_shoot(&player->weapons[player->selected], bullets, &player->transform,
+                                                        camera);
         }
     }
 
     if (IsKeyDown(KEY_A)) {
-        player->physics.velocity.x =
-            -(PLAYER_STATES[player->state.current_class].speed_x + player->state.movement_speed);
+        player->physics.velocity.x = -500;
     }
     if (IsKeyDown(KEY_D)) {
-        player->physics.velocity.x =
-            (PLAYER_STATES[player->state.current_class].speed_x + player->state.movement_speed);
+        player->physics.velocity.x = 500;
+    }
+    if (IsKeyPressed(KEY_Z)) {
+        player->selected = WT_PISTOL;
+    }
+    if (IsKeyPressed(KEY_X)) {
+        player->selected = WT_AR;
     }
 
     if (player->physics.grounded && IsKeyPressed(KEY_SPACE)) {
-        player->physics.velocity.y = -PLAYER_STATES[player->state.current_class].jump_power;
+        player->physics.velocity.y = -500;
         PlaySound(player->jump_sound);
         player->physics.grounded = false;
         const Vector2 pos = transform_center(&player->transform);
