@@ -23,6 +23,7 @@ typedef struct {
 #define TRANSFORM(x_, y_, w_, h_) (TransformComp){.rect = {.x = (x_), .y = (y_), .width = (w_), .height = (h_)}}
 #define DEFAULT_PHYSICS() (PhysicsComp){.velocity = {.x = 0, .y = 0}, .grounded = false}
 
+Vector2 transform_center(const TransformComp* transform);
 
 // Applies gravity and fades x velocity towards 0
 void physics(PhysicsComp* physics, float dt); 

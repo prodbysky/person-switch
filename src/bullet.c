@@ -7,12 +7,11 @@
 #include <math.h>
 
 void bullets_spawn_bullet(const TransformComp *origin_transform, Bullets *bullets, Vector2 dir, Color c) {
-    const float x = origin_transform->rect.x + (origin_transform->rect.width / 2.0);
-    const float y = origin_transform->rect.y + (origin_transform->rect.height / 2.0);
+    const Vector2 pos = transform_center(origin_transform);
     bullets->bullets[bullets->current] = (ECSPlayerBullet){
         .direction = dir,
         .creation_time = GetTime(),
-        .transform = TRANSFORM(x, y, 16, 8),
+        .transform = TRANSFORM(pos.x, pos.y, 16, 8),
         .draw_conf = {.color = c},
         .active = true,
     };

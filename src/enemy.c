@@ -93,17 +93,11 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
 
         // Shoot
         if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
-            const Vector2 player_center =
-                (Vector2){.x = player_transform->rect.x + (player_transform->rect.width / 2.0),
-                          .y = player_transform->rect.y + (player_transform->rect.height / 2.0)};
-            const float dst =
-                Vector2Distance(player_center, (Vector2){.x = transform->rect.x + (transform->rect.width / 2.0),
-                                                         .y = transform->rect.y + (transform->rect.height / 2.0)});
+            const Vector2 player_center = transform_center(player_transform);
+            const float dst = Vector2Distance(player_center, transform_center(transform));
             const double time = (dst / BULLET_SPEED) - 1;
             const Vector2 prediction = Vector2Add(player_center, Vector2Scale(player_physics->velocity, time));
-            const Vector2 dir = Vector2Normalize(
-                Vector2Subtract(prediction, (Vector2){.x = transform->rect.x + (transform->rect.width / 2.0),
-                                                      .y = transform->rect.y + (transform->rect.height / 2.0)}));
+            const Vector2 dir = Vector2Normalize(Vector2Subtract(prediction, transform_center(transform)));
             bullets_spawn_bullet(transform, enemy_bullets, dir, GREEN);
             state->type_specific.ranger.last_shot = GetTime();
         }

@@ -43,15 +43,17 @@ typedef struct {
     PhysicsComp physics;
     PlayerStateComp state;
     SolidRectangleComp draw_conf;
+    Sound shoot_sound;
+    Sound jump_sound;
 } ECSPlayer;
 
 ECSPlayer ecs_player_new();
 // Handles player input
-void player_input(PlayerStateComp *state, PhysicsComp *physics, const TransformComp *transform, Bullets *bullets,
-                  const Sound *jump_sound, const Sound *shoot_sound, const Camera2D *camera, Particles *particles);
+void player_input(ECSPlayer *player, Bullets *bullets,
+                  const Camera2D *camera, Particles *particles);
 // Updates the entire player state
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
-                       const Sound *jump_sound, const Sound *shoot_sound, Bullets *enemy_bullets, Pickups *pickups, const Camera2D* camera, Particles* particles);
+                       Bullets *enemy_bullets, Pickups *pickups, const Camera2D* camera, Particles* particles);
 void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets *enemy_bullets, Particles *particles);
 void player_pickup_interaction(ECSPlayer *player, Pickups* pickups);
 void player_draw(const ECSPlayer *player);

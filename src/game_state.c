@@ -56,8 +56,6 @@ GameState game_state_init() {
     st.font[0] = LoadFontEx("assets/fonts/iosevka medium.ttf", 48, NULL, 255);
     SetTextureFilter(st.font[0].texture, TEXTURE_FILTER_BILINEAR);
     st.ui_button_click_sound = LoadSound("assets/sfx/button_click.wav");
-    st.player_jump_sound = LoadSound("assets/sfx/player_jump.wav");
-    st.player_shoot_sound = LoadSound("assets/sfx/shoot.wav");
     st.enemy_hit_sound = LoadSound("assets/sfx/enemy_hit.wav");
     st.enemy_die_sound = LoadSound("assets/sfx/enemy_die.wav");
     st.phase_change_sound = LoadSound("assets/sfx/menu_switch.wav");
@@ -247,9 +245,8 @@ void game_state_update_gp_main(GameState *state, float dt) {
                          PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets,
                          &state->pickups, &state->particles);
     }
-    ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets, &state->player_jump_sound,
-                      &state->player_shoot_sound, &state->enemy_bullets, &state->pickups, &state->camera,
-                      &state->particles);
+    ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets, &state->enemy_bullets,
+                      &state->pickups, &state->camera, &state->particles);
     bullets_update(&state->bullets, dt, &state->stage, &state->particles);
     bullets_update(&state->enemy_bullets, dt, &state->stage, &state->particles);
     pickups_update(&state->pickups, &state->stage, dt);

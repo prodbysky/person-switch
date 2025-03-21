@@ -4,6 +4,13 @@
 #include "static_config.h"
 #include <raymath.h>
 
+Vector2 transform_center(const TransformComp *transform) {
+    return (Vector2){
+        .x = transform->rect.x + transform->rect.width / 2.0,
+        .y = transform->rect.y + transform->rect.height / 2.0,
+    };
+}
+
 void physics(PhysicsComp *physics, float dt) {
     if (physics->grounded) {
         // Apply ground friction
