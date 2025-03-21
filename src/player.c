@@ -11,21 +11,21 @@
 #include <raymath.h>
 
 ECSPlayer ecs_player_new() {
-    return (ECSPlayer){
-        .transform = TRANSFORM((GetMonitorWidth(0) / 2.0) + 16, (GetMonitorHeight(0) / 2.0) + 48, 32, 96),
-        .state = {.current_class = PS_MOVE,
-                  .health = 5,
-                  .last_hit = 0.0,
-                  .last_healed = 0.0,
-                  .dead = false,
-                  .movement_speed = 0.0,
-                  .coins = 10},
-        .physics = DEFAULT_PHYSICS(),
-        .draw_conf = {.color = WHITE},
+    return (ECSPlayer){.transform =
+                           TRANSFORM((GetMonitorWidth(0) / 2.0) + 16, (GetMonitorHeight(0) / 2.0) + 48, 32, 96),
+                       .state = {.current_class = PS_MOVE,
+                                 .health = 5,
+                                 .last_hit = 0.0,
+                                 .last_healed = 0.0,
+                                 .dead = false,
+                                 .movement_speed = 0.0,
+                                 .coins = 10},
+                       .physics = DEFAULT_PHYSICS(),
+                       .draw_conf = {.color = WHITE},
 
-        .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
-        .weapon = create_pistol(),
-    };
+                       .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
+                       .selected = 1,
+                       .weapons = {create_pistol(), create_ar()}};
 }
 
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
@@ -103,7 +103,8 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
 void player_input(ECSPlayer *player, Bullets *bullets, const Camera2D *camera, Particles *particles) {
     if (time_delta(player->state.last_shot) > SHOOT_DELAY - player->state.reload_time) {
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-            player->weapon.pistol.try_shoot(&player->weapon, bullets, &player->transform, camera);
+            player->weapons[player->selected].try_shoot(&player->weapons[player->selected], bullets, &player->transform,
+                                                        camera);
         }
     }
 
