@@ -20,8 +20,14 @@ typedef struct {
     Color color;
 } SolidRectangleComp;
 
+typedef struct {
+    int max;
+    int current;
+} HealthComp;
+
 #define TRANSFORM(x_, y_, w_, h_) (TransformComp){.rect = {.x = (x_), .y = (y_), .width = (w_), .height = (h_)}}
 #define DEFAULT_PHYSICS() (PhysicsComp){.velocity = {.x = 0, .y = 0}, .grounded = false}
+#define HEALTH(max_, current_) (HealthComp){.max = max_, .current = current_}
 
 Vector2 transform_center(const TransformComp* transform);
 

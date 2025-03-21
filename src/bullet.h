@@ -8,11 +8,6 @@
 #define BULLET_LIFETIME 2.0
 #define BULLET_SPEED 500
 
-typedef enum {
-    BD_LEFT,
-    BD_RIGHT,
-} BulletDirection;
-
 typedef struct {
     TransformComp transform;
     SolidRectangleComp draw_conf;
