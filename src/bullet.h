@@ -6,12 +6,12 @@
 
 #define MAX_BULLETS 100
 #define BULLET_LIFETIME 2.0
-#define BULLET_SPEED 500
 
 typedef struct Bullet {
     TransformComp transform;
     SolidRectangleComp draw_conf;
     Vector2 direction;
+    double speed;
     double creation_time;
     int damage;
     bool active;

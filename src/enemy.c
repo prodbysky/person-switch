@@ -49,6 +49,7 @@ void ranger_bullet_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp 
     victim_physics->velocity.y += 200 * this->direction.y;
 }
 
+#define RANGER_BULLET_SPEED 600
 static Bullet ranger_create_bullet(Vector2 pos, Color c, Vector2 dir) {
     return (Bullet){
         .direction = dir,
@@ -58,6 +59,7 @@ static Bullet ranger_create_bullet(Vector2 pos, Color c, Vector2 dir) {
         .active = true,
         .damage = 1,
         .on_hit = ranger_bullet_on_hit,
+        .speed = RANGER_BULLET_SPEED,
     };
 }
 
@@ -111,7 +113,7 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
             const Vector2 player_center = transform_center(player_transform);
             const float dst = Vector2Distance(player_center, transform_center(transform));
-            const double time = (dst / BULLET_SPEED) - 1;
+            const double time = (dst / RANGER_BULLET_SPEED) - 1;
             const Vector2 prediction = Vector2Add(player_center, Vector2Scale(player_physics->velocity, time));
             const Vector2 dir = Vector2Normalize(Vector2Subtract(prediction, transform_center(transform)));
             bullets_spawn_bullet(enemy_bullets, ranger_create_bullet(transform_center(transform), PINK, dir));

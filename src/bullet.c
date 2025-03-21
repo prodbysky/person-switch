@@ -27,7 +27,7 @@ void bullets_update(Bullets *bullets, float dt, const Stage *stage, Particles *p
                 continue;
             }
             const Vector2 movement_delta =
-                Vector2Multiply(bullet->direction, (Vector2){dt * BULLET_SPEED, dt * BULLET_SPEED});
+                Vector2Multiply(bullet->direction, (Vector2){dt * bullet->speed, dt * bullet->speed});
             const Vector2 next_pos =
                 Vector2Add(movement_delta, (Vector2){bullet->transform.rect.x, bullet->transform.rect.y});
             bullet->transform.rect.x = next_pos.x;

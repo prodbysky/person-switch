@@ -116,6 +116,12 @@ void player_input(ECSPlayer *player, Bullets *bullets, const Camera2D *camera, P
         player->physics.velocity.x =
             (PLAYER_STATES[player->state.current_class].speed_x + player->state.movement_speed);
     }
+    if (IsKeyPressed(KEY_Z)) {
+        player->selected = WT_PISTOL;
+    }
+    if (IsKeyPressed(KEY_X)) {
+        player->selected = WT_AR;
+    }
 
     if (player->physics.grounded && IsKeyPressed(KEY_SPACE)) {
         player->physics.velocity.y = -PLAYER_STATES[player->state.current_class].jump_power;

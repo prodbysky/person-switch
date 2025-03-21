@@ -8,6 +8,7 @@
 #include "stage.h"
 #include "timing_utilities.h"
 #include "wave.h"
+#include "weapon.h"
 #include <raylib.h>
 #include <raymath.h>
 #include <stdint.h>
@@ -436,7 +437,7 @@ void handle_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intpt
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         if (state->player.state.coins >= state->speed_cost) {
-            state->player.state.movement_speed += 5.0;
+            state->player.state.movement_speed += 10.0;
             state->player.state.coins -= state->speed_cost;
             state->speed_cost *= 1.1;
         }
@@ -598,6 +599,18 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 ui_label(TextFormat("Coins: %.2f", state->player.state.coins), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                switch (state->player.selected) {
+                case WT_PISTOL: {
+                    ui_label("Pistol", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                    ui_label("AR", 48, GRAY, CLAY_TEXT_ALIGN_LEFT);
+                    break;
+                }
+                case WT_AR: {
+                    ui_label("Pistol", 48, GRAY, CLAY_TEXT_ALIGN_LEFT);
+                    ui_label("AR", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                    break;
+                }
+                }
             }
             if (wave_is_done(&state->current_wave)) {
                 CENTERED_ELEMENT(

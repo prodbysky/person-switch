@@ -30,6 +30,7 @@ Bullet pistol_create_bullet(Vector2 pos, Color c, Vector2 dir) {
         .damage = 3,
         .active = true,
         .on_hit = pistol_on_hit,
+        .speed = 900,
     };
 }
 
@@ -82,5 +83,6 @@ Bullet ar_create_bullet(Vector2 pos, Color c, Vector2 dir) {
         .damage = 1,
         .active = true,
         .on_hit = ar_on_hit,
+        .speed = 1500,
     };
 }
