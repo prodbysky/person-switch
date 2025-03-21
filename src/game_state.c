@@ -6,7 +6,6 @@
 #include "pickup.h"
 #include "player.h"
 #include "stage.h"
-#include "static_config.h"
 #include "timing_utilities.h"
 #include "wave.h"
 #include <raylib.h>
