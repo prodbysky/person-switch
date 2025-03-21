@@ -14,13 +14,22 @@ void pistol_try_shoot(struct Weapon *this, Bullets *bullets, const TransformComp
     }
 }
 
+void pistol_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp *victim_health) {
+    victim_health->current -= this->damage;
+    this->active = false;
+    victim_physics->velocity.x += 200 * this->direction.x;
+    victim_physics->velocity.y += 200 * this->direction.y;
+}
+
 Bullet pistol_create_bullet(Vector2 pos, Color c, Vector2 dir) {
     return (Bullet){
         .direction = dir,
         .creation_time = GetTime(),
         .transform = TRANSFORM(pos.x, pos.y, 16, 8),
         .draw_conf = {.color = c},
+        .damage = 3,
         .active = true,
+        .on_hit = pistol_on_hit,
     };
 }
 

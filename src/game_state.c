@@ -242,8 +242,7 @@ void game_state_update_gp_main(GameState *state, float dt) {
     for (size_t i = 0; i < state->current_wave.count; i++) {
         ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform,
                          &state->player.physics, &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound,
-                         PLAYER_STATES[state->player.state.current_class].damage, &state->enemy_bullets,
-                         &state->pickups, &state->particles);
+                         &state->enemy_bullets, &state->pickups, &state->particles);
     }
     ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets, &state->enemy_bullets,
                       &state->pickups, &state->camera, &state->particles);

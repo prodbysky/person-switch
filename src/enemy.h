@@ -49,9 +49,8 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
               const TransformComp *player_transform, const PhysicsComp *player_physics, Bullets *enemy_bullets);
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform,
                       const PhysicsComp *player_physics, Bullets *bullets, const Sound *hit_sound,
-                      const Sound *death_sound, size_t dmg, Bullets *enemy_bullets, Pickups *pickups,
-                      Particles *particles);
+                      const Sound *death_sound, Bullets *enemy_bullets, Pickups *pickups, Particles *particles);
 // Decrements the enemy health after colliding with a single bullet
-void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transform, Bullets *bullets, EnemyState *state,
-                              const Sound *hit_sound, size_t dmg, Particles *particles);
+void enemy_bullet_interaction(PhysicsComp *physics, HealthComp *health, const TransformComp *transform,
+                              Bullets *bullets, EnemyState *state, const Sound *hit_sound, Particles *particles);
 #endif

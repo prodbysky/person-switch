@@ -8,12 +8,14 @@
 #define BULLET_LIFETIME 2.0
 #define BULLET_SPEED 500
 
-typedef struct {
+typedef struct Bullet {
     TransformComp transform;
     SolidRectangleComp draw_conf;
     Vector2 direction;
     double creation_time;
+    int damage;
     bool active;
+    void (*on_hit)(struct Bullet* this, PhysicsComp* victim_physics, HealthComp* victim_health);
 } Bullet;
 
 typedef struct {

@@ -42,6 +42,12 @@ ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health
                              .type_specific.ranger.last_shot = 0.0,
                          });
 }
+void ranger_bullet_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp *victim_health) {
+    victim_health->current -= this->damage;
+    this->active = false;
+    victim_physics->velocity.x += 200 * this->direction.x;
+    victim_physics->velocity.y += 200 * this->direction.y;
+}
 
 static Bullet ranger_create_bullet(Vector2 pos, Color c, Vector2 dir) {
     return (Bullet){
@@ -50,6 +56,8 @@ static Bullet ranger_create_bullet(Vector2 pos, Color c, Vector2 dir) {
         .transform = TRANSFORM(pos.x, pos.y, 16, 10),
         .draw_conf = {.color = c},
         .active = true,
+        .damage = 1,
+        .on_hit = ranger_bullet_on_hit,
     };
 }
 
@@ -117,8 +125,7 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform,
                       const PhysicsComp *player_physics, Bullets *bullets, const Sound *hit_sound,
-                      const Sound *death_sound, size_t dmg, Bullets *enemy_bullets, Pickups *pickups,
-                      Particles *particles) {
+                      const Sound *death_sound, Bullets *enemy_bullets, Pickups *pickups, Particles *particles) {
     if (enemy->state.dead) {
         return;
     }
@@ -143,19 +150,19 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform, player_physics,
              enemy_bullets);
     collision(&enemy->transform, &enemy->physics, stage, dt);
-    enemy_bullet_interaction(&enemy->physics, &enemy->transform, bullets, &enemy->state, hit_sound, dmg, particles);
+    enemy_bullet_interaction(&enemy->physics, &enemy->state.health, &enemy->transform, bullets, &enemy->state,
+                             hit_sound, particles);
 }
 
-void enemy_bullet_interaction(PhysicsComp *physics, const TransformComp *transform, Bullets *bullets, EnemyState *state,
-                              const Sound *hit_sound, size_t dmg, Particles *particles) {
+void enemy_bullet_interaction(PhysicsComp *physics, HealthComp *health, const TransformComp *transform,
+                              Bullets *bullets, EnemyState *state, const Sound *hit_sound, Particles *particles) {
     if (state->health.current <= 0) {
         return;
     }
     for (int i = 0; i < MAX_BULLETS; i++) {
         if (bullets->bullets[i].active) {
             if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
-                state->health.current -= dmg;
-                bullets->bullets[i].active = false;
+                bullets->bullets[i].on_hit(&bullets->bullets[i], physics, health);
                 state->last_hit = GetTime();
                 physics->velocity.x += 200 * bullets->bullets[i].direction.x;
                 physics->velocity.y += 200 * bullets->bullets[i].direction.y;
