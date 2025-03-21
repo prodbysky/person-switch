@@ -17,11 +17,13 @@ typedef struct Weapon{
             uint16_t damage;
             Sound shoot_sound;
             void (*try_shoot)(struct Weapon* this, Bullets* bullets, const TransformComp* from, const Camera2D* camera);
+            Bullet (*create_bullet)(Vector2 pos, Color c, Vector2 dir);
         } pistol;
     };
 } Weapon;
 
 void pistol_try_shoot(struct Weapon* this, Bullets* bullets, const TransformComp* from, const Camera2D* camera);
+Bullet pistol_create_bullet(Vector2 pos, Color c, Vector2 dir);
 
 Weapon create_pistol(double file_rate);
 

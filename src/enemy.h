@@ -19,8 +19,7 @@ typedef enum {
 
 typedef struct {
     EnemyType type;
-    int health;
-    int max_health;
+    HealthComp health;
     double last_hit;
     bool dead;
 
