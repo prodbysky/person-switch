@@ -841,24 +841,105 @@ Stage stage_1() {
                    .count_sp = 1};
 }
 Stage stage_2() {
-    return (Stage){
-        .count = 2,
-        .platforms =
-            {
-                (Platform){
-                    .x = 0,
-                    .y = 550,
-                    .width = 800,
-                    .height = 32,
-                },
-                (Platform){
-                    .x = 100,
-                    .y = 400,
-                    .width = 600,
-                    .height = 32,
-                },
-            },
-    };
+    return (Stage){.spawn = (Vector2){1726.33, 912.89},
+                   .platforms =
+                       {
+                           (Rectangle){
+                               .x = 5.33,
+                               .y = 859.33,
+                               .width = 1514.00,
+                               .height = 44.00,
+                           },
+                           (Rectangle){
+                               .x = 1942.33,
+                               .y = 855.00,
+                               .width = 1644.00,
+                               .height = 54.00,
+                           },
+                           (Rectangle){
+                               .x = 1322.22,
+                               .y = 879.11,
+                               .width = 294.00,
+                               .height = 24.00,
+                           },
+                           (Rectangle){
+                               .x = 1849.17,
+                               .y = 885.83,
+                               .width = 394.00,
+                               .height = 24.00,
+                           },
+                           (Rectangle){
+                               .x = 2.50,
+                               .y = -2.00,
+                               .width = 64.00,
+                               .height = 904.00,
+                           },
+                           (Rectangle){
+                               .x = 3522.50,
+                               .y = 0.00,
+                               .width = 64.00,
+                               .height = 904.00,
+                           },
+                           (Rectangle){
+                               .x = 1461.43,
+                               .y = 628.57,
+                               .width = 554.00,
+                               .height = 34.00,
+                           },
+                           (Rectangle){
+                               .x = 36.00,
+                               .y = 752.00,
+                               .width = 264.00,
+                               .height = 114.00,
+                           },
+                           (Rectangle){
+                               .x = 3298.00,
+                               .y = 722.00,
+                               .width = 264.00,
+                               .height = 164.00,
+                           },
+                           (Rectangle){
+                               .x = 1510.13,
+                               .y = 1041.56,
+                               .width = 464.00,
+                               .height = 24.00,
+                           },
+                           (Rectangle){
+                               .x = 1510.00,
+                               .y = 896.00,
+                               .width = 54.00,
+                               .height = 154.00,
+                           },
+                           (Rectangle){
+                               .x = 1922.79,
+                               .y = 891.07,
+                               .width = 54.00,
+                               .height = 174.00,
+                           },
+                           (Rectangle){
+                               .x = 2.00,
+                               .y = -33.50,
+                               .width = 3584.00,
+                               .height = 44.00,
+                           },
+                       },
+                   .count = 13,
+                   .spawns =
+                       {
+                           (Rectangle){
+                               .x = 79.00,
+                               .y = 495.00,
+                               .width = 224.00,
+                               .height = 144.00,
+                           },
+                           (Rectangle){
+                               .x = 3304.50,
+                               .y = 507.00,
+                               .width = 204.00,
+                               .height = 84.00,
+                           },
+                       },
+                   .count_sp = 2};
 }
 Stage stage_3() {
     return (Stage){
