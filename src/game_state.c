@@ -45,7 +45,6 @@ GameState game_state_init() {
     Clay_SetDebugModeEnabled(true);
 #endif
 
-    st.stage = stages[0]();
     st.selected_stage = 0;
     st.player = ecs_player_new();
     st.reload_cost = 3;
@@ -64,7 +63,6 @@ GameState game_state_init() {
     st.selected_class = PS_MOVE;
     st.wave_strength = 5;
     st.wave_number = 1;
-    st.current_wave = generate_wave(st.wave_strength, &st.stage);
     st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
     st.camera = (Camera2D){
         .zoom = 0.75,
@@ -469,6 +467,10 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
         state->stage = stages[state->selected_stage]();
+        game_state_start_new_wave(state, state->selected_class);
+        state->wave_strength *= 1.1;
+        state->wave_number++;
+        state->current_wave = generate_wave(state->wave_strength, &state->stage);
         state->player.state.current_class = state->selected_class;
         state->player.transform.rect.x = state->stage.spawn.x;
         state->player.transform.rect.y = state->stage.spawn.y;
