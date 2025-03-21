@@ -33,11 +33,11 @@ Bullet pistol_create_bullet(Vector2 pos, Color c, Vector2 dir) {
     };
 }
 
-Weapon create_pistol(double file_rate) {
+Weapon create_pistol() {
     return (Weapon){
         .type = WT_PISTOL,
         .last_shot = 0.0,
-        .fire_rate = file_rate,
+        .fire_rate = .33,
         .damage = 3,
         .pistol =
             {

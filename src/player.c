@@ -16,17 +16,15 @@ ECSPlayer ecs_player_new() {
         .state = {.current_class = PS_MOVE,
                   .health = 5,
                   .last_hit = 0.0,
-                  .last_shot = 0.0,
                   .last_healed = 0.0,
                   .dead = false,
                   .movement_speed = 0.0,
-                  .reload_time = 0.0,
                   .coins = 10},
         .physics = DEFAULT_PHYSICS(),
         .draw_conf = {.color = WHITE},
 
         .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
-        .weapon = create_pistol(0.33),
+        .weapon = create_pistol(),
     };
 }
 

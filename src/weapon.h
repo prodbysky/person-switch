@@ -25,6 +25,6 @@ typedef struct Weapon{
 void pistol_try_shoot(struct Weapon* this, Bullets* bullets, const TransformComp* from, const Camera2D* camera);
 Bullet pistol_create_bullet(Vector2 pos, Color c, Vector2 dir);
 
-Weapon create_pistol(double file_rate);
+Weapon create_pistol();
 
 #endif
