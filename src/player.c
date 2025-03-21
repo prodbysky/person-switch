@@ -6,6 +6,7 @@
 #include "pickup.h"
 #include "static_config.h"
 #include "timing_utilities.h"
+#include "weapon.h"
 #include <raylib.h>
 #include <raymath.h>
 
@@ -25,7 +26,7 @@ ECSPlayer ecs_player_new() {
         .draw_conf = {.color = WHITE},
 
         .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
-        .shoot_sound = LoadSound("assets/sfx/shoot.wav"),
+        .weapon = create_pistol(0.33),
     };
 }
 
@@ -104,11 +105,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
 void player_input(ECSPlayer *player, Bullets *bullets, const Camera2D *camera, Particles *particles) {
     if (time_delta(player->state.last_shot) > SHOOT_DELAY - player->state.reload_time) {
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-            const Vector2 mouse_pos = GetScreenToWorld2D(GetMousePosition(), *camera);
-            const Vector2 dir = Vector2Normalize(Vector2Subtract(mouse_pos, transform_center(&player->transform)));
-            bullets_spawn_bullet(&player->transform, bullets, dir, PURPLE);
-            player->state.last_shot = GetTime();
-            PlaySound(player->shoot_sound);
+            player->weapon.pistol.try_shoot(&player->weapon, bullets, &player->transform, camera);
         }
     }
 
