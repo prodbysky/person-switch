@@ -49,7 +49,7 @@ Weapon create_ar() {
     return (Weapon){
         .type = WT_AR,
         .last_shot = 0.0,
-        .fire_rate = .15,
+        .fire_rate = .1,
         .damage = 1,
         .shoot_sound = LoadSound("assets/sfx/ar_shoot.wav"),
         .try_shoot = ar_try_shoot,

@@ -109,12 +109,10 @@ void player_input(ECSPlayer *player, Bullets *bullets, const Camera2D *camera, P
     }
 
     if (IsKeyDown(KEY_A)) {
-        player->physics.velocity.x =
-            -(PLAYER_STATES[player->state.current_class].speed_x + player->state.movement_speed);
+        player->physics.velocity.x = -500;
     }
     if (IsKeyDown(KEY_D)) {
-        player->physics.velocity.x =
-            (PLAYER_STATES[player->state.current_class].speed_x + player->state.movement_speed);
+        player->physics.velocity.x = 500;
     }
     if (IsKeyPressed(KEY_Z)) {
         player->selected = WT_PISTOL;
@@ -124,7 +122,7 @@ void player_input(ECSPlayer *player, Bullets *bullets, const Camera2D *camera, P
     }
 
     if (player->physics.grounded && IsKeyPressed(KEY_SPACE)) {
-        player->physics.velocity.y = -PLAYER_STATES[player->state.current_class].jump_power;
+        player->physics.velocity.y = -500;
         PlaySound(player->jump_sound);
         player->physics.grounded = false;
         const Vector2 pos = transform_center(&player->transform);
