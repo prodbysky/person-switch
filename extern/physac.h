@@ -131,7 +131,8 @@
         #define _STDBOOL_H
     #endif
 #endif
-
+#include <raymath.h>
+#include <stdbool.h>
 typedef enum PhysicsShapeType { PHYSICS_CIRCLE, PHYSICS_POLYGON } PhysicsShapeType;
 
 // Previously defined to be used in PhysicsShape struct as circular dependencies
@@ -248,7 +249,7 @@ PHYSACDEF void ClosePhysics(void);                                              
 #include <stdint.h>                 // Required for: uint64_t
 
 #if !defined(PHYSAC_STANDALONE)
-    #include "raymath.h"            // Required for: Vector2Add(), Vector2Subtract()
+    #include <raymath.h>            // Required for: Vector2Add(), Vector2Subtract()
 #endif
 
 // Time management functionality
