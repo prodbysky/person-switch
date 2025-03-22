@@ -61,7 +61,7 @@ GameState game_state_init() {
     st.bullets = (Bullets){.bullets = {0}, .current = 0};
     st.began_transition = GetTime();
     st.screen_type = IST_PLAYER_UPGRADE;
-    st.wave_strength = 5;
+    st.wave_strength = 2;
     st.wave_number = 1;
     st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
     st.camera = (Camera2D){
@@ -402,6 +402,14 @@ void handle_screen_select_button_upgrade(Clay_ElementId e_id, Clay_PointerData p
         state->screen_type = IST_PLAYER_UPGRADE;
     }
 }
+
+void handle_screen_select_button_upgrade_weapons(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->screen_type = IST_PLAYER_WEAPONS_UPGRADE;
+    }
+}
 void handle_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
@@ -554,11 +562,68 @@ void handle_show_main_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t 
     }
 }
 
+void handle_pistol_fire_rate_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->player.state.coins > state->player.weapons[WT_PISTOL].fire_rate_upgrade_cost) {
+            state->player.state.coins -= state->player.weapons[WT_PISTOL].fire_rate_upgrade_cost;
+            state->player.weapons[WT_PISTOL].fire_rate -= 0.05;
+            state->player.weapons[WT_PISTOL].fire_rate_upgrade_cost += 0.5;
+        }
+    }
+}
+void handle_pistol_damage_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->player.state.coins > state->player.weapons[WT_PISTOL].damage_upgrade_cost) {
+            state->player.state.coins -= state->player.weapons[WT_PISTOL].damage_upgrade_cost;
+            state->player.weapons[WT_PISTOL].damage += 1;
+            state->player.weapons[WT_PISTOL].damage_upgrade_cost += 0.5;
+        }
+    }
+}
+void handle_ar_fire_rate_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->player.state.coins > state->player.weapons[WT_AR].fire_rate_upgrade_cost) {
+            state->player.state.coins -= state->player.weapons[WT_AR].fire_rate_upgrade_cost;
+            state->player.weapons[WT_AR].fire_rate -= 0.05;
+            state->player.weapons[WT_AR].fire_rate_upgrade_cost += 0.5;
+        }
+    }
+}
+void handle_ar_damage_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->player.state.coins > state->player.weapons[WT_AR].damage_upgrade_cost) {
+            state->player.state.coins -= state->player.weapons[WT_AR].damage_upgrade_cost;
+            state->player.weapons[WT_AR].damage += 1;
+            state->player.weapons[WT_AR].damage_upgrade_cost += 0.5;
+        }
+    }
+}
+
 Clay_Color button_color(bool activecond) {
     return activecond ? (Clay_Color){120, 120, 120, 255} : (Clay_Color){90, 90, 90, 200};
 }
 
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
+    DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
+               GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
+    if (state->vfx_enabled) {
+        DrawTextEx(state->font[0], "VFX enabled", (Vector2){500, 40}, 48, 0,
+                   GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
+    } else {
+        DrawTextEx(state->font[0], "VFX disabled", (Vector2){500, 40}, 48, 0,
+                   GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
+    }
+
+    DrawTextEx(state->font[0], state->error, (Vector2){200, 200}, 60, 0,
+               GetColor(0xff000000 + (state->error_opacity * 255)));
     Clay_BeginLayout();
     ui_container(CLAY_ID("OuterContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), 0, 0) {
         switch (state->phase) {
@@ -657,42 +722,73 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         }
         case GP_AFTER_WAVE: {
             ui_container(CLAY_ID("IntermissionScreenContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
-                         CLAY_SIZING_GROW(0), 16, 16) {
+                         CLAY_SIZING_PERCENT(0.5), 16, 16) {
                 ui_container(CLAY_ID("ScreenSelectButtonContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_PERCENT(0.1),
                              CLAY_SIZING_GROW(0), 0, 16) {
                     LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Upgrades", "UpgradeSelectScreenButton",
                                    handle_screen_select_button_upgrade, state->screen_type == IST_PLAYER_UPGRADE);
-                }
-
-                CLAY({.id = CLAY_ID("NextWaveEnemyListContainer"),
-                      .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
-                                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                 .childGap = 8,
-                                 .padding = {16, 16, 16, 16}},
-                      .backgroundColor = {100, 100, 100, 255},
-                      .scroll = {.horizontal = false, .vertical = true},
-                      .cornerRadius = {10, 10, 10, 10}}) {
-                    size_t count[ET_COUNT] = {0};
-                    for (size_t i = 0; i < state->current_wave.count; i++) {
-                        const ECSEnemy *e = &state->current_wave.enemies[i];
-                        count[e->state.type]++;
-                    }
-                    ui_label(TextFormat("x%d melee enemies", count[ET_BASIC]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                    ui_label(TextFormat("x%d ranged enemies", count[ET_RANGER]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
+                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Weapon Upgrades",
+                                   "WeaponUpgradeSelectScreenButton", handle_screen_select_button_upgrade_weapons,
+                                   state->screen_type == IST_PLAYER_WEAPONS_UPGRADE);
                 }
                 switch (state->screen_type) {
                 case IST_PLAYER_UPGRADE: {
-                    ui_container(CLAY_ID("PlayerUpgradeContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0),
-                                 CLAY_SIZING_GROW(0), 0, 16) {
-                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Reload", "ReloadUpgradeButton",
-                                       handle_reload_speed_upgrade_button, false);
-                        ui_label(TextFormat("Cost: %.2f", state->reload_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
-                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Speed", "SpeedUpgradeButton",
-                                       handle_speed_upgrade_button, false);
-                        ui_label(TextFormat("Cost: %.2f", state->speed_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Reload", "ReloadUpgradeButton",
+                                   handle_reload_speed_upgrade_button, false);
+                    ui_label(TextFormat("Cost: %.2f", state->reload_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Speed", "SpeedUpgradeButton",
+                                   handle_speed_upgrade_button, false);
+                    ui_label(TextFormat("Cost: %.2f", state->speed_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                    break;
+                }
+                case IST_PLAYER_WEAPONS_UPGRADE: {
+                    CLAY({.id = CLAY_ID("WeaponUpgradeContainer"),
+                          .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                     .childGap = 16,
+                                     .padding = {16, 16, 16, 16}}}) {
+                        CLAY({.id = CLAY_ID("PistolUpgrades"),
+                              .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                         .childGap = 8,
+                                         .padding = {16, 16, 16, 16}},
+                              .backgroundColor = {100, 100, 100, 255},
+                              .cornerRadius = {16, 16, 16, 16}}) {
+                            ui_label("Pistol", 48, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                            LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0),
+                                           TextFormat("Firerate: %.2f / sec. [Cost: %.2f]",
+                                                      state->player.weapons[WT_PISTOL].fire_rate / 1.0,
+                                                      state->player.weapons[WT_PISTOL].fire_rate_upgrade_cost),
+                                           "PistolFireRateUpgradeButton", handle_pistol_fire_rate_upgrade, false);
+                            LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0),
+                                           TextFormat("Damage: %d [Cost: %.2f]",
+                                                      state->player.weapons[WT_PISTOL].damage,
+                                                      state->player.weapons[WT_PISTOL].damage_upgrade_cost),
+                                           "PistolDamageUpgradeButton", handle_pistol_damage_upgrade, false);
+                        }
+                        CLAY({.id = CLAY_ID("ARUpgrades"),
+                              .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                         .childGap = 8,
+                                         .padding = {16, 16, 16, 16}},
+                              .backgroundColor = {100, 100, 100, 255},
+                              .cornerRadius = {16, 16, 16, 16}}) {
+                            ui_label("AR", 48, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                            LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0),
+                                           TextFormat("Firerate: %.2f / sec. [Cost: %.2f]",
+                                                      state->player.weapons[WT_AR].fire_rate / 1.0,
+                                                      state->player.weapons[WT_AR].fire_rate_upgrade_cost),
+                                           "ARFireRateUpgradeButton", handle_ar_fire_rate_upgrade, false);
+                            LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0),
+                                           TextFormat("Damage: %d [Cost: %.2f]", state->player.weapons[WT_AR].damage,
+                                                      state->player.weapons[WT_AR].damage_upgrade_cost),
+                                           "ARDamageUpgradeButton", handle_ar_damage_upgrade, false);
+                        }
                     }
                     break;
                 }
+                }
+                CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}}}) {
                 }
             }
             break;
@@ -714,18 +810,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         }
     }
 
-    DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
-               GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
-    if (state->vfx_enabled) {
-        DrawTextEx(state->font[0], "VFX enabled", (Vector2){500, 40}, 48, 0,
-                   GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
-    } else {
-        DrawTextEx(state->font[0], "VFX disabled", (Vector2){500, 40}, 48, 0,
-                   GetColor(0xffffff00 + (state->vfx_indicator_opacity * 255)));
-    }
-
-    DrawTextEx(state->font[0], state->error, (Vector2){200, 200}, 60, 0,
-               GetColor(0xff000000 + (state->error_opacity * 255)));
     return Clay_EndLayout();
 }
 

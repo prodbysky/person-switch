@@ -22,7 +22,8 @@ typedef enum {
 } GamePhase;
 
 typedef enum {
-    IST_PLAYER_UPGRADE = 0
+    IST_PLAYER_UPGRADE = 0,
+IST_PLAYER_WEAPONS_UPGRADE
 } IntermissionScreenType;
 
 typedef enum {
