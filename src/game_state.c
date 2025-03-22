@@ -9,14 +9,18 @@
 #include "timing_utilities.h"
 #include "wave.h"
 #include "weapon.h"
-#include <raylib.h>
-#include <raymath.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <clay/clay.h>
 #include <clay/clay_raylib_renderer.c>
+
+#define PHYSAC_IMPLEMENTATION
+#include <physac.h>
+#include <raylib.h>
+#include <raymath.h>
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define TRANSITION_TIME 0.25
 
