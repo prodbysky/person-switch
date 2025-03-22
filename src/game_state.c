@@ -48,7 +48,6 @@ GameState game_state_init() {
 
     st.selected_stage = 0;
     st.player = ecs_player_new();
-    st.reload_cost = 3;
     st.speed_cost = 1;
     st.phase = GP_TRANSITION;
     st.after_transition = GP_STARTMENU;
@@ -421,17 +420,6 @@ void handle_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intpt
         }
     }
 }
-void handle_reload_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        if (state->player.state.coins >= state->reload_cost) {
-            state->player.state.reload_time += 0.02;
-            state->player.state.coins -= state->reload_cost;
-            state->reload_cost *= 1.1;
-        }
-    }
-}
 
 void handle_continue_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
@@ -733,20 +721,18 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 }
                 switch (state->screen_type) {
                 case IST_PLAYER_UPGRADE: {
-                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Reload", "ReloadUpgradeButton",
-                                   handle_reload_speed_upgrade_button, false);
-                    ui_label(TextFormat("Cost: %.2f", state->reload_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
-                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Speed", "SpeedUpgradeButton",
+                    LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_GROW(0),
+                                   TextFormat("Speed [Cost: %.2f]", state->speed_cost), "SpeedUpgradeButton",
                                    handle_speed_upgrade_button, false);
-                    ui_label(TextFormat("Cost: %.2f", state->speed_cost), 28, WHITE, CLAY_TEXT_ALIGN_CENTER);
                     break;
                 }
                 case IST_PLAYER_WEAPONS_UPGRADE: {
                     CLAY({.id = CLAY_ID("WeaponUpgradeContainer"),
-                          .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
-                                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                     .childGap = 16,
-                                     .padding = {16, 16, 16, 16}}}) {
+                          .layout = {
+                              .sizing = {.width = CLAY_SIZING_PERCENT(0.2), .height = CLAY_SIZING_GROW(0)},
+                              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                              .childGap = 16,
+                          }}) {
                         CLAY({.id = CLAY_ID("PistolUpgrades"),
                               .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
                                          .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -787,8 +773,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     }
                     break;
                 }
-                }
-                CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}}}) {
                 }
             }
             break;
