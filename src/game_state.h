@@ -22,8 +22,7 @@ typedef enum {
 } GamePhase;
 
 typedef enum {
-    IST_PLAYER_CLASS_SELECT = 0,
-    IST_PLAYER_UPGRADE = 1
+    IST_PLAYER_UPGRADE = 0
 } IntermissionScreenType;
 
 typedef enum {
@@ -63,7 +62,6 @@ typedef struct {
 
     // Intermission screen (upgrades)
     IntermissionScreenType screen_type;
-    PlayerClass selected_class;
 
     double wave_strength;
     size_t wave_number;
@@ -99,7 +97,7 @@ GameState game_state_init();
 void game_state_destroy(GameState *state); 
 
 // Starts a new wave with the given new class of player
-void game_state_start_new_wave(GameState* state, PlayerClass new_class);
+void game_state_start_new_wave(GameState *state);
 
 // Runs a single frame (update and draw) of the game
 void game_state(GameState *state); 

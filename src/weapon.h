@@ -14,6 +14,8 @@ typedef struct Weapon {
     double last_shot;
     double fire_rate;
     uint16_t damage;
+    uint16_t mag_size;
+    uint16_t mag_cap;
     Sound shoot_sound;
     void (*try_shoot)(struct Weapon* this, Bullets* bullets, const TransformComp* from, const Camera2D* camera);
     Bullet (*create_bullet)(Vector2 pos, Color c, Vector2 dir);

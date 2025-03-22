@@ -38,8 +38,8 @@ Weapon create_pistol() {
     return (Weapon){
         .type = WT_PISTOL,
         .last_shot = 0.0,
-        .fire_rate = .33,
-        .damage = 3,
+        .fire_rate = 2,
+        .damage = 4,
         .shoot_sound = LoadSound("assets/sfx/pistol_shoot.wav"),
         .try_shoot = pistol_try_shoot,
         .create_bullet = pistol_create_bullet,
@@ -49,7 +49,7 @@ Weapon create_ar() {
     return (Weapon){
         .type = WT_AR,
         .last_shot = 0.0,
-        .fire_rate = .1,
+        .fire_rate = .25,
         .damage = 1,
         .shoot_sound = LoadSound("assets/sfx/ar_shoot.wav"),
         .try_shoot = ar_try_shoot,

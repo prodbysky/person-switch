@@ -60,8 +60,7 @@ GameState game_state_init() {
     st.phase_change_sound = LoadSound("assets/sfx/menu_switch.wav");
     st.bullets = (Bullets){.bullets = {0}, .current = 0};
     st.began_transition = GetTime();
-    st.screen_type = IST_PLAYER_CLASS_SELECT;
-    st.selected_class = PS_MOVE;
+    st.screen_type = IST_PLAYER_UPGRADE;
     st.wave_strength = 5;
     st.wave_number = 1;
     st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
@@ -294,7 +293,7 @@ void game_state_update_gp_transition(GameState *state, float dt) {
 void game_state_update_gp_after_wave(GameState *state, float dt) {
     (void)dt;
     if (IsKeyDown(KEY_ENTER)) {
-        game_state_start_new_wave(state, state->selected_class);
+        game_state_start_new_wave(state);
     }
 }
 
@@ -308,8 +307,7 @@ void game_state_phase_change(GameState *state, GamePhase next) {
     PlaySound(state->phase_change_sound);
 }
 
-void game_state_start_new_wave(GameState *state, PlayerClass new_class) {
-    state->player.state.current_class = new_class;
+void game_state_start_new_wave(GameState *state) {
     game_state_phase_change(state, GP_MAIN);
     state->bullets = (Bullets){.bullets = {0}, .current = 0};
     state->enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
@@ -397,39 +395,11 @@ void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligm
                                     }, ));
 }
 
-void handle_screen_select_button_class(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->screen_type = IST_PLAYER_CLASS_SELECT;
-    }
-}
 void handle_screen_select_button_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         state->screen_type = IST_PLAYER_UPGRADE;
-    }
-}
-void handle_player_class_select_button_tank(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_class = PS_TANK;
-    }
-}
-void handle_player_class_select_button_move(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_class = PS_MOVE;
-    }
-}
-void handle_player_class_select_button_killer(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_class = PS_DAMAGE;
     }
 }
 void handle_speed_upgrade_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
@@ -468,11 +438,10 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
         state->stage = stages[state->selected_stage]();
-        game_state_start_new_wave(state, state->selected_class);
+        game_state_start_new_wave(state);
         state->wave_strength *= 1.1;
         state->wave_number++;
         state->current_wave = generate_wave(state->wave_strength, &state->stage);
-        state->player.state.current_class = state->selected_class;
         state->player.transform.rect.x = state->stage.spawn.x;
         state->player.transform.rect.y = state->stage.spawn.y;
     }
@@ -671,16 +640,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                                         state->selected_stage == 2));
                     }
 
-                    ui_container(CLAY_ID("ClassSelectContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
-                                 CLAY_SIZING_GROW(0), 0, 16) {
-                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Tank", "TankClassButton",
-                                       handle_player_class_select_button_tank, state->selected_class == PS_TANK);
-                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Mover", "MoveClassButton",
-                                       handle_player_class_select_button_move, state->selected_class == PS_MOVE);
-                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Killer", "KillerClassButton",
-                                       handle_player_class_select_button_killer, state->selected_class == PS_DAMAGE);
-                    }
-
                     CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Play",
                                                     "PlayButton", handle_start_game_button, false));
 
@@ -701,8 +660,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                          CLAY_SIZING_GROW(0), 16, 16) {
                 ui_container(CLAY_ID("ScreenSelectButtonContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_PERCENT(0.1),
                              CLAY_SIZING_GROW(0), 0, 16) {
-                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Class select", "ClassSelectScreenButton",
-                                   handle_screen_select_button_class, state->screen_type == IST_PLAYER_CLASS_SELECT);
                     LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Upgrades", "UpgradeSelectScreenButton",
                                    handle_screen_select_button_upgrade, state->screen_type == IST_PLAYER_UPGRADE);
                 }
@@ -724,18 +681,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     ui_label(TextFormat("x%d ranged enemies", count[ET_RANGER]), 36, WHITE, CLAY_TEXT_ALIGN_LEFT);
                 }
                 switch (state->screen_type) {
-                case IST_PLAYER_CLASS_SELECT: {
-                    ui_container(CLAY_ID("PlayerClassSelectContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0),
-                                 CLAY_SIZING_GROW(0), 0, 16) {
-                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Tank", "TankClassButton",
-                                       handle_player_class_select_button_tank, state->selected_class == PS_TANK);
-                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Mover", "MoveClassButton",
-                                       handle_player_class_select_button_move, state->selected_class == PS_MOVE);
-                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Killer", "KillerClassButton",
-                                       handle_player_class_select_button_killer, state->selected_class == PS_DAMAGE);
-                    }
-                    break;
-                }
                 case IST_PLAYER_UPGRADE: {
                     ui_container(CLAY_ID("PlayerUpgradeContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0),
                                  CLAY_SIZING_GROW(0), 0, 16) {
