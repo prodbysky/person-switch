@@ -31,7 +31,7 @@ void clay_error_callback(Clay_ErrorData errorData) {
 static Stage (*const stages[])(void) = {stage_1, stage_2, stage_3};
 
 GameState game_state_init() {
-    GameState st;
+    GameState st = {0};
     InitWindow(100, 100, "Persona");
     InitAudioDevice();
     SetWindowState(FLAG_VSYNC_HINT);
@@ -888,12 +888,13 @@ Stage stage_3() {
 
 #define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 50)
 #define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 20, 3)
+#define DRONE(x, y) ecs_drone_enemy((Vector2){(x), (y)}, (Vector2){64, 32}, 20, 20, 3, 300)
 
 EnemyWave generate_wave(double strength, const Stage *stage) {
     EnemyWave wave = NULL;
 
     while (strength > 0) {
-        size_t enemy_type = GetRandomValue(0, 1);
+        size_t enemy_type = GetRandomValue(0, 2);
         size_t which_area = GetRandomValue(0, stage->count_sp - 1);
         Vector2 pos = (Vector2){
             GetRandomValue(stage->spawns[which_area].x, stage->spawns[which_area].x + stage->spawns[which_area].width),
@@ -908,6 +909,11 @@ EnemyWave generate_wave(double strength, const Stage *stage) {
         case 1: {
             stbds_arrput(wave, RANGER(pos.x, pos.y));
             strength -= 1;
+            break;
+        }
+        case 2: {
+            stbds_arrput(wave, DRONE(pos.x, pos.y));
+            strength -= 2;
             break;
         }
         }

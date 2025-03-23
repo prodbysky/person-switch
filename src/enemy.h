@@ -14,6 +14,7 @@ typedef struct {
 typedef enum {
     ET_BASIC,
     ET_RANGER,
+    ET_DRONE,
     ET_COUNT
 } EnemyType;
 
@@ -23,12 +24,13 @@ typedef struct {
     double last_hit;
     bool dead;
 
-    union {
         struct {
             double reload_time;
             double last_shot;
-        } ranger;
-    } type_specific;
+        } ranged;
+        struct {
+            double vertical_offset;
+        } flying;
 } EnemyState;
 
 typedef struct {
@@ -43,6 +45,7 @@ typedef struct {
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, EnemyState state);
 ECSEnemy ecs_basic_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health);
 ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double reload_time);
+ECSEnemy ecs_drone_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double reload_time, double vertical_offset);
 
 // Makes the enemy follow the passed in transform `player_transform`
 void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformComp *transform, PhysicsComp *physics,

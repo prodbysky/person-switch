@@ -39,9 +39,21 @@ ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health
                              .health = HEALTH(health, health),
                              .dead = false,
                              .last_hit = 0.0,
-                             .type_specific.ranger.reload_time = reload_time,
-                             .type_specific.ranger.last_shot = 0.0,
+                             .ranged.reload_time = reload_time,
+                             .ranged.last_shot = 0.0,
                          });
+}
+
+ECSEnemy ecs_drone_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double reload_time,
+                         double vertical_offset) {
+    return ecs_enemy_new(pos, size, speed,
+                         (EnemyState){.type = ET_DRONE,
+                                      .health = HEALTH(health, health),
+                                      .dead = false,
+                                      .last_hit = 0.0,
+                                      .ranged.reload_time = reload_time,
+                                      .ranged.last_shot = 0.0,
+                                      .flying = {.vertical_offset = vertical_offset}});
 }
 void ranger_bullet_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp *victim_health) {
     victim_health->current -= this->damage;
@@ -111,16 +123,18 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         }
 
         // Shoot
-        if (time_delta(state->type_specific.ranger.last_shot) > state->type_specific.ranger.reload_time) {
+        if (time_delta(state->ranged.last_shot) > state->ranged.reload_time) {
             const Vector2 player_center = transform_center(player_transform);
             const float dst = Vector2Distance(player_center, transform_center(transform));
             const double time = (dst / RANGER_BULLET_SPEED) - 1;
             const Vector2 prediction = Vector2Add(player_center, Vector2Scale(player_physics->velocity, time));
             const Vector2 dir = Vector2Normalize(Vector2Subtract(prediction, transform_center(transform)));
             bullets_spawn_bullet(enemy_bullets, ranger_create_bullet(transform_center(transform), PINK, dir));
-            state->type_specific.ranger.last_shot = GetTime();
+            state->ranged.last_shot = GetTime();
         }
         break;
+    }
+    case ET_DRONE: {
     }
     case ET_COUNT: {
     }
