@@ -16,10 +16,7 @@ typedef struct {
     bool active;
 } Particle;
 
-typedef struct {
-   Particle particles[MAX_PARTICLES];
-   size_t count;
-} Particles;
+typedef Particle* Particles;
 
 void particles_push(Particles* particles, Particle p);
 void particles_spawn_n_in_dir(Particles *particles, int n, Color c, Vector2 dir, Vector2 pos);

@@ -49,7 +49,7 @@ GameState game_state_init() {
 #ifndef RELEASE
     Clay_SetDebugModeEnabled(true);
 #endif
-
+    st.particles = NULL;
     st.selected_stage = 0;
     st.player = ecs_player_new();
     st.speed_cost = 1;

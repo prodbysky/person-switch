@@ -2,10 +2,13 @@
 #include "ecs.h"
 #include "raylib.h"
 #include "raymath.h"
+#include "stb_ds_helper.h"
 #include "timing_utilities.h"
+#include <stb_ds.h>
+#include <stddef.h>
 
 void particles_push(Particles *particles, Particle p) {
-    particles->particles[(particles->count++) % MAX_PARTICLES] = p;
+    stbds_arrput((*particles), p);
 }
 
 void particles_spawn_n_in_dir(Particles *particles, int n, Color c, Vector2 dir, Vector2 pos) {
@@ -28,8 +31,8 @@ void particles_spawn_n_in_dir(Particles *particles, int n, Color c, Vector2 dir,
     }
 }
 void particles_draw(const Particles *particles) {
-    for (size_t i = 0; i < MAX_PARTICLES; i++) {
-        const Particle *p = &particles->particles[i];
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*particles); i++) {
+        const Particle *p = &(*particles)[i];
         if (p->active) {
             DrawRectangleRec(p->transform.rect,
                              ColorAlpha(p->color, ((time_delta(p->created_at) / PARTICLE_LIFETIME) - 1) * -1));
@@ -37,8 +40,12 @@ void particles_draw(const Particles *particles) {
     }
 }
 void particles_update(Particles *particles, const Stage *stage, float dt) {
-    for (size_t i = 0; i < MAX_PARTICLES; i++) {
-        Particle *p = &particles->particles[i];
+    const ptrdiff_t len = stbds_arrlen(*particles);
+    if (len > 300) {
+        STB_DS_ARRAY_CLEAN((*particles), !(*particles)[i].active);
+    }
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*particles); i++) {
+        Particle *p = &(*particles)[i];
         if (!p->active) {
             continue;
         }
