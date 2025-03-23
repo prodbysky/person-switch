@@ -135,6 +135,28 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         break;
     }
     case ET_DRONE: {
+        float y_pos_delta = fabs(transform->rect.y + (transform->rect.height / 2.0) -
+                                 (player_transform->rect.y + (player_transform->rect.height / 2.0)));
+        if (y_pos_delta < state->flying.vertical_offset) {
+            physics->velocity.y -= 20;
+        }
+
+        const bool player_is_on_the_left = transform->rect.x < player_transform->rect.x;
+        if (player_is_on_the_left) {
+            physics->velocity.x += conf->speed;
+        } else {
+            physics->velocity.x -= conf->speed;
+        }
+        if (time_delta(state->ranged.last_shot) > state->ranged.reload_time) {
+            const Vector2 player_center = transform_center(player_transform);
+            const float dst = Vector2Distance(player_center, transform_center(transform));
+            const double time = (dst / RANGER_BULLET_SPEED) - 1;
+            const Vector2 prediction = Vector2Add(player_center, Vector2Scale(player_physics->velocity, time));
+            const Vector2 dir = Vector2Normalize(Vector2Subtract(prediction, transform_center(transform)));
+            bullets_spawn_bullet(enemy_bullets, ranger_create_bullet(transform_center(transform), PINK, dir));
+            state->ranged.last_shot = GetTime();
+        }
+        break;
     }
     case ET_COUNT: {
     }
