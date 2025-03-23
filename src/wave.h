@@ -2,7 +2,6 @@
 #define WAVE_H
 
 #include <stddef.h>
-#define MAX_WAVE_POPULATION 50
 
 #include "enemy.h"
 

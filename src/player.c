@@ -83,8 +83,8 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
             return;
         }
     }
-    for (size_t i = 0; i < MAX_BULLETS; i++) {
-        const Bullet *b = &enemy_bullets->bullets[i];
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*enemy_bullets); i++) {
+        const Bullet *b = &(*enemy_bullets)[i];
         if (!b->active) {
             continue;
         }

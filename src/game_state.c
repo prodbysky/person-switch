@@ -61,12 +61,13 @@ GameState game_state_init() {
     st.enemy_hit_sound = LoadSound("assets/sfx/enemy_hit.wav");
     st.enemy_die_sound = LoadSound("assets/sfx/enemy_die.wav");
     st.phase_change_sound = LoadSound("assets/sfx/menu_switch.wav");
-    st.bullets = (Bullets){.bullets = {0}, .current = 0};
+    st.bullets = NULL;
     st.began_transition = GetTime();
     st.screen_type = IST_PLAYER_UPGRADE;
     st.wave_strength = 2;
     st.wave_number = 1;
-    st.enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
+    st.current_wave = NULL;
+    st.enemy_bullets = NULL;
     st.camera = (Camera2D){
         .zoom = 0.75,
         .offset = (Vector2){GetMonitorWidth(0) / 2.0, GetMonitorHeight(0) / 2.0},
@@ -313,8 +314,8 @@ void game_state_phase_change(GameState *state, GamePhase next) {
 
 void game_state_start_new_wave(GameState *state) {
     game_state_phase_change(state, GP_MAIN);
-    state->bullets = (Bullets){.bullets = {0}, .current = 0};
-    state->enemy_bullets = (Bullets){.bullets = {0}, .current = 0};
+    STB_DS_ARRAY_RESET(state->bullets);
+    STB_DS_ARRAY_RESET(state->enemy_bullets);
 }
 
 void game_state_update_ui_internals() {

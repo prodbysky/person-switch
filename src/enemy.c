@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <math.h>
 #include <raymath.h>
+#include <stb_ds.h>
 #include <stdlib.h>
 
 ECSEnemy ecs_enemy_new(Vector2 pos, Vector2 size, size_t speed, EnemyState state) {
@@ -161,18 +162,19 @@ void enemy_bullet_interaction(PhysicsComp *physics, HealthComp *health, const Tr
     if (state->health.current <= 0) {
         return;
     }
-    for (int i = 0; i < MAX_BULLETS; i++) {
-        if (bullets->bullets[i].active) {
-            if (CheckCollisionRecs(transform->rect, bullets->bullets[i].transform.rect)) {
-                bullets->bullets[i].on_hit(&bullets->bullets[i], physics, health);
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*bullets); i++) {
+        Bullet *bullet = &(*bullets)[i];
+        if (bullet->active) {
+            if (CheckCollisionRecs(transform->rect, bullet->transform.rect)) {
+                bullet->on_hit(bullet, physics, health);
                 state->last_hit = GetTime();
-                physics->velocity.x += 200 * bullets->bullets[i].direction.x;
-                physics->velocity.y += 200 * bullets->bullets[i].direction.y;
+                physics->velocity.x += 200 * bullet->direction.x;
+                physics->velocity.y += 200 * bullet->direction.y;
 
                 Vector2 pos = *(Vector2 *)transform;
                 pos.y += transform->rect.height / 2.0;
                 pos.x += transform->rect.width / 2.0;
-                particles_spawn_n_in_dir(particles, 5, RED, Vector2Rotate(bullets->bullets[i].direction, PI), pos);
+                particles_spawn_n_in_dir(particles, 5, RED, Vector2Rotate(bullet->direction, PI), pos);
                 PlaySound(*hit_sound);
                 return;
             }

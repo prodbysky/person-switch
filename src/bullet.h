@@ -4,7 +4,6 @@
 #include "particles.h"
 #include "ecs.h"
 
-#define MAX_BULLETS 100
 #define BULLET_LIFETIME 2.0
 
 typedef struct Bullet {
@@ -18,13 +17,8 @@ typedef struct Bullet {
     void (*on_hit)(struct Bullet* this, PhysicsComp* victim_physics, HealthComp* victim_health);
 } Bullet;
 
-typedef struct {
-    Bullet bullets[MAX_BULLETS];
-    size_t current;
-} Bullets;
+typedef Bullet* Bullets;
 
-// NOTES:
-// Hard limit of `MAX_BULLETS` (if more are spawned then they will be overriden)
 void bullets_spawn_bullet(Bullets *bullets, Bullet b);
 
 void bullets_update(Bullets *bullets, float dt, const Stage *stage, Particles *particles);

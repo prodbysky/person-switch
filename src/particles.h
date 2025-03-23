@@ -5,7 +5,6 @@
 #include "raylib.h"
 
 #define PARTICLE_LIFETIME 2.0
-#define MAX_PARTICLES 500
 #define PARTICLE_VELOCITY 500
 
 typedef struct {
