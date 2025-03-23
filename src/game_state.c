@@ -369,14 +369,14 @@ void game_state_draw_playfield(const GameState *state) {
                    arrow_end, arrow_thickness, arrow_color);
     }
     arrow_color = GetColor(0x00ff0055);
-    for (size_t i = 0; i < MAX_PICKUPS; i++) {
-        if (!state->pickups.pickups[i].active) {
+    for (ptrdiff_t i = 0; i < stbds_arrlen(state->pickups); i++) {
+        if (!state->pickups[i].active) {
             continue;
         }
         Vector2 direction =
-            Vector2Normalize((Vector2){state->pickups.pickups[i].transform.rect.x -
+            Vector2Normalize((Vector2){state->pickups[i].transform.rect.x -
                                            (state->player.transform.rect.x + state->player.transform.rect.width / 2),
-                                       state->pickups.pickups[i].transform.rect.y -
+                                       state->pickups[i].transform.rect.y -
                                            (state->player.transform.rect.y + state->player.transform.rect.height / 2)});
 
         Vector2 arrow_end = {

@@ -137,8 +137,8 @@ void player_draw(const ECSPlayer *player) {
     }
 }
 void player_pickup_interaction(ECSPlayer *player, Pickups *pickups) {
-    for (size_t i = 0; i < MAX_PICKUPS; i++) {
-        Pickup *p = &pickups->pickups[i];
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*pickups); i++) {
+        Pickup *p = &(*pickups)[i];
         if (p->active) {
             if (CheckCollisionRecs(p->transform.rect, player->transform.rect)) {
                 const double T = GetTime();

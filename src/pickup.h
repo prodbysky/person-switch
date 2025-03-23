@@ -21,13 +21,9 @@ typedef struct {
     };
 } Pickup;
 
-#define MAX_PICKUPS 50
 #define PICKUP_FADE_OUT_TIME 0.25
 
-typedef struct {
-    Pickup pickups[MAX_PICKUPS];
-    size_t current;
-} Pickups;
+typedef Pickup* Pickups;
 
 Pickup health_pickup(float x, float y, float w, float h, size_t health);
 Pickup coin_pickup(float x, float y, float w, float h, size_t coin);

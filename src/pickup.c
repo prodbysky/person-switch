@@ -1,16 +1,16 @@
 #include "pickup.h"
 #include "ecs.h"
-#include "raylib.h"
 #include "timing_utilities.h"
+#include <raylib.h>
+#include <stb_ds.h>
 
 void pickups_spawn(Pickups *pickups, Pickup p) {
-    pickups->pickups[pickups->current] = p;
-    pickups->current = (pickups->current + 1) % MAX_PICKUPS;
+    stbds_arrput(*pickups, p);
 }
 
 void pickups_draw(const Pickups *pickups) {
-    for (size_t i = 0; i < MAX_PICKUPS; i++) {
-        const Pickup *p = &pickups->pickups[i];
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*pickups); i++) {
+        const Pickup *p = &(*pickups)[i];
         if (p->active) {
             DrawRectangleRec(p->transform.rect, WHITE);
         } else if (time_delta(p->picked_up_at) < PICKUP_FADE_OUT_TIME) {
@@ -20,11 +20,15 @@ void pickups_draw(const Pickups *pickups) {
     }
 }
 void pickups_update(Pickups *pickups, const Stage *stage, float dt) {
-    for (size_t i = 0; i < MAX_PICKUPS; i++) {
-        Pickup *p = &pickups->pickups[i];
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*pickups); i++) {
+        Pickup *p = &(*pickups)[i];
         if (p->active) {
             physics(&p->physics, dt);
             collision(&p->transform, &p->physics, stage, dt);
+        } else {
+            if (time_delta(p->picked_up_at) > PICKUP_FADE_OUT_TIME) {
+                stbds_arrdel(*pickups, i);
+            }
         }
     }
 }
