@@ -7,4 +7,5 @@
             stbds_arrdel(array, i); \
         }\
     }
+#define STB_DS_ARRAY_RESET(array) stbds_arrsetlen(array, 0)
 #endif
