@@ -6,11 +6,13 @@
 #include "pickup.h"
 #include "player.h"
 #include "stage.h"
+#include "stb_ds_helper.h"
 #include "timing_utilities.h"
 #include "wave.h"
 #include "weapon.h"
 #include <raylib.h>
 #include <raymath.h>
+#include <stddef.h>
 #define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
 #include <stdint.h>
@@ -254,6 +256,7 @@ void game_state_update_gp_main(GameState *state, float dt) {
     if (wave_is_done(&state->current_wave)) {
         if (IsKeyPressed(KEY_ENTER)) {
             game_state_phase_change(state, GP_AFTER_WAVE);
+            STB_DS_ARRAY_CLEAN(state->current_wave, .state.dead);
 
             state->wave_strength *= 1.1;
             state->wave_number++;
