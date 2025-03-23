@@ -1,9 +1,12 @@
 #include "wave.h"
 #include "enemy.h"
 #include "raylib.h"
+#include <stb_ds.h>
+#include <stddef.h>
+
 bool wave_is_done(const EnemyWave *wave) {
-    for (size_t i = 0; i < wave->count; i++) {
-        if (!wave->enemies[i].state.dead) {
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*wave); i++) {
+        if (!(*wave)[i].state.dead) {
             return false;
         }
     }
@@ -11,8 +14,8 @@ bool wave_is_done(const EnemyWave *wave) {
 }
 
 void wave_draw(const EnemyWave *wave) {
-    for (size_t i = 0; i < wave->count; i++) {
-        const ECSEnemy *enemy = &wave->enemies[i];
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*wave); i++) {
+        const ECSEnemy *enemy = &(*wave)[i];
         if (!enemy->state.dead) {
             DrawRectangleRec(
                 (Rectangle){

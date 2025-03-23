@@ -9,6 +9,7 @@
 #include "weapon.h"
 #include <raylib.h>
 #include <raymath.h>
+#include <stb_ds.h>
 
 ECSPlayer ecs_player_new() {
     return (ECSPlayer){.transform =
@@ -56,17 +57,17 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
 void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets *enemy_bullets, Particles *particles) {
     const float KNOCKBACK_FORCE = 500.0f;
 
-    for (size_t i = 0; i < wave->count; i++) {
-        if (wave->enemies[i].state.dead) {
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*wave); i++) {
+        if ((*wave)[i].state.dead) {
             continue;
         }
-        if (CheckCollisionRecs(player->transform.rect, wave->enemies[i].transform.rect) &&
+        if (CheckCollisionRecs(player->transform.rect, (*wave)[i].transform.rect) &&
             time_delta(player->state.last_hit) > INVULNERABILITY_TIME) {
             player->state.last_hit = GetTime();
             player->state.health--;
 
             const Vector2 player_center = transform_center(&player->transform);
-            const Vector2 enemy_center = transform_center(&wave->enemies[i].transform);
+            const Vector2 enemy_center = transform_center(&(*wave)[i].transform);
 
             Vector2 direction = {0};
             if (player_center.x > enemy_center.x) {

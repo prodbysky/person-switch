@@ -11,6 +11,8 @@
 #include "weapon.h"
 #include <raylib.h>
 #include <raymath.h>
+#define STB_DS_IMPLEMENTATION
+#include <stb_ds.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -235,10 +237,10 @@ void game_state_update_gp_main(GameState *state, float dt) {
         game_state_phase_change(state, GP_PAUSED);
         return;
     }
-    for (size_t i = 0; i < state->current_wave.count; i++) {
-        ecs_enemy_update(&state->current_wave.enemies[i], &state->stage, &state->player.transform,
-                         &state->player.physics, &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound,
-                         &state->enemy_bullets, &state->pickups, &state->particles);
+    for (ptrdiff_t i = 0; i < stbds_arrlen(state->current_wave); i++) {
+        ecs_enemy_update(&state->current_wave[i], &state->stage, &state->player.transform, &state->player.physics,
+                         &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound, &state->enemy_bullets,
+                         &state->pickups, &state->particles);
     }
     ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets, &state->enemy_bullets,
                       &state->pickups, &state->camera, &state->particles);
@@ -345,14 +347,14 @@ void game_state_draw_playfield(const GameState *state) {
     const float arrow_length = 50.0f;
     const float arrow_thickness = 5.0f;
     Color arrow_color = GetColor(0xff000055);
-    for (size_t i = 0; i < state->current_wave.count; i++) {
-        if (state->current_wave.enemies[i].state.dead) {
+    for (ptrdiff_t i = 0; i < stbds_arrlen(state->current_wave); i++) {
+        if (state->current_wave[i].state.dead) {
             continue;
         }
         Vector2 direction =
-            Vector2Normalize((Vector2){state->current_wave.enemies[i].transform.rect.x -
+            Vector2Normalize((Vector2){state->current_wave[i].transform.rect.x -
                                            (state->player.transform.rect.x + state->player.transform.rect.width / 2),
-                                       state->current_wave.enemies[i].transform.rect.y -
+                                       state->current_wave[i].transform.rect.y -
                                            (state->player.transform.rect.y + state->player.transform.rect.height / 2)});
 
         Vector2 arrow_end = {
@@ -879,8 +881,7 @@ Stage stage_3() {
 #define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 20, 3)
 
 EnemyWave generate_wave(double strength, const Stage *stage) {
-    EnemyWave wave = {.count = 0};
-    size_t current_index = 0;
+    EnemyWave wave = NULL;
 
     while (strength > 0) {
         size_t enemy_type = GetRandomValue(0, 1);
@@ -891,19 +892,17 @@ EnemyWave generate_wave(double strength, const Stage *stage) {
         };
         switch (enemy_type) {
         case 0: {
-            wave.enemies[current_index] = SLOW_STRONG_ENEMY(pos.x, pos.y);
+            stbds_arrput(wave, SLOW_STRONG_ENEMY(pos.x, pos.y));
             strength -= 1;
             break;
         }
         case 1: {
-            wave.enemies[current_index] = RANGER(pos.x, pos.y);
+            stbds_arrput(wave, RANGER(pos.x, pos.y));
             strength -= 1;
             break;
         }
         }
-        current_index++;
     }
-    wave.count = current_index;
     return wave;
 }
 

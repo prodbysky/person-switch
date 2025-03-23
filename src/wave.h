@@ -5,10 +5,8 @@
 #define MAX_WAVE_POPULATION 50
 
 #include "enemy.h"
-typedef struct {
-    ECSEnemy enemies[MAX_WAVE_POPULATION];
-    size_t count;
-} EnemyWave;
+
+typedef ECSEnemy* EnemyWave;
 
 bool wave_is_done(const EnemyWave* wave);
 void wave_draw(const EnemyWave* wave);
