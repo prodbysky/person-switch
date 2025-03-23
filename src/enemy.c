@@ -55,6 +55,16 @@ ECSEnemy ecs_drone_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health,
                                       .ranged.last_shot = 0.0,
                                       .flying = {.vertical_offset = vertical_offset}});
 }
+
+ECSEnemy ecs_wolf_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double charge_force,
+                        double charge_from) {
+    return ecs_enemy_new(pos, size, speed,
+                         (EnemyState){.type = ET_WOLF,
+                                      .health = HEALTH(health, health),
+                                      .dead = false,
+                                      .last_hit = 0.0,
+                                      .charging = {.charge_from = charge_from, .charge_force = charge_force}});
+}
 void ranger_bullet_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp *victim_health) {
     victim_health->current -= this->damage;
     this->active = false;
@@ -156,6 +166,9 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
             bullets_spawn_bullet(enemy_bullets, ranger_create_bullet(transform_center(transform), PINK, dir));
             state->ranged.last_shot = GetTime();
         }
+        break;
+    }
+    case ET_WOLF: {
         break;
     }
     case ET_COUNT: {
