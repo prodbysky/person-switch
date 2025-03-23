@@ -16,6 +16,12 @@ typedef enum {
     ET_RANGER,
     ET_DRONE,
     ET_WOLF,
+    // TODO: TYPES
+    // ET_HEALER
+    // ET_STEALTH
+    // ET_STUPID
+    // ET_SNIPER
+    // ET_KABOOM
     ET_COUNT
 } EnemyType;
 
