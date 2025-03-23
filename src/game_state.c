@@ -231,6 +231,11 @@ void game_state_destroy(GameState *state) {
     UnloadRenderTexture(state->ui_frame_buffer);
     UnloadRenderTexture(state->final_frame_buffer);
     UnloadShader(state->pixelizer);
+    stbds_arrfreef(state->bullets);
+    stbds_arrfreef(state->enemy_bullets);
+    stbds_arrfreef(state->current_wave);
+    stbds_arrfreef(state->pickups);
+    stbds_arrfreef(state->particles);
     CloseAudioDevice();
     CloseWindow();
 }
