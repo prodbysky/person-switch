@@ -36,6 +36,7 @@ typedef struct {
         double charge_force;
         double charge_from;
         double charge_cooldown;
+        double last_charged;
     } charging;
 } EnemyState;
 

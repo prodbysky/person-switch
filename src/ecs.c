@@ -12,17 +12,12 @@ Vector2 transform_center(const TransformComp *transform) {
 }
 
 void physics(PhysicsComp *physics, float dt) {
-    if (physics->grounded) {
-        // Apply ground friction
-        physics->velocity.x /= 1 + (5 * dt);
-    }
-    // Apply air friction
-    physics->velocity.x /= (1 + (10 * dt));
+    physics->velocity.x /= 1 + (10 * dt);
 
     if (!physics->grounded) {
         physics->velocity.y += G * dt;
     }
-    physics->velocity.x = Clamp(physics->velocity.x, -300, 300);
+    /*physics->velocity.x = Clamp(physics->velocity.x, -300, 300);*/
     physics->velocity.y = Clamp(physics->velocity.y, -800, 800);
 }
 

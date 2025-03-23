@@ -65,7 +65,8 @@ ECSEnemy ecs_wolf_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, 
                                       .last_hit = 0.0,
                                       .charging = {.charge_from = charge_from,
                                                    .charge_force = charge_force,
-                                                   .charge_cooldown = charge_cooldown}});
+                                                   .charge_cooldown = charge_cooldown,
+                                                   .last_charged = 0.0}});
 }
 void ranger_bullet_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp *victim_health) {
     victim_health->current -= this->damage;
@@ -171,6 +172,25 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         break;
     }
     case ET_WOLF: {
+        const bool player_is_on_the_left = transform->rect.x < player_transform->rect.x;
+        if (player_is_on_the_left) {
+            physics->velocity.x += conf->speed;
+        } else {
+            physics->velocity.x -= conf->speed;
+        }
+
+        float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
+                                 (player_transform->rect.x + (player_transform->rect.width / 2.0)));
+        if (x_pos_delta > state->charging.charge_from &&
+            time_delta(state->charging.last_charged) > state->charging.charge_cooldown) {
+            state->charging.last_charged = GetTime();
+            if (player_is_on_the_left) {
+                physics->velocity.x = state->charging.charge_force;
+            } else {
+                physics->velocity.x = -state->charging.charge_force;
+            }
+            physics->velocity.y -= 500;
+        }
         break;
     }
     case ET_COUNT: {
