@@ -889,7 +889,7 @@ Stage stage_3() {
 #define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 20, 50)
 #define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 20, 3)
 #define DRONE(x, y) ecs_drone_enemy((Vector2){(x), (y)}, (Vector2){64, 32}, 10, 20, 3, 300)
-#define WOLF(x, y) ecs_wolf_enemy((Vector2){(x), (y)}, (Vector2){64, 20}, 10, 20, 300, 200)
+#define WOLF(x, y) ecs_wolf_enemy((Vector2){(x), (y)}, (Vector2){64, 20}, 5, 20, 300, 200, 3)
 
 EnemyWave generate_wave(double strength, const Stage *stage) {
     EnemyWave wave = NULL;
