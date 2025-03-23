@@ -10,7 +10,6 @@ typedef struct {
     Rectangle rect;
 } TransformComp;
 
-
 typedef struct {
     Vector2 velocity;
     bool grounded;
