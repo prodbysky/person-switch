@@ -56,14 +56,16 @@ ECSEnemy ecs_drone_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health,
                                       .flying = {.vertical_offset = vertical_offset}});
 }
 
-ECSEnemy ecs_wolf_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double charge_force,
-                        double charge_from) {
+ECSEnemy ecs_wolf_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double charge_force, double charge_from,
+                        double charge_cooldown) {
     return ecs_enemy_new(pos, size, speed,
                          (EnemyState){.type = ET_WOLF,
                                       .health = HEALTH(health, health),
                                       .dead = false,
                                       .last_hit = 0.0,
-                                      .charging = {.charge_from = charge_from, .charge_force = charge_force}});
+                                      .charging = {.charge_from = charge_from,
+                                                   .charge_force = charge_force,
+                                                   .charge_cooldown = charge_cooldown}});
 }
 void ranger_bullet_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp *victim_health) {
     victim_health->current -= this->damage;
