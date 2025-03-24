@@ -68,6 +68,16 @@ ECSEnemy ecs_wolf_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, 
                                                    .charge_cooldown = charge_cooldown,
                                                    .last_charged = 0.0}});
 }
+
+ECSEnemy ecs_healing_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double heal_amount,
+                           double heal_radius) {
+    return ecs_enemy_new(pos, size, speed,
+                         (EnemyState){.type = ET_HEALER,
+                                      .health = HEALTH(health, health),
+                                      .dead = false,
+                                      .last_hit = 0.0,
+                                      .healing = {.heal_amount = heal_amount, .heal_radius = heal_radius}});
+}
 void ranger_bullet_on_hit(Bullet *this, PhysicsComp *victim_physics, HealthComp *victim_health) {
     victim_health->current -= this->damage;
     this->active = false;
@@ -90,7 +100,8 @@ static Bullet ranger_create_bullet(Vector2 pos, Color c, Vector2 dir) {
 }
 
 void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformComp *transform, PhysicsComp *physics,
-              const TransformComp *player_transform, const PhysicsComp *player_physics, Bullets *enemy_bullets) {
+              const TransformComp *player_transform, const PhysicsComp *player_physics, Bullets *enemy_bullets,
+              ECSEnemy *other_enemies, ptrdiff_t other_enemies_len) {
     switch (state->type) {
     case ET_BASIC: {
         float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
@@ -193,13 +204,43 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         }
         break;
     }
+    case ET_HEALER: {
+        for (ptrdiff_t i = 0; i < other_enemies_len; i++) {
+            if (CheckCollisionCircleRec(transform_center(transform), state->healing.heal_radius,
+                                        other_enemies[i].transform.rect)) {
+                other_enemies[i].state.health.current += state->healing.heal_amount * GetFrameTime();
+                other_enemies[i].state.health.current =
+                    Clamp(other_enemies[i].state.health.current, 0, other_enemies[i].state.health.max);
+            }
+        }
+        float x_pos_delta = fabs(transform->rect.x + (transform->rect.width / 2.0) -
+                                 (player_transform->rect.x + (player_transform->rect.width / 2.0)));
+
+        const bool player_is_on_the_left = transform->rect.x < player_transform->rect.x;
+        if (x_pos_delta > 400.0 + GetRandomValue(-100, 100)) {
+            // Move towards the player
+            if (player_is_on_the_left) {
+                physics->velocity.x += conf->speed;
+            } else {
+                physics->velocity.x -= conf->speed;
+            }
+        } else {
+            // Move away from the player
+            if (player_is_on_the_left) {
+                physics->velocity.x -= conf->speed;
+            } else {
+                physics->velocity.x += conf->speed;
+            }
+        }
+    }
     case ET_COUNT: {
     }
     }
 }
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform,
                       const PhysicsComp *player_physics, Bullets *bullets, const Sound *hit_sound,
-                      const Sound *death_sound, Bullets *enemy_bullets, Pickups *pickups, Particles *particles) {
+                      const Sound *death_sound, Bullets *enemy_bullets, Pickups *pickups, Particles *particles,
+                      ECSEnemy *other_enemies, ptrdiff_t other_enemies_len) {
     if (enemy->state.dead) {
         return;
     }
@@ -222,7 +263,7 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
     }
     physics(&enemy->physics, dt);
     enemy_ai(&enemy->enemy_conf, &enemy->state, &enemy->transform, &enemy->physics, player_transform, player_physics,
-             enemy_bullets);
+             enemy_bullets, other_enemies, other_enemies_len);
     collision(&enemy->transform, &enemy->physics, stage, dt);
     enemy_bullet_interaction(&enemy->physics, &enemy->state.health, &enemy->transform, bullets, &enemy->state,
                              hit_sound, particles);

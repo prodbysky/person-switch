@@ -20,8 +20,8 @@ typedef struct {
 } SolidRectangleComp;
 
 typedef struct {
-    int max;
-    int current;
+    double max;
+    double current;
 } HealthComp;
 
 #define TRANSFORM(x_, y_, w_, h_) (TransformComp){.rect = {.x = (x_), .y = (y_), .width = (w_), .height = (h_)}}

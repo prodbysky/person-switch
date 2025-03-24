@@ -248,7 +248,7 @@ void game_state_update_gp_main(GameState *state, float dt) {
     for (ptrdiff_t i = 0; i < stbds_arrlen(state->current_wave); i++) {
         ecs_enemy_update(&state->current_wave[i], &state->stage, &state->player.transform, &state->player.physics,
                          &state->bullets, &state->enemy_hit_sound, &state->enemy_die_sound, &state->enemy_bullets,
-                         &state->pickups, &state->particles);
+                         &state->pickups, &state->particles, state->current_wave, stbds_arrlen(state->current_wave));
     }
     ecs_player_update(&state->player, &state->stage, &state->current_wave, &state->bullets, &state->enemy_bullets,
                       &state->pickups, &state->camera, &state->particles);
@@ -890,12 +890,13 @@ Stage stage_3() {
 #define RANGER(x, y) ecs_ranger_enemy((Vector2){(x), (y)}, (Vector2){32, 96}, 20, 20, 3)
 #define DRONE(x, y) ecs_drone_enemy((Vector2){(x), (y)}, (Vector2){64, 32}, 10, 20, 3, 300)
 #define WOLF(x, y) ecs_wolf_enemy((Vector2){(x), (y)}, (Vector2){64, 20}, 5, 20, 2000, 0, 3)
+#define HEALER(x, y) ecs_healing_enemy((Vector2){(x), (y)}, (Vector2){32, 64}, 5, 9, 0.5, 200)
 
 EnemyWave generate_wave(double strength, const Stage *stage) {
     EnemyWave wave = NULL;
 
     while (strength > 0) {
-        size_t enemy_type = GetRandomValue(0, 3);
+        size_t enemy_type = GetRandomValue(0, 4);
         size_t which_area = GetRandomValue(0, stage->count_sp - 1);
         Vector2 pos = (Vector2){
             GetRandomValue(stage->spawns[which_area].x, stage->spawns[which_area].x + stage->spawns[which_area].width),
@@ -919,6 +920,11 @@ EnemyWave generate_wave(double strength, const Stage *stage) {
         }
         case 3: {
             stbds_arrput(wave, WOLF(pos.x, pos.y));
+            strength -= 2;
+            break;
+        }
+        case 4: {
+            stbds_arrput(wave, HEALER(pos.x, pos.y));
             strength -= 2;
             break;
         }

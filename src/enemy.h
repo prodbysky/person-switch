@@ -5,6 +5,7 @@
 #include "bullet.h"
 #include "particles.h"
 #include "pickup.h"
+#include <stddef.h>
 #include <stdlib.h>
 
 typedef struct {
@@ -16,8 +17,8 @@ typedef enum {
     ET_RANGER,
     ET_DRONE,
     ET_WOLF,
+    ET_HEALER,
     // TODO: TYPES
-    // ET_HEALER
     // ET_STEALTH
     // ET_STUPID
     // ET_SNIPER
@@ -44,6 +45,10 @@ typedef struct {
         double charge_cooldown;
         double last_charged;
     } charging;
+    struct {
+        double heal_amount;
+        double heal_radius;
+    } healing;
 } EnemyState;
 
 typedef struct {
@@ -61,13 +66,14 @@ ECSEnemy ecs_ranger_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health
 ECSEnemy ecs_drone_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double reload_time, double vertical_offset);
 ECSEnemy ecs_wolf_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double charge_force, double charge_from,
                         double charge_cooldown);
+ECSEnemy ecs_healing_enemy(Vector2 pos, Vector2 size, size_t speed, size_t health, double heal_amount, double heal_radius);
 
 // Makes the enemy follow the passed in transform `player_transform`
 void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformComp *transform, PhysicsComp *physics,
-              const TransformComp *player_transform, const PhysicsComp *player_physics, Bullets *enemy_bullets);
+              const TransformComp *player_transform, const PhysicsComp *player_physics, Bullets *enemy_bullets, ECSEnemy* other_enemies, ptrdiff_t other_enemies_len);
 void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *player_transform,
                       const PhysicsComp *player_physics, Bullets *bullets, const Sound *hit_sound,
-                      const Sound *death_sound, Bullets *enemy_bullets, Pickups *pickups, Particles *particles);
+                      const Sound *death_sound, Bullets *enemy_bullets, Pickups *pickups, Particles *particles, ECSEnemy* other_enemies, ptrdiff_t other_enemies_len);
 // Decrements the enemy health after colliding with a single bullet
 void enemy_bullet_interaction(PhysicsComp *physics, HealthComp *health, const TransformComp *transform,
                               Bullets *bullets, EnemyState *state, const Sound *hit_sound, Particles *particles);
