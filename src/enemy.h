@@ -77,4 +77,6 @@ void ecs_enemy_update(ECSEnemy *enemy, const Stage *stage, const TransformComp *
 // Decrements the enemy health after colliding with a single bullet
 void enemy_bullet_interaction(PhysicsComp *physics, HealthComp *health, const TransformComp *transform,
                               Bullets *bullets, EnemyState *state, const Sound *hit_sound, Particles *particles);
+void enemy_draw_self(const ECSEnemy* enemy);
+void enemy_draw_health_bar(const ECSEnemy* enemy);
 #endif

@@ -1,6 +1,5 @@
 #include "wave.h"
 #include "enemy.h"
-#include "raylib.h"
 #include <stb_ds.h>
 #include <stddef.h>
 
@@ -17,24 +16,8 @@ void wave_draw(const EnemyWave *wave) {
     for (ptrdiff_t i = 0; i < stbds_arrlen(*wave); i++) {
         const ECSEnemy *enemy = &(*wave)[i];
         if (!enemy->state.dead) {
-            DrawRectangleRec(
-                (Rectangle){
-                    .x = enemy->transform.rect.x - enemy->transform.rect.width / 2.0,
-                    .y = enemy->transform.rect.y - 32,
-                    .width = enemy->transform.rect.width * 2,
-                    .height = 16,
-                },
-                GetColor(0x990000ff));
-            DrawRectangleRec(
-                (Rectangle){
-                    .x = enemy->transform.rect.x - enemy->transform.rect.width / 2.0,
-                    .y = enemy->transform.rect.y - 32,
-                    .width = ((enemy->transform.rect.width * 2) / (float)enemy->state.health.max) *
-                             enemy->state.health.current,
-                    .height = 16,
-                },
-                RED);
-            draw_solid(&enemy->transform, &enemy->draw_conf);
+            enemy_draw_self(enemy);
+            enemy_draw_health_bar(enemy);
         }
     }
 }

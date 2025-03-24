@@ -269,3 +269,25 @@ void enemy_bullet_interaction(PhysicsComp *physics, HealthComp *health, const Tr
         }
     }
 }
+
+void enemy_draw_self(const ECSEnemy *enemy) {
+    draw_solid(&enemy->transform, &enemy->draw_conf);
+}
+void enemy_draw_health_bar(const ECSEnemy *enemy) {
+    DrawRectangleRec(
+        (Rectangle){
+            .x = enemy->transform.rect.x - enemy->transform.rect.width / 2.0,
+            .y = enemy->transform.rect.y - enemy->transform.rect.height / 1.5,
+            .width = enemy->transform.rect.width * 2,
+            .height = 16,
+        },
+        GetColor(0x990000ff));
+    DrawRectangleRec(
+        (Rectangle){
+            .x = enemy->transform.rect.x - enemy->transform.rect.width / 2.0,
+            .y = enemy->transform.rect.y - enemy->transform.rect.height / 1.5,
+            .width = ((enemy->transform.rect.width * 2) / (float)enemy->state.health.max) * enemy->state.health.current,
+            .height = 16,
+        },
+        RED);
+}
