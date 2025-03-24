@@ -12,6 +12,10 @@ void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizin
             Clay_Color background_color, Clay_Color label_color,
             void (*on_hover)(Clay_ElementId, Clay_PointerData, intptr_t));
 
+void delete_object_action(Clay_ElementId id, Clay_PointerData pd, intptr_t ud);
+void copy_object_action(Clay_ElementId id, Clay_PointerData pd, intptr_t ud);
+void paste_object_action(Clay_ElementId id, Clay_PointerData pd, intptr_t ud);
+
 static bool running = true;
 static size_t selected = 0xffff;
 static char *out = NULL;
@@ -28,6 +32,34 @@ static struct {
 } stage;
 
 #define CLAY_WHITE (Clay_Color){255, 255, 255, 255}
+
+static bool has_copied = false;
+static Rectangle copied_rect;
+static bool copied_is_platform;
+
+void update_axis_controls() {
+    if (selected == 0xffff || selected == SPAWN_SELECT)
+        return;
+
+    float moveStep = (500.0f / (camera.zoom / 1.0)) * GetFrameTime();
+    Rectangle *obj = NULL;
+    if (selected < stage.count) {
+        obj = &stage.platforms[selected];
+    } else if (selected >= 50 && selected < 50 + stage.count_sp) {
+        obj = &stage.enemy_spawns[selected - 50];
+    }
+
+    if (obj) {
+        if (IsKeyDown(KEY_RIGHT))
+            obj->x += moveStep;
+        if (IsKeyDown(KEY_LEFT))
+            obj->x -= moveStep;
+        if (IsKeyDown(KEY_DOWN))
+            obj->y += moveStep;
+        if (IsKeyDown(KEY_UP))
+            obj->y -= moveStep;
+    }
+}
 
 int main(int argc, char **argv) {
     stage.count = 0;
@@ -90,7 +122,6 @@ int main(int argc, char **argv) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 selected = SPAWN_SELECT;
             }
-
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                 const Vector2 mouse_delta = GetMouseDelta();
                 if (selected == SPAWN_SELECT) {
@@ -98,14 +129,12 @@ int main(int argc, char **argv) {
                     stage.spawn.y += mouse_delta.y / camera.zoom;
                 }
             }
-
         } else {
             for (size_t i = 0; i < stage.count; i++) {
                 if (CheckCollisionPointRec(world_mouse_pos, stage.platforms[i])) {
                     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                         selected = i;
                     }
-
                     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                         const Vector2 mouse_delta = GetMouseDelta();
                         if (selected != 0xffff && selected != SPAWN_SELECT) {
@@ -113,7 +142,6 @@ int main(int argc, char **argv) {
                             stage.platforms[selected].y += mouse_delta.y / camera.zoom;
                         }
                     }
-
                     if (selected != 0xffff && selected != SPAWN_SELECT) {
                         if (IsKeyDown(KEY_LEFT_SHIFT)) {
                             if (scroll_delta.y != 0) {
@@ -133,7 +161,6 @@ int main(int argc, char **argv) {
                     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                         selected = i + 50;
                     }
-
                     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                         const Vector2 mouse_delta = GetMouseDelta();
                         if (selected != 0xffff && selected != SPAWN_SELECT && selected > 49) {
@@ -141,7 +168,6 @@ int main(int argc, char **argv) {
                             stage.enemy_spawns[selected - 50].y += mouse_delta.y / camera.zoom;
                         }
                     }
-
                     if (selected != 0xffff && selected != SPAWN_SELECT && selected > 49) {
                         if (IsKeyDown(KEY_LEFT_SHIFT)) {
                             if (scroll_delta.y != 0) {
@@ -158,31 +184,12 @@ int main(int argc, char **argv) {
             }
         }
 
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            bool clicked_on_anything = false;
-            bool b = true;
-            if (CheckCollisionPointCircle(GetScreenToWorld2D(GetMousePosition(), camera), stage.spawn, 25)) {
-                clicked_on_anything = true;
-                b = false;
-            }
-            for (size_t i = 0; i < stage.count && b; i++) {
-                if (CheckCollisionPointRec(world_mouse_pos, stage.platforms[i])) {
-                    clicked_on_anything = true;
-                    b = false;
-                }
-            }
-            for (size_t i = 0; i < stage.count_sp && b; i++) {
-                if (CheckCollisionPointRec(world_mouse_pos, stage.enemy_spawns[i])) {
-                    clicked_on_anything = true;
-                    b = false;
-                }
-            }
-            if (!clicked_on_anything) {
-                selected = 0xffff;
-            }
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            selected = 0xffff;
         }
 
-        // Render
+        update_axis_controls();
+
         BeginDrawing();
         ClearBackground(GetColor(0x181818ff));
         BeginMode2D(camera);
@@ -196,10 +203,9 @@ int main(int argc, char **argv) {
                 DrawRectangleLinesEx(stage.platforms[i], 2, RED);
             }
         }
-
         for (size_t i = 0; i < stage.count_sp; i++) {
             DrawRectangleRec(stage.enemy_spawns[i], GetColor(0x00ff0066));
-            if (i == selected) {
+            if (i + 50 == selected) {
                 DrawRectangleLinesEx(stage.enemy_spawns[i], 2, RED);
             }
         }
@@ -255,8 +261,7 @@ void dump_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
             fprintf(file, "},\n");
         }
         fprintf(file, "},\n");
-        fprintf(file, ".count = %zu\n,", stage.count);
-
+        fprintf(file, ".count = %zu,\n", stage.count);
         fprintf(file, ".spawns = {");
         for (size_t i = 0; i < stage.count_sp; i++) {
             fprintf(file, "(Rectangle){\n");
@@ -285,6 +290,7 @@ void add_platform_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr
         };
     }
 }
+
 void add_spawn_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     (void)ud;
@@ -295,6 +301,66 @@ void add_spawn_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t 
             .width = 64,
             .height = 64,
         };
+    }
+}
+
+void delete_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    (void)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (selected == SPAWN_SELECT) {
+            stage.spawn = (Vector2){0, 0};
+        } else if (selected < stage.count) {
+            for (size_t i = selected; i < stage.count - 1; i++) {
+                stage.platforms[i] = stage.platforms[i + 1];
+            }
+            stage.count--;
+            selected = 0xffff;
+        } else if (selected >= 50 && selected < 50 + stage.count_sp) {
+            size_t idx = selected - 50;
+            for (size_t i = idx; i < stage.count_sp - 1; i++) {
+                stage.enemy_spawns[i] = stage.enemy_spawns[i + 1];
+            }
+            stage.count_sp--;
+            selected = 0xffff;
+        }
+    }
+}
+
+void copy_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    (void)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (selected == SPAWN_SELECT) {
+            return;
+        } else if (selected < stage.count) {
+            copied_rect = stage.platforms[selected];
+            copied_is_platform = true;
+            has_copied = true;
+        } else if (selected >= 50 && selected < 50 + stage.count_sp) {
+            copied_rect = stage.enemy_spawns[selected - 50];
+            copied_is_platform = false;
+            has_copied = true;
+        }
+    }
+}
+
+void paste_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    (void)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME && has_copied) {
+        Vector2 mouse_pos = GetMousePosition();
+        Vector2 world_mouse = GetScreenToWorld2D(mouse_pos, camera);
+        Rectangle new_rect = copied_rect;
+        new_rect.x = world_mouse.x;
+        new_rect.y = world_mouse.y;
+        if (copied_is_platform) {
+            stage.platforms[stage.count++] = new_rect;
+            selected = stage.count - 1;
+        } else {
+            stage.enemy_spawns[stage.count_sp++] = new_rect;
+            selected = 50 + stage.count_sp - 1;
+        }
     }
 }
 
@@ -340,21 +406,23 @@ Clay_RenderCommandArray build_ui() {
             button(CLAY_ID("DumpButton"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("Save"),
                    (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, dump_button_action);
         }
-        CLAY({
-            .id = CLAY_ID("ObjectControls"),
-            .cornerRadius = {16, 16, 16, 16},
-            .layout =
-                {
-                    .sizing = {CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_PERCENT(.1)},
-                    .padding = {16, 16, 16, 16},
-                    .childGap = 16,
-                },
-            .backgroundColor = {50, 50, 50, 255},
-        }) {
+        CLAY({.id = CLAY_ID("ObjectControls"),
+              .cornerRadius = {16, 16, 16, 16},
+              .layout = {.sizing = {CLAY_SIZING_PERCENT(0.4), CLAY_SIZING_PERCENT(.1)},
+                         .padding = {16, 16, 16, 16},
+                         .childGap = 16},
+              .backgroundColor = {50, 50, 50, 255}}) {
             button(CLAY_ID("AddPlatform"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Plat."),
                    (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, add_platform_button_action);
             button(CLAY_ID("AddSpawn"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Spawn."),
                    (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, add_spawn_button_action);
+            // New buttons for Delete, Copy, and Paste
+            button(CLAY_ID("Delete"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Delete"),
+                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, delete_object_action);
+            button(CLAY_ID("Copy"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Copy"),
+                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, copy_object_action);
+            button(CLAY_ID("Paste"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Paste"),
+                   (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, paste_object_action);
         }
     }
     return Clay_EndLayout();
