@@ -620,6 +620,28 @@ void handle_ar_damage_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
 Clay_Color button_color(bool activecond) {
     return activecond ? (Clay_Color){120, 120, 120, 255} : (Clay_Color){90, 90, 90, 200};
 }
+void text(Clay_String str, Clay_Color color, Clay_TextAlignment alligment) {
+    CLAY_TEXT(str, CLAY_TEXT_CONFIG({
+                       .textAlignment = alligment,
+                       .textColor = color,
+                       .fontSize = 32,
+                       .fontId = 0,
+                   }));
+}
+
+void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizing, Clay_String label,
+            Clay_Color background_color, Clay_Color label_color,
+            void (*on_hover)(Clay_ElementId, Clay_PointerData, intptr_t)) {
+    CLAY({.id = id,
+          .cornerRadius = {16, 16, 16, 16},
+          .layout = {.sizing = {x_sizing, y_sizing},
+                     .padding = {16, 16, 16, 16},
+                     .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}},
+          .backgroundColor = background_color}) {
+        Clay_OnHover(on_hover, 0);
+        text(label, label_color, CLAY_TEXT_ALIGN_CENTER);
+    }
+}
 
 Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
@@ -733,6 +755,42 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
             break;
         }
         case GP_EDITOR: {
+            CLAY({.id = CLAY_ID("Toolbar"),
+                  .layout = {.layoutDirection = CLAY_LEFT_TO_RIGHT,
+                             .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.1)},
+                             .padding = {16, 16, 16, 16},
+                             .childGap = 16},
+                  .cornerRadius = {16, 16, 16, 16},
+                  .backgroundColor = {50, 50, 50, 255}}) {
+                button(CLAY_ID("QuitButton"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("X"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+                // Dump as before using the command-line file.
+                button(CLAY_ID("Dump"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("Dump"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+                // Save and Load for editable file.
+                button(CLAY_ID("SaveStage"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("Save"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+                button(CLAY_ID("LoadStage"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("Load"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+            }
+            CLAY({.id = CLAY_ID("ObjectControls"),
+                  .cornerRadius = {16, 16, 16, 16},
+                  .layout = {.sizing = {CLAY_SIZING_PERCENT(0.4), CLAY_SIZING_PERCENT(.1)},
+                             .padding = {16, 16, 16, 16},
+                             .childGap = 16},
+                  .backgroundColor = {50, 50, 50, 255}}) {
+                button(CLAY_ID("AddPlatform"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Plat."),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+                button(CLAY_ID("AddSpawn"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Spawn."),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+                button(CLAY_ID("Delete"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Delete"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+                button(CLAY_ID("Copy"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Copy"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+                button(CLAY_ID("Paste"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Paste"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, NULL);
+            }
+            break;
         }
         case GP_AFTER_WAVE: {
             ui_container(CLAY_ID("IntermissionScreenContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
