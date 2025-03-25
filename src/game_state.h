@@ -14,6 +14,7 @@ Stage stage_3();
 
 typedef enum {
     GP_STARTMENU = 0,
+    GP_EDITOR,
     GP_MAIN,
     GP_DEAD,
     GP_PAUSED,
@@ -88,6 +89,8 @@ typedef struct {
 
     Pickups pickups;
     Particles particles;
+
+    struct {} editor_state;
 } GameState;
 
 // Initializes raylib, loads needed assets

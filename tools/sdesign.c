@@ -1,3 +1,4 @@
+#include "../src/stage.h"
 #include <assert.h>
 #include <clay/clay.h>
 #include <clay/clay_raylib_renderer.c>
@@ -22,20 +23,14 @@ void load_stage_action(Clay_ElementId id, Clay_PointerData pd, intptr_t ud);
 
 static bool running = true;
 static size_t selected = 0xffff;
-static char *out = NULL;  
+static char *out = NULL;
 static const char *saveFilename = "stage_editable.txt";
 
 Camera2D camera = {.zoom = 1, .offset = {960, 540}, .target = {0, 0}, .rotation = 0};
 
 #define SPAWN_SELECT 100
 
-static struct {
-    Vector2 spawn;
-    Rectangle platforms[50];
-    Rectangle enemy_spawns[20];
-    size_t count;
-    size_t count_sp;
-} stage;
+static Stage stage;
 
 #define CLAY_WHITE (Clay_Color){255, 255, 255, 255}
 
@@ -44,24 +39,30 @@ static Rectangle copied_rect;
 static bool copied_is_platform;
 
 void update_axis_controls() {
-    if (selected == 0xffff || selected == SPAWN_SELECT) return;
-    float moveStep = 5.0f;
+    if (selected == 0xffff || selected == SPAWN_SELECT)
+        return;
+    float moveStep = 5.0f * GetFrameTime();
     Rectangle *obj = NULL;
     if (selected < stage.count) {
         obj = &stage.platforms[selected];
     } else if (selected >= 50 && selected < 50 + stage.count_sp) {
-        obj = &stage.enemy_spawns[selected - 50];
+        obj = &stage.spawns[selected - 50];
     }
     if (obj) {
-        if (IsKeyDown(KEY_RIGHT)) obj->x += moveStep;
-        if (IsKeyDown(KEY_LEFT))  obj->x -= moveStep;
-        if (IsKeyDown(KEY_DOWN))  obj->y += moveStep;
-        if (IsKeyDown(KEY_UP))    obj->y -= moveStep;
+        if (IsKeyDown(KEY_RIGHT))
+            obj->x += moveStep;
+        if (IsKeyDown(KEY_LEFT))
+            obj->x -= moveStep;
+        if (IsKeyDown(KEY_DOWN))
+            obj->y += moveStep;
+        if (IsKeyDown(KEY_UP))
+            obj->y -= moveStep;
     }
 }
 
 void dump_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         FILE *file = fopen(out, "w");
         if (!file) {
@@ -73,16 +74,14 @@ void dump_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
         fprintf(file, "  .platforms = {\n");
         for (size_t i = 0; i < stage.count; i++) {
             fprintf(file, "    (Rectangle){.x = %.2f, .y = %.2f, .width = %.2f, .height = %.2f},\n",
-                    stage.platforms[i].x, stage.platforms[i].y,
-                    stage.platforms[i].width, stage.platforms[i].height);
+                    stage.platforms[i].x, stage.platforms[i].y, stage.platforms[i].width, stage.platforms[i].height);
         }
         fprintf(file, "  },\n");
         fprintf(file, "  .count = %zu,\n", stage.count);
         fprintf(file, "  .spawns = {\n");
         for (size_t i = 0; i < stage.count_sp; i++) {
-            fprintf(file, "    (Rectangle){.x = %.2f, .y = %.2f, .width = %.2f, .height = %.2f},\n",
-                    stage.enemy_spawns[i].x, stage.enemy_spawns[i].y,
-                    stage.enemy_spawns[i].width, stage.enemy_spawns[i].height);
+            fprintf(file, "    (Rectangle){.x = %.2f, .y = %.2f, .width = %.2f, .height = %.2f},\n", stage.spawns[i].x,
+                    stage.spawns[i].y, stage.spawns[i].width, stage.spawns[i].height);
         }
         fprintf(file, "  },\n");
         fprintf(file, "  .count_sp = %zu\n", stage.count_sp);
@@ -93,7 +92,8 @@ void dump_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
 }
 
 void save_stage_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         FILE *file = fopen(saveFilename, "w");
         if (!file) {
@@ -103,13 +103,13 @@ void save_stage_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
         fprintf(file, "%.2f %.2f\n", stage.spawn.x, stage.spawn.y);
         fprintf(file, "%zu\n", stage.count);
         for (size_t i = 0; i < stage.count; i++) {
-            fprintf(file, "%.2f %.2f %.2f %.2f\n", stage.platforms[i].x, stage.platforms[i].y,
-                    stage.platforms[i].width, stage.platforms[i].height);
+            fprintf(file, "%.2f %.2f %.2f %.2f\n", stage.platforms[i].x, stage.platforms[i].y, stage.platforms[i].width,
+                    stage.platforms[i].height);
         }
         fprintf(file, "%zu\n", stage.count_sp);
         for (size_t i = 0; i < stage.count_sp; i++) {
-            fprintf(file, "%.2f %.2f %.2f %.2f\n", stage.enemy_spawns[i].x, stage.enemy_spawns[i].y,
-                    stage.enemy_spawns[i].width, stage.enemy_spawns[i].height);
+            fprintf(file, "%.2f %.2f %.2f %.2f\n", stage.spawns[i].x, stage.spawns[i].y, stage.spawns[i].width,
+                    stage.spawns[i].height);
         }
         fclose(file);
         TraceLog(LOG_INFO, "Stage saved for editing to %s", saveFilename);
@@ -117,7 +117,8 @@ void save_stage_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
 }
 
 void load_stage_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         FILE *file = fopen(saveFilename, "r");
         if (!file) {
@@ -135,8 +136,8 @@ void load_stage_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
             return;
         }
         for (size_t i = 0; i < stage.count; i++) {
-            if (fscanf(file, "%f %f %f %f", &stage.platforms[i].x, &stage.platforms[i].y,
-                       &stage.platforms[i].width, &stage.platforms[i].height) != 4) {
+            if (fscanf(file, "%f %f %f %f", &stage.platforms[i].x, &stage.platforms[i].y, &stage.platforms[i].width,
+                       &stage.platforms[i].height) != 4) {
                 TraceLog(LOG_ERROR, "Failed to read platform %zu", i);
                 fclose(file);
                 return;
@@ -148,8 +149,8 @@ void load_stage_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
             return;
         }
         for (size_t i = 0; i < stage.count_sp; i++) {
-            if (fscanf(file, "%f %f %f %f", &stage.enemy_spawns[i].x, &stage.enemy_spawns[i].y,
-                       &stage.enemy_spawns[i].width, &stage.enemy_spawns[i].height) != 4) {
+            if (fscanf(file, "%f %f %f %f", &stage.spawns[i].x, &stage.spawns[i].y, &stage.spawns[i].width,
+                       &stage.spawns[i].height) != 4) {
                 TraceLog(LOG_ERROR, "Failed to read enemy spawn %zu", i);
                 fclose(file);
                 return;
@@ -256,33 +257,33 @@ int main(int argc, char **argv) {
                 }
             }
             for (size_t i = 0; i < stage.count_sp; i++) {
-                if (CheckCollisionPointRec(world_mouse_pos, stage.enemy_spawns[i])) {
+                if (CheckCollisionPointRec(world_mouse_pos, stage.spawns[i])) {
                     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                         selected = i + 50;
                     }
                     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                         const Vector2 mouse_delta = GetMouseDelta();
                         if (selected != 0xffff && selected != SPAWN_SELECT && selected > 49) {
-                            stage.enemy_spawns[selected - 50].x += mouse_delta.x / camera.zoom;
-                            stage.enemy_spawns[selected - 50].y += mouse_delta.y / camera.zoom;
+                            stage.spawns[selected - 50].x += mouse_delta.x / camera.zoom;
+                            stage.spawns[selected - 50].y += mouse_delta.y / camera.zoom;
                         }
                     }
                     if (selected != 0xffff && selected != SPAWN_SELECT && selected > 49) {
                         if (IsKeyDown(KEY_LEFT_SHIFT)) {
                             if (scroll_delta.y != 0) {
-                                stage.enemy_spawns[selected - 50].width += scroll_delta.y * 10;
+                                stage.spawns[selected - 50].width += scroll_delta.y * 10;
                             }
                         }
                         if (IsKeyDown(KEY_LEFT_ALT)) {
                             if (scroll_delta.y != 0) {
-                                stage.enemy_spawns[selected - 50].height += scroll_delta.y * 10;
+                                stage.spawns[selected - 50].height += scroll_delta.y * 10;
                             }
                         }
                     }
                 }
             }
         }
-        
+
         if (IsKeyPressed(KEY_ESCAPE)) {
             selected = 0xffff;
         }
@@ -302,9 +303,9 @@ int main(int argc, char **argv) {
             }
         }
         for (size_t i = 0; i < stage.count_sp; i++) {
-            DrawRectangleRec(stage.enemy_spawns[i], GetColor(0x00ff0066));
+            DrawRectangleRec(stage.spawns[i], GetColor(0x00ff0066));
             if (i + 50 == selected) {
-                DrawRectangleLinesEx(stage.enemy_spawns[i], 2, RED);
+                DrawRectangleLinesEx(stage.spawns[i], 2, RED);
             }
         }
         DrawCircleV(stage.spawn, 25, GREEN);
@@ -334,14 +335,16 @@ void handle_clay_errors(Clay_ErrorData errorData) {
 }
 
 void close_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         running = false;
     }
 }
 
 void add_platform_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         stage.platforms[stage.count++] = (Rectangle){
             .x = 0,
@@ -353,9 +356,10 @@ void add_platform_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr
 }
 
 void add_spawn_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        stage.enemy_spawns[stage.count_sp++] = (Rectangle){
+        stage.spawns[stage.count_sp++] = (Rectangle){
             .x = 0,
             .y = 0,
             .width = 64,
@@ -365,7 +369,8 @@ void add_spawn_button_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t 
 }
 
 void delete_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         if (selected == SPAWN_SELECT) {
             stage.spawn = (Vector2){0, 0};
@@ -378,7 +383,7 @@ void delete_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud)
         } else if (selected >= 50 && selected < 50 + stage.count_sp) {
             size_t idx = selected - 50;
             for (size_t i = idx; i < stage.count_sp - 1; i++) {
-                stage.enemy_spawns[i] = stage.enemy_spawns[i + 1];
+                stage.spawns[i] = stage.spawns[i + 1];
             }
             stage.count_sp--;
             selected = 0xffff;
@@ -387,15 +392,17 @@ void delete_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud)
 }
 
 void copy_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        if (selected == SPAWN_SELECT) return;
+        if (selected == SPAWN_SELECT)
+            return;
         else if (selected < stage.count) {
             copied_rect = stage.platforms[selected];
             copied_is_platform = true;
             has_copied = true;
         } else if (selected >= 50 && selected < 50 + stage.count_sp) {
-            copied_rect = stage.enemy_spawns[selected - 50];
+            copied_rect = stage.spawns[selected - 50];
             copied_is_platform = false;
             has_copied = true;
         }
@@ -403,7 +410,8 @@ void copy_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
 }
 
 void paste_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id; (void)ud;
+    (void)e_id;
+    (void)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME && has_copied) {
         Vector2 mouse_pos = GetMousePosition();
         Vector2 world_mouse = GetScreenToWorld2D(mouse_pos, camera);
@@ -414,7 +422,7 @@ void paste_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) 
             stage.platforms[stage.count++] = new_rect;
             selected = stage.count - 1;
         } else {
-            stage.enemy_spawns[stage.count_sp++] = new_rect;
+            stage.spawns[stage.count_sp++] = new_rect;
             selected = 50 + stage.count_sp - 1;
         }
     }
@@ -422,26 +430,22 @@ void paste_object_action(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) 
 
 void text(Clay_String str, Clay_Color color, Clay_TextAlignment alligment) {
     CLAY_TEXT(str, CLAY_TEXT_CONFIG({
-        .textAlignment = alligment,
-        .textColor = color,
-        .fontSize = 32,
-        .fontId = 0,
-    }));
+                       .textAlignment = alligment,
+                       .textColor = color,
+                       .fontSize = 32,
+                       .fontId = 0,
+                   }));
 }
 
 void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizing, Clay_String label,
             Clay_Color background_color, Clay_Color label_color,
             void (*on_hover)(Clay_ElementId, Clay_PointerData, intptr_t)) {
-    CLAY({
-        .id = id,
-        .cornerRadius = {16, 16, 16, 16},
-        .layout = {
-            .sizing = {x_sizing, y_sizing},
-            .padding = {16, 16, 16, 16},
-            .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}
-        },
-        .backgroundColor = background_color
-    }) {
+    CLAY({.id = id,
+          .cornerRadius = {16, 16, 16, 16},
+          .layout = {.sizing = {x_sizing, y_sizing},
+                     .padding = {16, 16, 16, 16},
+                     .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}},
+          .backgroundColor = background_color}) {
         Clay_OnHover(on_hover, 0);
         text(label, label_color, CLAY_TEXT_ALIGN_CENTER);
     }
@@ -449,26 +453,18 @@ void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizin
 
 Clay_RenderCommandArray build_ui() {
     Clay_BeginLayout();
-    CLAY({
-        .id = CLAY_ID("Root"),
-        .layout = {
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-            .padding = {16, 16, 16, 16},
-            .childGap = 16
-        }
-    }) {
-        CLAY({
-            .id = CLAY_ID("Toolbar"),
-            .layout = {
-                .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.1)},
-                .padding = {16, 16, 16, 16},
-                .childGap = 16
-            },
-            .cornerRadius = {16, 16, 16, 16},
-            .backgroundColor = {50, 50, 50, 255}
-        }) {
+    CLAY({.id = CLAY_ID("Root"),
+          .layout = {.layoutDirection = CLAY_TOP_TO_BOTTOM,
+                     .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                     .padding = {16, 16, 16, 16},
+                     .childGap = 16}}) {
+        CLAY({.id = CLAY_ID("Toolbar"),
+              .layout = {.layoutDirection = CLAY_LEFT_TO_RIGHT,
+                         .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.1)},
+                         .padding = {16, 16, 16, 16},
+                         .childGap = 16},
+              .cornerRadius = {16, 16, 16, 16},
+              .backgroundColor = {50, 50, 50, 255}}) {
             button(CLAY_ID("QuitButton"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("X"),
                    (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, close_button_action);
             // Dump as before using the command-line file.
@@ -480,16 +476,12 @@ Clay_RenderCommandArray build_ui() {
             button(CLAY_ID("LoadStage"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("Load"),
                    (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, load_stage_action);
         }
-        CLAY({
-            .id = CLAY_ID("ObjectControls"),
-            .cornerRadius = {16, 16, 16, 16},
-            .layout = {
-                .sizing = {CLAY_SIZING_PERCENT(0.4), CLAY_SIZING_PERCENT(.1)},
-                .padding = {16, 16, 16, 16},
-                .childGap = 16
-            },
-            .backgroundColor = {50, 50, 50, 255}
-        }) {
+        CLAY({.id = CLAY_ID("ObjectControls"),
+              .cornerRadius = {16, 16, 16, 16},
+              .layout = {.sizing = {CLAY_SIZING_PERCENT(0.4), CLAY_SIZING_PERCENT(.1)},
+                         .padding = {16, 16, 16, 16},
+                         .childGap = 16},
+              .backgroundColor = {50, 50, 50, 255}}) {
             button(CLAY_ID("AddPlatform"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Plat."),
                    (Clay_Color){20, 20, 20, 255}, CLAY_WHITE, add_platform_button_action);
             button(CLAY_ID("AddSpawn"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Spawn."),

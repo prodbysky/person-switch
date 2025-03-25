@@ -106,6 +106,7 @@ void game_state_frame(GameState *state) {
         break;
     case GP_DEAD:
     case GP_STARTMENU:
+    case GP_EDITOR:
         break;
     }
 
@@ -221,6 +222,8 @@ void game_state_update(GameState *state) {
         break;
     case GP_AFTER_WAVE:
         game_state_update_gp_after_wave(state, dt);
+        break;
+    case GP_EDITOR:
         break;
     }
 }
@@ -454,6 +457,14 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     }
 }
 
+void handle_editor_start_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        game_state_phase_change(state, GP_EDITOR);
+    }
+}
+
 void handle_stage_1_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
@@ -669,6 +680,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                        handle_continue_game_button, false);
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.5), "Controls", "ShowControlsButton",
                                        handle_show_controls_button, false);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.5), "Editor", "StartEditor",
+                                       handle_editor_start_button, false);
                     }
                     break;
                 }
@@ -718,6 +731,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         case GP_DEAD: {
             CENTERED_ELEMENT(ui_label("You died!", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));
             break;
+        }
+        case GP_EDITOR: {
         }
         case GP_AFTER_WAVE: {
             ui_container(CLAY_ID("IntermissionScreenContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
