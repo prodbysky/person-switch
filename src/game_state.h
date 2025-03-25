@@ -41,6 +41,8 @@ typedef struct {
     double speed_cost;
     Bullets bullets;
 
+    Stage* stages;
+
     // Contains platforms
     Stage stage;
     size_t selected_stage;

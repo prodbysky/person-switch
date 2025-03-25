@@ -13,6 +13,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <stddef.h>
+#include <stdio.h>
 #define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
 #include <stdint.h>
@@ -27,8 +28,6 @@
 void clay_error_callback(Clay_ErrorData errorData) {
     TraceLog(LOG_ERROR, "%s", errorData.errorText.chars);
 }
-
-static Stage (*const stages[])(void) = {stage_1, stage_2, stage_3};
 
 GameState game_state_init() {
     GameState st = {0};
@@ -50,6 +49,30 @@ GameState game_state_init() {
     Clay_SetDebugModeEnabled(true);
 #endif
     st.particles = NULL;
+    st.stages = NULL;
+
+    FILE *index_file = fopen("assets/stages/index.sti", "r");
+    size_t n;
+    fscanf(index_file, "%zu", &n);
+    for (size_t i = 0; i < n; i++) {
+        FILE *stage_file = fopen(TextFormat("assets/stages/stage%zu.st", i), "r");
+        Stage stage;
+        fscanf(stage_file, "%f %f", &stage.spawn.x, &stage.spawn.y);
+        fscanf(stage_file, "%zu", &stage.count);
+        for (size_t i = 0; i < stage.count; i++) {
+            fscanf(stage_file, "%f %f %f %f", &stage.platforms[i].x, &stage.platforms[i].y, &stage.platforms[i].width,
+                   &stage.platforms[i].height);
+        }
+
+        fscanf(stage_file, "%zu", &stage.count_sp);
+        for (size_t i = 0; i < stage.count_sp; i++) {
+            fscanf(stage_file, "%f %f %f %f", &stage.spawns[i].x, &stage.spawns[i].y, &stage.spawns[i].width,
+                   &stage.spawns[i].height);
+        }
+        fclose(stage_file);
+        stbds_arrput(st.stages, stage);
+    }
+
     st.selected_stage = 0;
     st.player = ecs_player_new();
     st.speed_cost = 1;
@@ -239,6 +262,27 @@ void game_state_destroy(GameState *state) {
     stbds_arrfree(state->current_wave);
     stbds_arrfree(state->pickups);
     stbds_arrfree(state->particles);
+
+    FILE *index_file = fopen("assets/stages/index.sti", "w");
+    fprintf(index_file, "%zu", stbds_arrlen(state->stages));
+    fclose(index_file);
+    for (ptrdiff_t i = 0; i < stbds_arrlen(state->stages); i++) {
+        FILE *stage_file = fopen(TextFormat("assets/stages/stage%zu.st", i), "w");
+
+        fprintf(stage_file, "%.2f %.2f\n", state->stages[i].spawn.x, state->stages[i].spawn.y);
+        fprintf(stage_file, "%zu\n", state->stages[i].count);
+        for (size_t i = 0; i < state->stages[i].count; i++) {
+            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", state->stages[i].platforms[i].x,
+                    state->stages[i].platforms[i].y, state->stages[i].platforms[i].width,
+                    state->stages[i].platforms[i].height);
+        }
+        fprintf(stage_file, "%zu\n", state->stages[i].count_sp);
+        for (size_t i = 0; i < state->stages[i].count_sp; i++) {
+            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", state->stages[i].spawns[i].x, state->stages[i].spawns[i].y,
+                    state->stages[i].spawns[i].width, state->stages[i].spawns[i].height);
+        }
+        fclose(stage_file);
+    }
     CloseAudioDevice();
     CloseWindow();
 }
@@ -281,7 +325,7 @@ void game_state_update_gp_dead(GameState *state, float dt) {
         game_state_phase_change(state, GP_MAIN);
         state->began_transition = GetTime();
         state->player = ecs_player_new();
-        state->stage = stages[state->selected_stage]();
+        state->stage = state->stages[state->selected_stage];
         state->current_wave = generate_wave(state->wave_strength, &state->stage);
         state->player.transform.rect.x = state->stage.spawn.x;
         state->player.transform.rect.y = state->stage.spawn.y;
@@ -312,7 +356,7 @@ void game_state_update_gp_after_wave(GameState *state, float dt) {
 
 void game_state_phase_change(GameState *state, GamePhase next) {
     if (next == GP_MAIN) {
-        state->stage = stages[state->selected_stage]();
+        state->stage = state->stages[state->selected_stage];
     }
     state->phase = GP_TRANSITION;
     state->after_transition = next;
@@ -447,7 +491,7 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
-        state->stage = stages[state->selected_stage]();
+        state->stage = state->stages[state->selected_stage];
         game_state_start_new_wave(state);
         state->wave_strength *= 1.1;
         state->wave_number++;
@@ -462,29 +506,6 @@ void handle_editor_start_button(Clay_ElementId e_id, Clay_PointerData pd, intptr
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_EDITOR);
-    }
-}
-
-void handle_stage_1_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_stage = 0;
-    }
-}
-
-void handle_stage_2_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_stage = 1;
-    }
-}
-void handle_stage_3_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_stage = 2;
     }
 }
 
@@ -728,15 +749,6 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                 case MMT_CONFIGGAME: {
                     ui_container(CLAY_ID("StageSelectContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
                                  CLAY_SIZING_GROW(0), 0, 0) {
-                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 1",
-                                                        "Stage1Button", handle_stage_1_button,
-                                                        state->selected_stage == 0));
-                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 2",
-                                                        "Stage2Button", handle_stage_2_button,
-                                                        state->selected_stage == 1));
-                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 3",
-                                                        "Stage3Button", handle_stage_3_button,
-                                                        state->selected_stage == 2));
                     }
 
                     CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Play",
@@ -913,66 +925,6 @@ void draw_centered_text(const char *message, const Font *font, size_t size, Colo
 void flash_error(GameState *state, char *message) {
     state->error_opacity = 1.0;
     state->error = message;
-}
-
-Stage stage_1() {
-    return (Stage){.spawn = (Vector2){296.11, 206.11},
-                   .platforms =
-                       {
-                           (Rectangle){.x = -0.58, .y = 740.08, .width = 3904.00, .height = 734.00},
-                           (Rectangle){.x = -0.56, .y = 378.89, .width = 84.00, .height = 364.00},
-                           (Rectangle){.x = 72.22, .y = 378.89, .width = 434.00, .height = 74.00},
-                           (Rectangle){.x = 703.33, .y = 688.33, .width = 314.00, .height = 124.00},
-                           (Rectangle){.x = 808.14, .y = 637.06, .width = 314.00, .height = 124.00},
-                           (Rectangle){.x = 915.00, .y = 585.00, .width = 374.00, .height = 254.00},
-                           (Rectangle){.x = 1143.15, .y = 552.06, .width = 524.00, .height = 234.00},
-                           (Rectangle){.x = 1659.81, .y = 597.05, .width = 374.00, .height = 254.00},
-                           (Rectangle){.x = 2021.48, .y = 640.39, .width = 314.00, .height = 124.00},
-                           (Rectangle){.x = 2311.48, .y = 677.89, .width = 314.00, .height = 124.00},
-                           (Rectangle){.x = 3818.98, .y = 402.89, .width = 84.00, .height = 364.00},
-                           (Rectangle){.x = 3398.98, .y = 402.89, .width = 434.00, .height = 74.00},
-                       },
-                   .count = 12,
-                   .spawns =
-                       {
-                           (Rectangle){.x = 88.89, .y = 458.89, .width = 404.00, .height = 164.00},
-                           (Rectangle){.x = 3402.50, .y = 495.00, .width = 394.00, .height = 134.00},
-                       },
-                   .count_sp = 2};
-}
-Stage stage_2() {
-    return (Stage){.spawn = (Vector2){1726.33, 912.89},
-                   .platforms =
-                       {
-                           (Rectangle){.x = 5.33, .y = 859.33, .width = 1514.00, .height = 44.00},
-                           (Rectangle){.x = 1942.33, .y = 855.00, .width = 1644.00, .height = 54.00},
-                           (Rectangle){.x = 1322.22, .y = 879.11, .width = 294.00, .height = 24.00},
-                           (Rectangle){.x = 1849.17, .y = 885.83, .width = 394.00, .height = 24.00},
-                           (Rectangle){.x = 2.50, .y = -2.00, .width = 64.00, .height = 904.00},
-                           (Rectangle){.x = 3522.50, .y = 0.00, .width = 64.00, .height = 904.00},
-                           (Rectangle){.x = 1461.43, .y = 628.57, .width = 554.00, .height = 34.00},
-                           (Rectangle){.x = 36.00, .y = 752.00, .width = 264.00, .height = 114.00},
-                           (Rectangle){.x = 3298.00, .y = 722.00, .width = 264.00, .height = 164.00},
-                           (Rectangle){.x = 1510.13, .y = 1041.56, .width = 464.00, .height = 24.00},
-                           (Rectangle){.x = 1510.00, .y = 896.00, .width = 54.00, .height = 154.00},
-                           (Rectangle){.x = 1922.79, .y = 891.07, .width = 54.00, .height = 174.00},
-                           (Rectangle){.x = 2.00, .y = -33.50, .width = 3584.00, .height = 44.00},
-                       },
-                   .count = 13,
-                   .spawns = {(Rectangle){.x = 79.00, .y = 495.00, .width = 224.00, .height = 144.00},
-                              (Rectangle){.x = 3304.50, .y = 507.00, .width = 204.00, .height = 84.00}},
-                   .count_sp = 2};
-}
-Stage stage_3() {
-    return (Stage){
-        .count = 3,
-        .platforms =
-            {
-                (Platform){.x = 0, .y = 550, .width = 800, .height = 32},
-                (Platform){.x = 100, .y = 400, .width = 600, .height = 32},
-                (Platform){.x = 200, .y = 250, .width = 400, .height = 32},
-            },
-    };
 }
 
 #define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 10, 50)
