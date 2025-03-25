@@ -162,7 +162,15 @@ static void charge(EnemyState *state, const TransformComp *transform, PhysicsCom
         } else {
             physics->velocity.x = -state->charging.charge_force;
         }
-        physics->velocity.y -= 500;
+        physics->velocity.y -= 400;
+    }
+}
+
+static void jump(const TransformComp *player_transform, const TransformComp *transform, PhysicsComp *physics) {
+    if (((player_transform->rect.y + player_transform->rect.height < transform->rect.y) ||
+         GetRandomValue(0, 100) / 100.0 > 0.9) &&
+        physics->grounded) {
+        physics->velocity.y = -400;
     }
 }
 
@@ -171,13 +179,12 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
               ECSEnemy *other_enemies, ptrdiff_t other_enemies_len) {
     switch (state->type) {
     case ET_BASIC: {
-        if ((player_transform->rect.y + player_transform->rect.height < transform->rect.y) && physics->grounded) {
-            physics->velocity.y = -200;
-        }
+        jump(player_transform, transform, physics);
         approach_player(transform, physics, conf, player_transform);
         break;
     }
     case ET_RANGER: {
+        jump(player_transform, transform, physics);
         avoid_player(transform, physics, conf, player_transform, 300.0);
         shoot_at(state, transform, player_physics, player_transform, enemy_bullets, ranger_create_bullet);
         break;
@@ -194,11 +201,14 @@ void enemy_ai(const EnemyConfigComp *conf, EnemyState *state, const TransformCom
         break;
     }
     case ET_WOLF: {
+
+        jump(player_transform, transform, physics);
         approach_player(transform, physics, conf, player_transform);
         charge(state, transform, physics, player_transform);
         break;
     }
     case ET_HEALER: {
+        jump(player_transform, transform, physics);
         for (ptrdiff_t i = 0; i < other_enemies_len; i++) {
             if (CheckCollisionCircleRec(transform_center(transform), state->healing.heal_radius,
                                         other_enemies[i].transform.rect)) {

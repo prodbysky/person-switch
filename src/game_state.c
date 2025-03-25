@@ -264,7 +264,7 @@ void game_state_update_gp_main(GameState *state, float dt) {
             game_state_phase_change(state, GP_AFTER_WAVE);
             STB_DS_ARRAY_RESET(state->current_wave);
 
-            state->wave_strength *= 1.1;
+            state->wave_strength *= 1.2;
             state->wave_number++;
             state->current_wave = generate_wave(state->wave_strength, &state->stage);
         }
@@ -843,13 +843,29 @@ void flash_error(GameState *state, char *message) {
 }
 
 Stage stage_1() {
-    return (Stage){.spawn = (Vector2){420.00, 306.67},
-                   .platforms = {(Rectangle){.x = 3.33, .y = 665.00, .width = 1214.00, .height = 24.00},
-                                 (Rectangle){.x = 1.67, .y = 3.33, .width = 24.00, .height = 674.00},
-                                 (Rectangle){.x = 1183.33, .y = 3.33, .width = 34.00, .height = 684.00}},
-                   .count = 3,
-                   .spawns = {(Rectangle){.x = 38.34, .y = 10.00, .width = 194.00, .height = 214.00}},
-                   .count_sp = 1};
+    return (Stage){.spawn = (Vector2){296.11, 206.11},
+                   .platforms =
+                       {
+                           (Rectangle){.x = -0.58, .y = 740.08, .width = 3904.00, .height = 734.00},
+                           (Rectangle){.x = -0.56, .y = 378.89, .width = 84.00, .height = 364.00},
+                           (Rectangle){.x = 72.22, .y = 378.89, .width = 434.00, .height = 74.00},
+                           (Rectangle){.x = 703.33, .y = 688.33, .width = 314.00, .height = 124.00},
+                           (Rectangle){.x = 808.14, .y = 637.06, .width = 314.00, .height = 124.00},
+                           (Rectangle){.x = 915.00, .y = 585.00, .width = 374.00, .height = 254.00},
+                           (Rectangle){.x = 1143.15, .y = 552.06, .width = 524.00, .height = 234.00},
+                           (Rectangle){.x = 1659.81, .y = 597.05, .width = 374.00, .height = 254.00},
+                           (Rectangle){.x = 2021.48, .y = 640.39, .width = 314.00, .height = 124.00},
+                           (Rectangle){.x = 2311.48, .y = 677.89, .width = 314.00, .height = 124.00},
+                           (Rectangle){.x = 3818.98, .y = 402.89, .width = 84.00, .height = 364.00},
+                           (Rectangle){.x = 3398.98, .y = 402.89, .width = 434.00, .height = 74.00},
+                       },
+                   .count = 12,
+                   .spawns =
+                       {
+                           (Rectangle){.x = 88.89, .y = 458.89, .width = 404.00, .height = 164.00},
+                           (Rectangle){.x = 3402.50, .y = 495.00, .width = 394.00, .height = 134.00},
+                       },
+                   .count_sp = 2};
 }
 Stage stage_2() {
     return (Stage){.spawn = (Vector2){1726.33, 912.89},
