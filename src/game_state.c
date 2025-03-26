@@ -49,30 +49,7 @@ GameState game_state_init() {
     Clay_SetDebugModeEnabled(true);
 #endif
     st.particles = NULL;
-    st.stages = NULL;
-
-    FILE *index_file = fopen("assets/stages/index.sti", "r");
-    size_t n;
-    fscanf(index_file, "%zu", &n);
-    fclose(index_file);
-    for (size_t i = 0; i < n; i++) {
-        FILE *stage_file = fopen(TextFormat("assets/stages/stage%zu.st", i), "r");
-        Stage stage;
-        fscanf(stage_file, "%f %f", &stage.spawn.x, &stage.spawn.y);
-        fscanf(stage_file, "%zu", &stage.count);
-        for (size_t i = 0; i < stage.count; i++) {
-            fscanf(stage_file, "%f %f %f %f", &stage.platforms[i].x, &stage.platforms[i].y, &stage.platforms[i].width,
-                   &stage.platforms[i].height);
-        }
-
-        fscanf(stage_file, "%zu", &stage.count_sp);
-        for (size_t i = 0; i < stage.count_sp; i++) {
-            fscanf(stage_file, "%f %f %f %f", &stage.spawns[i].x, &stage.spawns[i].y, &stage.spawns[i].width,
-                   &stage.spawns[i].height);
-        }
-        fclose(stage_file);
-        stbds_arrput(st.stages, stage);
-    }
+    st.stages = load_stages("assets/stages/index.sti", "assets/stages/stage%zu.st");
 
     st.selected_stage = 0;
     st.player = ecs_player_new();
@@ -286,27 +263,8 @@ void game_state_destroy(GameState *state) {
     stbds_arrfree(state->current_wave);
     stbds_arrfree(state->pickups);
     stbds_arrfree(state->particles);
-
-    FILE *index_file = fopen("assets/stages/index.sti", "w");
-    fprintf(index_file, "%zu", stbds_arrlen(state->stages));
-    fclose(index_file);
-    for (ptrdiff_t i = 0; i < stbds_arrlen(state->stages); i++) {
-        FILE *stage_file = fopen(TextFormat("assets/stages/stage%zu.st", i), "w");
-
-        fprintf(stage_file, "%.2f %.2f\n", state->stages[i].spawn.x, state->stages[i].spawn.y);
-        fprintf(stage_file, "%zu\n", state->stages[i].count);
-        for (size_t i = 0; i < state->stages[i].count; i++) {
-            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", state->stages[i].platforms[i].x,
-                    state->stages[i].platforms[i].y, state->stages[i].platforms[i].width,
-                    state->stages[i].platforms[i].height);
-        }
-        fprintf(stage_file, "%zu\n", state->stages[i].count_sp);
-        for (size_t i = 0; i < state->stages[i].count_sp; i++) {
-            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", state->stages[i].spawns[i].x, state->stages[i].spawns[i].y,
-                    state->stages[i].spawns[i].width, state->stages[i].spawns[i].height);
-        }
-        fclose(stage_file);
-    }
+    save_stages(&state->stages, "assets/stages/index.sti", "assets/stages/stage%zu.st");
+    stbds_arrfree(state->stages);
     CloseAudioDevice();
     CloseWindow();
 }
@@ -1176,6 +1134,54 @@ Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
     }
 
     return Clay_EndLayout();
+}
+
+Stage *load_stages(const char *index_file_name, const char *stage_file_name_format) {
+    FILE *index_file = fopen(index_file_name, "r");
+    size_t n;
+    fscanf(index_file, "%zu", &n);
+    fclose(index_file);
+    Stage *stages = NULL;
+    for (size_t i = 0; i < n; i++) {
+        FILE *stage_file = fopen(TextFormat(stage_file_name_format, i), "r");
+        Stage stage;
+        fscanf(stage_file, "%f %f", &stage.spawn.x, &stage.spawn.y);
+        fscanf(stage_file, "%zu", &stage.count);
+        for (size_t i = 0; i < stage.count; i++) {
+            fscanf(stage_file, "%f %f %f %f", &stage.platforms[i].x, &stage.platforms[i].y, &stage.platforms[i].width,
+                   &stage.platforms[i].height);
+        }
+
+        fscanf(stage_file, "%zu", &stage.count_sp);
+        for (size_t i = 0; i < stage.count_sp; i++) {
+            fscanf(stage_file, "%f %f %f %f", &stage.spawns[i].x, &stage.spawns[i].y, &stage.spawns[i].width,
+                   &stage.spawns[i].height);
+        }
+        fclose(stage_file);
+        stbds_arrput(stages, stage);
+    }
+    return stages;
+}
+void save_stages(Stage **stages, const char *index_file_name, const char *stage_file_name_format) {
+    FILE *index_file = fopen(index_file_name, "w");
+    fprintf(index_file, "%zu", stbds_arrlen(*stages));
+    fclose(index_file);
+    for (ptrdiff_t i = 0; i < stbds_arrlen(*stages); i++) {
+        FILE *stage_file = fopen(TextFormat(stage_file_name_format, i), "w");
+
+        fprintf(stage_file, "%.2f %.2f\n", (*stages)[i].spawn.x, (*stages)[i].spawn.y);
+        fprintf(stage_file, "%zu\n", (*stages)[i].count);
+        for (size_t i = 0; i < (*stages)[i].count; i++) {
+            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", (*stages)[i].platforms[i].x, (*stages)[i].platforms[i].y,
+                    (*stages)[i].platforms[i].width, (*stages)[i].platforms[i].height);
+        }
+        fprintf(stage_file, "%zu\n", (*stages)[i].count_sp);
+        for (size_t i = 0; i < (*stages)[i].count_sp; i++) {
+            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", (*stages)[i].spawns[i].x, (*stages)[i].spawns[i].y,
+                    (*stages)[i].spawns[i].width, (*stages)[i].spawns[i].height);
+        }
+        fclose(stage_file);
+    }
 }
 
 void apply_shader(RenderTexture2D *in, RenderTexture2D *out, Shader *shader) {

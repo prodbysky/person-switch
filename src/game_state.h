@@ -140,6 +140,9 @@ void apply_shader(RenderTexture2D *in, RenderTexture2D *out, Shader *shader);
 
 void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment);
 void flash_error(GameState* state, char* message);
+
+Stage* load_stages(const char* index_file_name, const char* stage_file_name_format);
+void save_stages(Stage** stages, const char* index_file_name, const char* stage_file_name_format);
 #define ui_container(id_, dir, width, height, pad, c_gap)  \
     CLAY({ \
         .id = id_, \
