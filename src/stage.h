@@ -4,6 +4,7 @@
 #include <stddef.h>
 typedef Rectangle Platform;
 
+// TODO: Environment hazards (lava, water, air drafts)
 typedef struct {
     Vector2 spawn;
     Platform platforms[50];
