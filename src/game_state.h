@@ -34,19 +34,19 @@ typedef enum {
 
 // The entire game state, sort of a `god` object
 typedef struct {
-    // Player state
+    // All entities or static objects in the game
     ECSPlayer player;
     double speed_cost;
     Bullets bullets;
-
     Stage* stages;
-
-    // Contains platforms
     Stage stage;
     size_t selected_stage;
-
     EnemyWave current_wave;
     Bullets enemy_bullets;
+    double wave_strength;
+    size_t wave_number;
+    Pickups pickups;
+    Particles particles;
 
     GamePhase phase;
 
@@ -63,9 +63,6 @@ typedef struct {
 
     // Intermission screen (upgrades)
     IntermissionScreenType screen_type;
-
-    double wave_strength;
-    size_t wave_number;
 
     Camera2D camera;
 
@@ -87,8 +84,6 @@ typedef struct {
     // clay ui
     Clay_Arena clay_memory;
 
-    Pickups pickups;
-    Particles particles;
 
     struct {
         Stage s;
@@ -136,6 +131,10 @@ double screen_centered_position(double w);
 
 EnemyWave generate_wave(double strength, const Stage *stage);
 
+
+// Renders the `in` texture into `out` assuming they are the same size
+// with the shader in `shader` unless `shader` is NULL then just blit 
+// `in` -> `out`
 void apply_shader(RenderTexture2D *in, RenderTexture2D *out, Shader *shader);
 
 void ui_label(const char *text, uint16_t size, Color c, Clay_TextAlignment aligment);
