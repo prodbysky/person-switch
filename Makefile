@@ -33,9 +33,6 @@ $(TARGET): $(OBJS) $(SRC_DIR)/main.c
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-sdesign: tools/sdesign.c
-	$(CC) tools/sdesign.c -o build/sdesign $(CFLAGS) $(LDFLAGS) $(LIBS) src/clay.o
-
 raylib:
 	$(MAKE) -C $(EXTERN_DIR)
 

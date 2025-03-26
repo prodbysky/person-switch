@@ -8,10 +8,6 @@
 #include "wave.h"
 #include <clay/clay.h>
 
-Stage stage_1();
-Stage stage_2();
-Stage stage_3();
-
 typedef enum {
     GP_STARTMENU = 0,
     GP_EDITOR,
@@ -32,6 +28,8 @@ typedef enum {
     MMT_CONFIGGAME,
     MMT_CONTROLS,
 } MainMenuType;
+
+#define SPAWN_SELECT 100
 
 
 // The entire game state, sort of a `god` object
@@ -92,7 +90,13 @@ typedef struct {
     Pickups pickups;
     Particles particles;
 
-    struct {} editor_state;
+    struct {
+        Stage s;
+        Rectangle copied_rect;
+        size_t selected;
+        bool has_copied;
+        bool copied_is_platform;
+    } editor_state;
 } GameState;
 
 // Initializes raylib, loads needed assets
@@ -112,7 +116,7 @@ void game_state_update(GameState *state);
 void game_state_frame(GameState *state); 
 // Draws the stage, enemies, bullets, player
 void game_state_draw_playfield(const GameState *state); 
-Clay_RenderCommandArray game_state_draw_ui(const GameState *state);
+Clay_RenderCommandArray game_state_draw_ui(GameState *state);
 
 
 void game_state_update_gp_main(GameState *state, float dt);
@@ -120,6 +124,7 @@ void game_state_update_gp_dead(GameState *state, float dt);
 void game_state_update_gp_paused(GameState *state, float dt);
 void game_state_update_gp_transition(GameState *state, float dt);
 void game_state_update_gp_after_wave(GameState *state, float dt);
+void game_state_update_editor(GameState *state, float dt);
 
 void game_state_update_ui_internals();
 void game_state_update_camera(Camera2D *camera, const TransformComp *target);
