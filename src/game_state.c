@@ -13,6 +13,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <stddef.h>
+#include <stdio.h>
 #define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
 #include <stdint.h>
@@ -27,8 +28,6 @@
 void clay_error_callback(Clay_ErrorData errorData) {
     TraceLog(LOG_ERROR, "%s", errorData.errorText.chars);
 }
-
-static Stage (*const stages[])(void) = {stage_1, stage_2, stage_3};
 
 GameState game_state_init() {
     GameState st = {0};
@@ -50,6 +49,31 @@ GameState game_state_init() {
     Clay_SetDebugModeEnabled(true);
 #endif
     st.particles = NULL;
+    st.stages = NULL;
+
+    FILE *index_file = fopen("assets/stages/index.sti", "r");
+    size_t n;
+    fscanf(index_file, "%zu", &n);
+    fclose(index_file);
+    for (size_t i = 0; i < n; i++) {
+        FILE *stage_file = fopen(TextFormat("assets/stages/stage%zu.st", i), "r");
+        Stage stage;
+        fscanf(stage_file, "%f %f", &stage.spawn.x, &stage.spawn.y);
+        fscanf(stage_file, "%zu", &stage.count);
+        for (size_t i = 0; i < stage.count; i++) {
+            fscanf(stage_file, "%f %f %f %f", &stage.platforms[i].x, &stage.platforms[i].y, &stage.platforms[i].width,
+                   &stage.platforms[i].height);
+        }
+
+        fscanf(stage_file, "%zu", &stage.count_sp);
+        for (size_t i = 0; i < stage.count_sp; i++) {
+            fscanf(stage_file, "%f %f %f %f", &stage.spawns[i].x, &stage.spawns[i].y, &stage.spawns[i].width,
+                   &stage.spawns[i].height);
+        }
+        fclose(stage_file);
+        stbds_arrput(st.stages, stage);
+    }
+
     st.selected_stage = 0;
     st.player = ecs_player_new();
     st.speed_cost = 1;
@@ -107,6 +131,29 @@ void game_state_frame(GameState *state) {
     case GP_DEAD:
     case GP_STARTMENU:
         break;
+    case GP_EDITOR: {
+        DrawText("0, 0", 10, 10, 36, WHITE);
+        DrawLineEx((Vector2){0, -3000}, (Vector2){0, 3000}, 5, GRAY);
+        DrawLineEx((Vector2){-3000, 0}, (Vector2){3000, 0}, 5, GRAY);
+        for (size_t i = 0; i < state->editor_state.s.count; i++) {
+            DrawRectangleRec(state->editor_state.s.platforms[i], WHITE);
+            if (i == state->editor_state.selected) {
+                DrawRectangleLinesEx(state->editor_state.s.platforms[i], 2, RED);
+            }
+        }
+        for (size_t i = 0; i < state->editor_state.s.count_sp; i++) {
+            DrawRectangleRec(state->editor_state.s.spawns[i], GetColor(0x00ff0066));
+            if (i + 50 == state->editor_state.selected) {
+                DrawRectangleLinesEx(state->editor_state.s.spawns[i], 2, RED);
+            }
+        }
+        DrawCircleV(state->editor_state.s.spawn, 25, GREEN);
+        DrawRectangle(state->editor_state.s.spawn.x, state->editor_state.s.spawn.y, 32, 96, WHITE);
+        if (state->editor_state.selected == SPAWN_SELECT) {
+            DrawCircleLinesV(state->editor_state.s.spawn, 25, RED);
+        }
+        break;
+    }
     }
 
     EndMode2D();
@@ -173,7 +220,6 @@ void game_state_frame(GameState *state) {
 
 void game_state_update(GameState *state) {
     game_state_update_ui_internals();
-    game_state_update_camera(&state->camera, &state->player.transform);
 
     const float dt = GetFrameTime();
 
@@ -206,6 +252,7 @@ void game_state_update(GameState *state) {
 
     switch (state->phase) {
     case GP_MAIN:
+        game_state_update_camera(&state->camera, &state->player.transform);
         game_state_update_gp_main(state, dt);
         break;
     case GP_STARTMENU:
@@ -222,6 +269,9 @@ void game_state_update(GameState *state) {
     case GP_AFTER_WAVE:
         game_state_update_gp_after_wave(state, dt);
         break;
+    case GP_EDITOR:
+        game_state_update_editor(state, dt);
+        break;
     }
 }
 
@@ -236,6 +286,27 @@ void game_state_destroy(GameState *state) {
     stbds_arrfree(state->current_wave);
     stbds_arrfree(state->pickups);
     stbds_arrfree(state->particles);
+
+    FILE *index_file = fopen("assets/stages/index.sti", "w");
+    fprintf(index_file, "%zu", stbds_arrlen(state->stages));
+    fclose(index_file);
+    for (ptrdiff_t i = 0; i < stbds_arrlen(state->stages); i++) {
+        FILE *stage_file = fopen(TextFormat("assets/stages/stage%zu.st", i), "w");
+
+        fprintf(stage_file, "%.2f %.2f\n", state->stages[i].spawn.x, state->stages[i].spawn.y);
+        fprintf(stage_file, "%zu\n", state->stages[i].count);
+        for (size_t i = 0; i < state->stages[i].count; i++) {
+            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", state->stages[i].platforms[i].x,
+                    state->stages[i].platforms[i].y, state->stages[i].platforms[i].width,
+                    state->stages[i].platforms[i].height);
+        }
+        fprintf(stage_file, "%zu\n", state->stages[i].count_sp);
+        for (size_t i = 0; i < state->stages[i].count_sp; i++) {
+            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", state->stages[i].spawns[i].x, state->stages[i].spawns[i].y,
+                    state->stages[i].spawns[i].width, state->stages[i].spawns[i].height);
+        }
+        fclose(stage_file);
+    }
     CloseAudioDevice();
     CloseWindow();
 }
@@ -278,7 +349,7 @@ void game_state_update_gp_dead(GameState *state, float dt) {
         game_state_phase_change(state, GP_MAIN);
         state->began_transition = GetTime();
         state->player = ecs_player_new();
-        state->stage = stages[state->selected_stage]();
+        state->stage = state->stages[state->selected_stage];
         state->current_wave = generate_wave(state->wave_strength, &state->stage);
         state->player.transform.rect.x = state->stage.spawn.x;
         state->player.transform.rect.y = state->stage.spawn.y;
@@ -307,9 +378,126 @@ void game_state_update_gp_after_wave(GameState *state, float dt) {
     }
 }
 
+void game_state_update_editor(GameState *state, float dt) {
+    (void)dt;
+    const Vector2 scroll_delta = GetMouseWheelMoveV();
+    const Vector2 mouse_pos = GetMousePosition();
+    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+        const Vector2 mouse_delta = GetMouseDelta();
+        state->camera.target =
+            Vector2Subtract(state->camera.target, Vector2Scale(mouse_delta, 1.0 / state->camera.zoom));
+    }
+
+    if (IsKeyDown(KEY_LEFT_CONTROL)) {
+        if (scroll_delta.y != 0) {
+            state->camera.zoom += scroll_delta.y * 0.1;
+        }
+    }
+    state->camera.zoom = Clamp(state->camera.zoom, 0.2, 4);
+
+    Vector2 world_mouse_pos = GetScreenToWorld2D(mouse_pos, state->camera);
+    if (CheckCollisionPointCircle(world_mouse_pos, state->editor_state.s.spawn, 25)) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            state->editor_state.selected = SPAWN_SELECT;
+        }
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            const Vector2 mouse_delta = GetMouseDelta();
+            if (state->editor_state.selected == SPAWN_SELECT) {
+                state->editor_state.s.spawn.x += mouse_delta.x / state->camera.zoom;
+                state->editor_state.s.spawn.y += mouse_delta.y / state->camera.zoom;
+            }
+        }
+    } else {
+        for (size_t i = 0; i < state->editor_state.s.count; i++) {
+            if (CheckCollisionPointRec(world_mouse_pos, state->editor_state.s.platforms[i])) {
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    state->editor_state.selected = i;
+                }
+                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                    const Vector2 mouse_delta = GetMouseDelta();
+                    if (state->editor_state.selected != 0xffff && state->editor_state.selected != SPAWN_SELECT) {
+                        state->editor_state.s.platforms[state->editor_state.selected].x +=
+                            mouse_delta.x / state->camera.zoom;
+                        state->editor_state.s.platforms[state->editor_state.selected].y +=
+                            mouse_delta.y / state->camera.zoom;
+                    }
+                }
+                if (state->editor_state.selected != 0xffff && state->editor_state.selected != SPAWN_SELECT) {
+                    if (IsKeyDown(KEY_LEFT_SHIFT)) {
+                        if (scroll_delta.y != 0) {
+                            state->editor_state.s.platforms[state->editor_state.selected].width += scroll_delta.y * 10;
+                        }
+                    }
+                    if (IsKeyDown(KEY_LEFT_ALT)) {
+                        if (scroll_delta.y != 0) {
+                            state->editor_state.s.platforms[state->editor_state.selected].height += scroll_delta.y * 10;
+                        }
+                    }
+                }
+            }
+        }
+        for (size_t i = 0; i < state->editor_state.s.count_sp; i++) {
+            if (CheckCollisionPointRec(world_mouse_pos, state->editor_state.s.spawns[i])) {
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    state->editor_state.selected = i + 50;
+                }
+                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                    const Vector2 mouse_delta = GetMouseDelta();
+                    if (state->editor_state.selected != 0xffff && state->editor_state.selected != SPAWN_SELECT &&
+                        state->editor_state.selected > 49) {
+                        state->editor_state.s.spawns[state->editor_state.selected - 50].x +=
+                            mouse_delta.x / state->camera.zoom;
+                        state->editor_state.s.spawns[state->editor_state.selected - 50].y +=
+                            mouse_delta.y / state->camera.zoom;
+                    }
+                }
+                if (state->editor_state.selected != 0xffff && state->editor_state.selected != SPAWN_SELECT &&
+                    state->editor_state.selected > 49) {
+                    if (IsKeyDown(KEY_LEFT_SHIFT)) {
+                        if (scroll_delta.y != 0) {
+                            state->editor_state.s.spawns[state->editor_state.selected - 50].width +=
+                                scroll_delta.y * 10;
+                        }
+                    }
+                    if (IsKeyDown(KEY_LEFT_ALT)) {
+                        if (scroll_delta.y != 0) {
+                            state->editor_state.s.spawns[state->editor_state.selected - 50].height +=
+                                scroll_delta.y * 10;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        state->editor_state.selected = 0xffff;
+    }
+    if (state->editor_state.selected == 0xffff || state->editor_state.selected == SPAWN_SELECT)
+        return;
+    float moveStep = 5.0f * GetFrameTime();
+    Rectangle *obj = NULL;
+    if (state->editor_state.selected < state->editor_state.s.count) {
+        obj = &state->editor_state.s.platforms[state->editor_state.selected];
+    } else if (state->editor_state.selected >= 50 &&
+               state->editor_state.selected < 50 + state->editor_state.s.count_sp) {
+        obj = &state->editor_state.s.spawns[state->editor_state.selected - 50];
+    }
+    if (obj) {
+        if (IsKeyDown(KEY_RIGHT))
+            obj->x += moveStep;
+        if (IsKeyDown(KEY_LEFT))
+            obj->x -= moveStep;
+        if (IsKeyDown(KEY_DOWN))
+            obj->y += moveStep;
+        if (IsKeyDown(KEY_UP))
+            obj->y -= moveStep;
+    }
+}
+
 void game_state_phase_change(GameState *state, GamePhase next) {
     if (next == GP_MAIN) {
-        state->stage = stages[state->selected_stage]();
+        state->stage = state->stages[state->selected_stage];
     }
     state->phase = GP_TRANSITION;
     state->after_transition = next;
@@ -444,7 +632,7 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         game_state_phase_change(state, GP_MAIN);
-        state->stage = stages[state->selected_stage]();
+        state->stage = state->stages[state->selected_stage];
         game_state_start_new_wave(state);
         state->wave_strength *= 1.1;
         state->wave_number++;
@@ -454,26 +642,11 @@ void handle_start_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     }
 }
 
-void handle_stage_1_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+void handle_editor_start_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
     if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_stage = 0;
-    }
-}
-
-void handle_stage_2_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_stage = 1;
-    }
-}
-void handle_stage_3_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
-    (void)e_id;
-    GameState *state = (GameState *)ud;
-    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        state->selected_stage = 2;
+        game_state_phase_change(state, GP_EDITOR);
     }
 }
 
@@ -606,11 +779,156 @@ void handle_ar_damage_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
     }
 }
 
+void handle_exit_editor(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        game_state_phase_change(state, GP_STARTMENU);
+        state->camera = (Camera2D){
+            .zoom = 0.75,
+            .offset = (Vector2){GetMonitorWidth(0) / 2.0, GetMonitorHeight(0) / 2.0},
+            .rotation = 0,
+            .target = (Vector2){GetMonitorWidth(0) / 2.0, GetMonitorHeight(0) / 2.0},
+        };
+    }
+}
+
+void handle_save_stage_editor(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        stbds_arrput(state->stages, state->editor_state.s);
+    }
+}
+
+void handle_editor_add_platform(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    GameState *state = (GameState *)ud;
+    (void)e_id;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->editor_state.s.platforms[state->editor_state.s.count++] = (Rectangle){
+            .x = 0,
+            .y = 0,
+            .width = 64,
+            .height = 64,
+        };
+    }
+}
+void handle_editor_add_spawn(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    GameState *state = (GameState *)ud;
+    (void)state;
+    (void)e_id;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->editor_state.s.spawns[state->editor_state.s.count_sp++] = (Rectangle){
+            .x = 0,
+            .y = 0,
+            .width = 64,
+            .height = 64,
+        };
+    }
+}
+
+void handle_editor_delete_object(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    GameState *state = (GameState *)ud;
+    (void)state;
+    (void)e_id;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->editor_state.selected == SPAWN_SELECT) {
+            state->editor_state.s.spawn = (Vector2){0, 0};
+        } else if (state->editor_state.selected < state->editor_state.s.count) {
+            for (size_t i = state->editor_state.selected; i < state->editor_state.s.count - 1; i++) {
+                state->editor_state.s.platforms[i] = state->editor_state.s.platforms[i + 1];
+            }
+            state->editor_state.s.count--;
+            state->editor_state.selected = 0xffff;
+        } else if (state->editor_state.selected >= 50 &&
+                   state->editor_state.selected < 50 + state->editor_state.s.count_sp) {
+            size_t idx = state->editor_state.selected - 50;
+            for (size_t i = idx; i < state->editor_state.s.count_sp - 1; i++) {
+                state->editor_state.s.spawns[i] = state->editor_state.s.spawns[i + 1];
+            }
+            state->editor_state.s.count_sp--;
+            state->editor_state.selected = 0xffff;
+        }
+    }
+}
+void handle_editor_copy_object(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    GameState *state = (GameState *)ud;
+    (void)state;
+    (void)e_id;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->editor_state.selected == SPAWN_SELECT)
+            return;
+        else if (state->editor_state.selected < state->editor_state.s.count) {
+            state->editor_state.copied_rect = state->editor_state.s.platforms[state->editor_state.selected];
+            state->editor_state.copied_is_platform = true;
+            state->editor_state.has_copied = true;
+        } else if (state->editor_state.selected >= 50 &&
+                   state->editor_state.selected < 50 + state->editor_state.s.count_sp) {
+            state->editor_state.copied_rect = state->editor_state.s.spawns[state->editor_state.selected - 50];
+            state->editor_state.copied_is_platform = false;
+            state->editor_state.has_copied = true;
+        }
+    }
+}
+void handle_editor_paste_object(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    GameState *state = (GameState *)ud;
+    (void)state;
+    (void)e_id;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        Vector2 mouse_pos = GetMousePosition();
+        Vector2 world_mouse = GetScreenToWorld2D(mouse_pos, state->camera);
+        Rectangle new_rect = state->editor_state.copied_rect;
+        new_rect.x = world_mouse.x;
+        new_rect.y = world_mouse.y;
+        if (state->editor_state.copied_is_platform) {
+            state->editor_state.s.platforms[state->editor_state.s.count++] = new_rect;
+            state->editor_state.selected = state->editor_state.s.count - 1;
+        } else {
+            state->editor_state.s.spawns[state->editor_state.s.count_sp++] = new_rect;
+            state->editor_state.selected = 50 + state->editor_state.s.count_sp - 1;
+        }
+    }
+}
+
+typedef struct {
+    GameState *state;
+    ptrdiff_t stage_index;
+} ThatOneSpecificInput;
+void handle_select_stage_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    ThatOneSpecificInput *state = (ThatOneSpecificInput *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        state->state->selected_stage = state->stage_index;
+    }
+}
+
 Clay_Color button_color(bool activecond) {
     return activecond ? (Clay_Color){120, 120, 120, 255} : (Clay_Color){90, 90, 90, 200};
 }
+void text(Clay_String str, Clay_Color color, Clay_TextAlignment alligment) {
+    CLAY_TEXT(str, CLAY_TEXT_CONFIG({
+                       .textAlignment = alligment,
+                       .textColor = color,
+                       .fontSize = 32,
+                       .fontId = 0,
+                   }));
+}
 
-Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
+void button(Clay_ElementId id, Clay_SizingAxis x_sizing, Clay_SizingAxis y_sizing, Clay_String label,
+            Clay_Color background_color, Clay_Color label_color,
+            void (*on_hover)(Clay_ElementId, Clay_PointerData, intptr_t), intptr_t ud) {
+    CLAY({.id = id,
+          .cornerRadius = {16, 16, 16, 16},
+          .layout = {.sizing = {x_sizing, y_sizing},
+                     .padding = {16, 16, 16, 16},
+                     .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}},
+          .backgroundColor = background_color}) {
+        Clay_OnHover(on_hover, ud);
+        text(label, label_color, CLAY_TEXT_ALIGN_CENTER);
+    }
+}
+
+Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
     DrawTextEx(state->font[0], TextFormat("Volume: %.2f", GetMasterVolume() * 100), (Vector2){500, 40}, 48, 0,
                GetColor(0xffffff00 + (state->volume_label_opacity * 255)));
     if (state->vfx_enabled) {
@@ -624,7 +942,7 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
     DrawTextEx(state->font[0], state->error, (Vector2){200, 200}, 60, 0,
                GetColor(0xff000000 + (state->error_opacity * 255)));
     Clay_BeginLayout();
-    ui_container(CLAY_ID("OuterContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), 0, 0) {
+    ui_container(CLAY_ID("OuterContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), 0, 16) {
         switch (state->phase) {
         case GP_MAIN: {
             ui_container(CLAY_ID("PlayerInfoContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_PERCENT(0.4),
@@ -669,6 +987,8 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                                        handle_continue_game_button, false);
                         LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.5), "Controls", "ShowControlsButton",
                                        handle_show_controls_button, false);
+                        LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.5), "Editor", "StartEditor",
+                                       handle_editor_start_button, false);
                     }
                     break;
                 }
@@ -691,24 +1011,35 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
                     break;
                 }
                 case MMT_CONFIGGAME: {
-                    ui_container(CLAY_ID("StageSelectContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
+                    ui_container(CLAY_ID("ConfigGameContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
                                  CLAY_SIZING_GROW(0), 0, 0) {
-                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 1",
-                                                        "Stage1Button", handle_stage_1_button,
-                                                        state->selected_stage == 0));
-                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 2",
-                                                        "Stage2Button", handle_stage_2_button,
-                                                        state->selected_stage == 1));
-                        CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Stage 3",
-                                                        "Stage3Button", handle_stage_3_button,
-                                                        state->selected_stage == 2));
+                        CLAY({.backgroundColor = {20, 20, 20, 255},
+                              .cornerRadius = {16, 16, 16, 16},
+                              .id = CLAY_ID("StageSelectContainer"),
+                              .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                         .childGap = 16,
+                                         .padding = {16, 16, 16, 16}},
+                              .scroll = {.vertical = true}}) {
+                            for (ptrdiff_t i = 0; i < stbds_arrlen(state->stages); i++) {
+                                const ThatOneSpecificInput input = (ThatOneSpecificInput){state, i};
+                                const char *cstr = TextFormat("Stage #%zu", i + 1);
+                                const Clay_String str = {.chars = cstr, .length = strlen(cstr)};
+                                button(CLAY_IDI("StageButton", i), CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.1), str,
+                                       (Clay_Color){50, 50, 50, 255}, (Clay_Color){255, 255, 255, 255},
+                                       handle_select_stage_button, (intptr_t)&input);
+                            }
+                        }
+
+                        ui_container(CLAY_ID("ButtonContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
+                                     CLAY_SIZING_GROW(0), 0, 0) {
+                            CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Play",
+                                                            "PlayButton", handle_start_game_button, false));
+
+                            CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Go back",
+                                                            "GoBackButton", handle_show_main_button, false));
+                        }
                     }
-
-                    CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Play",
-                                                    "PlayButton", handle_start_game_button, false));
-
-                    CENTERED_ELEMENT(LABELED_BUTTON(CLAY_SIZING_PERCENT(0.25), CLAY_SIZING_GROW(0), "Go back",
-                                                    "GoBackButton", handle_show_main_button, false));
                     break;
                 }
                 }
@@ -717,6 +1048,45 @@ Clay_RenderCommandArray game_state_draw_ui(const GameState *state) {
         }
         case GP_DEAD: {
             CENTERED_ELEMENT(ui_label("You died!", 48, WHITE, CLAY_TEXT_ALIGN_CENTER));
+            break;
+        }
+        case GP_EDITOR: {
+            CLAY({.id = CLAY_ID("Toolbar"),
+                  .layout = {.layoutDirection = CLAY_LEFT_TO_RIGHT,
+                             .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.1)},
+                             .padding = {16, 16, 16, 16},
+                             .childGap = 16},
+                  .cornerRadius = {16, 16, 16, 16},
+                  .backgroundColor = {50, 50, 50, 255}}) {
+                button(CLAY_ID("QuitButton"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("X"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, handle_exit_editor,
+                       (intptr_t)state);
+                button(CLAY_ID("SaveStage"), CLAY_SIZING_PERCENT(0.05), CLAY_SIZING_GROW(0), CLAY_STRING("Save"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, handle_save_stage_editor,
+                       (intptr_t)state);
+            }
+            CLAY({.id = CLAY_ID("ObjectControls"),
+                  .cornerRadius = {16, 16, 16, 16},
+                  .layout = {.sizing = {CLAY_SIZING_PERCENT(0.4), CLAY_SIZING_PERCENT(.1)},
+                             .padding = {16, 16, 16, 16},
+                             .childGap = 16},
+                  .backgroundColor = {50, 50, 50, 255}}) {
+                button(CLAY_ID("AddPlatform"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Plat."),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, handle_editor_add_platform,
+                       (intptr_t)state);
+                button(CLAY_ID("AddSpawn"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Add Spawn."),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, handle_editor_add_spawn,
+                       (intptr_t)state);
+                button(CLAY_ID("Delete"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Delete"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, handle_editor_delete_object,
+                       (intptr_t)state);
+                button(CLAY_ID("Copy"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Copy"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, handle_editor_copy_object,
+                       (intptr_t)state);
+                button(CLAY_ID("Paste"), CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), CLAY_STRING("Paste"),
+                       (Clay_Color){20, 20, 20, 255}, (Clay_Color){255, 255, 255, 255}, handle_editor_paste_object,
+                       (intptr_t)state);
+            }
             break;
         }
         case GP_AFTER_WAVE: {
@@ -840,66 +1210,6 @@ void draw_centered_text(const char *message, const Font *font, size_t size, Colo
 void flash_error(GameState *state, char *message) {
     state->error_opacity = 1.0;
     state->error = message;
-}
-
-Stage stage_1() {
-    return (Stage){.spawn = (Vector2){296.11, 206.11},
-                   .platforms =
-                       {
-                           (Rectangle){.x = -0.58, .y = 740.08, .width = 3904.00, .height = 734.00},
-                           (Rectangle){.x = -0.56, .y = 378.89, .width = 84.00, .height = 364.00},
-                           (Rectangle){.x = 72.22, .y = 378.89, .width = 434.00, .height = 74.00},
-                           (Rectangle){.x = 703.33, .y = 688.33, .width = 314.00, .height = 124.00},
-                           (Rectangle){.x = 808.14, .y = 637.06, .width = 314.00, .height = 124.00},
-                           (Rectangle){.x = 915.00, .y = 585.00, .width = 374.00, .height = 254.00},
-                           (Rectangle){.x = 1143.15, .y = 552.06, .width = 524.00, .height = 234.00},
-                           (Rectangle){.x = 1659.81, .y = 597.05, .width = 374.00, .height = 254.00},
-                           (Rectangle){.x = 2021.48, .y = 640.39, .width = 314.00, .height = 124.00},
-                           (Rectangle){.x = 2311.48, .y = 677.89, .width = 314.00, .height = 124.00},
-                           (Rectangle){.x = 3818.98, .y = 402.89, .width = 84.00, .height = 364.00},
-                           (Rectangle){.x = 3398.98, .y = 402.89, .width = 434.00, .height = 74.00},
-                       },
-                   .count = 12,
-                   .spawns =
-                       {
-                           (Rectangle){.x = 88.89, .y = 458.89, .width = 404.00, .height = 164.00},
-                           (Rectangle){.x = 3402.50, .y = 495.00, .width = 394.00, .height = 134.00},
-                       },
-                   .count_sp = 2};
-}
-Stage stage_2() {
-    return (Stage){.spawn = (Vector2){1726.33, 912.89},
-                   .platforms =
-                       {
-                           (Rectangle){.x = 5.33, .y = 859.33, .width = 1514.00, .height = 44.00},
-                           (Rectangle){.x = 1942.33, .y = 855.00, .width = 1644.00, .height = 54.00},
-                           (Rectangle){.x = 1322.22, .y = 879.11, .width = 294.00, .height = 24.00},
-                           (Rectangle){.x = 1849.17, .y = 885.83, .width = 394.00, .height = 24.00},
-                           (Rectangle){.x = 2.50, .y = -2.00, .width = 64.00, .height = 904.00},
-                           (Rectangle){.x = 3522.50, .y = 0.00, .width = 64.00, .height = 904.00},
-                           (Rectangle){.x = 1461.43, .y = 628.57, .width = 554.00, .height = 34.00},
-                           (Rectangle){.x = 36.00, .y = 752.00, .width = 264.00, .height = 114.00},
-                           (Rectangle){.x = 3298.00, .y = 722.00, .width = 264.00, .height = 164.00},
-                           (Rectangle){.x = 1510.13, .y = 1041.56, .width = 464.00, .height = 24.00},
-                           (Rectangle){.x = 1510.00, .y = 896.00, .width = 54.00, .height = 154.00},
-                           (Rectangle){.x = 1922.79, .y = 891.07, .width = 54.00, .height = 174.00},
-                           (Rectangle){.x = 2.00, .y = -33.50, .width = 3584.00, .height = 44.00},
-                       },
-                   .count = 13,
-                   .spawns = {(Rectangle){.x = 79.00, .y = 495.00, .width = 224.00, .height = 144.00},
-                              (Rectangle){.x = 3304.50, .y = 507.00, .width = 204.00, .height = 84.00}},
-                   .count_sp = 2};
-}
-Stage stage_3() {
-    return (Stage){
-        .count = 3,
-        .platforms =
-            {
-                (Platform){.x = 0, .y = 550, .width = 800, .height = 32},
-                (Platform){.x = 100, .y = 400, .width = 600, .height = 32},
-                (Platform){.x = 200, .y = 250, .width = 400, .height = 32},
-            },
-    };
 }
 
 #define SLOW_STRONG_ENEMY(x, y) ecs_basic_enemy((Vector2){(x), (y)}, (Vector2){64, 64}, 10, 50)
