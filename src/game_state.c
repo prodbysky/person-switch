@@ -736,6 +736,28 @@ void handle_ar_damage_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
         }
     }
 }
+void handle_shotgun_fire_rate_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->player.state.coins > state->player.weapons[WT_SHOTGUN].fire_rate_upgrade_cost) {
+            state->player.state.coins -= state->player.weapons[WT_SHOTGUN].fire_rate_upgrade_cost;
+            state->player.weapons[WT_SHOTGUN].fire_rate -= 0.05;
+            state->player.weapons[WT_SHOTGUN].fire_rate_upgrade_cost += 0.5;
+        }
+    }
+}
+void handle_shotgun_damage_upgrade(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->player.state.coins > state->player.weapons[WT_SHOTGUN].damage_upgrade_cost) {
+            state->player.state.coins -= state->player.weapons[WT_SHOTGUN].damage_upgrade_cost;
+            state->player.weapons[WT_SHOTGUN].damage += 1;
+            state->player.weapons[WT_SHOTGUN].damage_upgrade_cost += 0.5;
+        }
+    }
+}
 
 void handle_exit_editor(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
@@ -917,7 +939,6 @@ Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
                         .childGap = 16,
                         .padding = {16, 16, 16, 16},
                     },
-                /*.backgroundColor = {100, 100, 100, 255}*/
             }) {
                 CLAY({
                     .backgroundColor = {100, 0, 0, 255},
@@ -947,6 +968,8 @@ Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
                                    state->player.selected == WT_PISTOL);
                     LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "AR", "ARLabel", NULL,
                                    state->player.selected == WT_AR);
+                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Shotgun", "ShotgunLabel", NULL,
+                                   state->player.selected == WT_SHOTGUN);
                 }
                 CLAY({.backgroundColor = {100, 100, 100, 255},
                       .cornerRadius = {16, 16, 16, 16},
@@ -1086,7 +1109,7 @@ Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
         }
         case GP_AFTER_WAVE: {
             ui_container(CLAY_ID("IntermissionScreenContainer"), CLAY_LEFT_TO_RIGHT, CLAY_SIZING_GROW(0),
-                         CLAY_SIZING_PERCENT(0.5), 16, 16) {
+                         CLAY_SIZING_PERCENT(0.7), 16, 16) {
                 ui_container(CLAY_ID("ScreenSelectButtonContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_PERCENT(0.1),
                              CLAY_SIZING_GROW(0), 0, 16) {
                     LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Upgrades", "UpgradeSelectScreenButton",
@@ -1145,6 +1168,25 @@ Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
                                            TextFormat("Damage: %d [Cost: %.2f]", state->player.weapons[WT_AR].damage,
                                                       state->player.weapons[WT_AR].damage_upgrade_cost),
                                            "ARDamageUpgradeButton", handle_ar_damage_upgrade, false);
+                        }
+                        CLAY({.id = CLAY_ID("ShotgunUpgrades"),
+                              .layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)},
+                                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                         .childGap = 8,
+                                         .padding = {16, 16, 16, 16}},
+                              .backgroundColor = {100, 100, 100, 255},
+                              .cornerRadius = {16, 16, 16, 16}}) {
+                            ui_label("Shotgun", 48, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                            LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0),
+                                           TextFormat("Firerate: %.2f / sec. [Cost: %.2f]",
+                                                      state->player.weapons[WT_SHOTGUN].fire_rate / 1.0,
+                                                      state->player.weapons[WT_SHOTGUN].fire_rate_upgrade_cost),
+                                           "ShotgunFireRateUpgradeButton", handle_shotgun_fire_rate_upgrade, false);
+                            LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0),
+                                           TextFormat("Damage: %d [Cost: %.2f]",
+                                                      state->player.weapons[WT_SHOTGUN].damage,
+                                                      state->player.weapons[WT_SHOTGUN].damage_upgrade_cost),
+                                           "ShotgunDamageUpgradeButton", handle_shotgun_damage_upgrade, false);
                         }
                     }
                     break;

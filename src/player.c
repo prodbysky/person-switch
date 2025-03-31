@@ -25,7 +25,7 @@ ECSPlayer ecs_player_new() {
 
                        .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
                        .selected = 1,
-                       .weapons = {create_pistol(), create_ar()},
+                       .weapons = {create_pistol(), create_ar(), create_shotgun()},
                        .health = {10, 10}};
 }
 
@@ -120,6 +120,9 @@ void player_input(ECSPlayer *player, Bullets *bullets, const Camera2D *camera, P
     }
     if (IsKeyPressed(KEY_X)) {
         player->selected = WT_AR;
+    }
+    if (IsKeyPressed(KEY_C)) {
+        player->selected = WT_SHOTGUN;
     }
 
     if (player->physics.grounded && IsKeyPressed(KEY_SPACE)) {

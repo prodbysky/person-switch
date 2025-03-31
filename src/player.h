@@ -45,7 +45,7 @@ typedef struct {
     HealthComp health;
     SolidRectangleComp draw_conf;
     size_t selected;
-    Weapon weapons[2];
+    Weapon weapons[WT_COUNT];
     Sound jump_sound;
 } ECSPlayer;
 
