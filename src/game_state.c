@@ -932,28 +932,22 @@ Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
             }
             CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.9)}}});
             CLAY({
-                .layout =
-                    {
-                        .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                        .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                        .childGap = 16,
-                        .padding = {16, 16, 16, 16},
-                    },
+                .layout = {.layoutDirection = CLAY_LEFT_TO_RIGHT,
+                           .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                           .childGap = 16,
+                           .padding = {16, 16, 16, 16}},
             }) {
-                CLAY({
-                    .backgroundColor = {100, 0, 0, 255},
-                    .layout =
-                        {
-                            .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                        },
-                    .cornerRadius = {16, 16, 16, 16},
-                }) {
+                CLAY({.backgroundColor = {100, 0, 0, 255},
+                      .layout =
+                          {
+                              .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                          },
+                      .cornerRadius = {16, 16, 16, 16}}) {
                     CLAY({.backgroundColor = {255, 0, 0, 255},
                           .cornerRadius = {16, 16, 16, 16},
-                          .layout = {.sizing = {
-                                         CLAY_SIZING_PERCENT(state->player.health.current / state->player.health.max),
-                                         CLAY_SIZING_GROW(0),
-                                     }}});
+                          .layout = {
+                              .sizing = {CLAY_SIZING_PERCENT(state->player.health.current / state->player.health.max),
+                                         CLAY_SIZING_GROW(0)}}});
                 }
                 CLAY({.backgroundColor = {100, 100, 100, 255},
                       .cornerRadius = {16, 16, 16, 16},
