@@ -1147,15 +1147,15 @@ Stage *load_stages(const char *index_file_name, const char *stage_file_name_form
         Stage stage;
         fscanf(stage_file, "%f %f", &stage.spawn.x, &stage.spawn.y);
         fscanf(stage_file, "%zu", &stage.count);
-        for (size_t i = 0; i < stage.count; i++) {
-            fscanf(stage_file, "%f %f %f %f", &stage.platforms[i].x, &stage.platforms[i].y, &stage.platforms[i].width,
-                   &stage.platforms[i].height);
+        for (size_t j = 0; j < stage.count; j++) {
+            fscanf(stage_file, "%f %f %f %f", &stage.platforms[j].x, &stage.platforms[j].y, &stage.platforms[j].width,
+                   &stage.platforms[j].height);
         }
 
         fscanf(stage_file, "%zu", &stage.count_sp);
-        for (size_t i = 0; i < stage.count_sp; i++) {
-            fscanf(stage_file, "%f %f %f %f", &stage.spawns[i].x, &stage.spawns[i].y, &stage.spawns[i].width,
-                   &stage.spawns[i].height);
+        for (size_t j = 0; j < stage.count_sp; j++) {
+            fscanf(stage_file, "%f %f %f %f", &stage.spawns[j].x, &stage.spawns[j].y, &stage.spawns[j].width,
+                   &stage.spawns[j].height);
         }
         fclose(stage_file);
         stbds_arrput(stages, stage);
@@ -1171,14 +1171,14 @@ void save_stages(Stage **stages, const char *index_file_name, const char *stage_
 
         fprintf(stage_file, "%.2f %.2f\n", (*stages)[i].spawn.x, (*stages)[i].spawn.y);
         fprintf(stage_file, "%zu\n", (*stages)[i].count);
-        for (size_t i = 0; i < (*stages)[i].count; i++) {
-            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", (*stages)[i].platforms[i].x, (*stages)[i].platforms[i].y,
-                    (*stages)[i].platforms[i].width, (*stages)[i].platforms[i].height);
+        for (size_t j = 0; j < (*stages)[i].count; j++) {
+            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", (*stages)[i].platforms[j].x, (*stages)[i].platforms[j].y,
+                    (*stages)[i].platforms[j].width, (*stages)[i].platforms[j].height);
         }
         fprintf(stage_file, "%zu\n", (*stages)[i].count_sp);
-        for (size_t i = 0; i < (*stages)[i].count_sp; i++) {
-            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", (*stages)[i].spawns[i].x, (*stages)[i].spawns[i].y,
-                    (*stages)[i].spawns[i].width, (*stages)[i].spawns[i].height);
+        for (size_t j = 0; j < (*stages)[i].count_sp; j++) {
+            fprintf(stage_file, "%.2f %.2f %.2f %.2f\n", (*stages)[i].spawns[j].x, (*stages)[i].spawns[j].y,
+                    (*stages)[i].spawns[j].width, (*stages)[j].spawns[j].height);
         }
         fclose(stage_file);
     }
