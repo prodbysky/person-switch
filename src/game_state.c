@@ -152,7 +152,7 @@ void game_state_frame(GameState *state) {
         break;
     }
     case GP_MAIN: {
-        if (state->player.state.health < 3) {
+        if (state->player.health.current < 5) {
             DrawRectangle(0, 0, GetMonitorWidth(0), GetMonitorHeight(0),
                           GetColor(0xff000000 + (((sinf(GetTime() * 10) + 1) / 2.0) * 40)));
         }
@@ -901,29 +901,66 @@ Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
                GetColor(0xff000000 + (state->error_opacity * 255)));
     Clay_BeginLayout();
     ui_container(CLAY_ID("OuterContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), 0, 16) {
+
         switch (state->phase) {
         case GP_MAIN: {
-            ui_container(CLAY_ID("PlayerInfoContainer"), CLAY_TOP_TO_BOTTOM, CLAY_SIZING_PERCENT(0.4),
-                         CLAY_SIZING_PERCENT(0.4), 16, 0) {
-                ui_label(TextFormat("Health: %d", state->player.state.health), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label(TextFormat("Coins: %.2f", state->player.state.coins), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                ui_label(TextFormat("Wave #%d", state->wave_number), 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                switch (state->player.selected) {
-                case WT_PISTOL: {
-                    ui_label("Pistol", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                    ui_label("AR", 48, GRAY, CLAY_TEXT_ALIGN_LEFT);
-                    break;
-                }
-                case WT_AR: {
-                    ui_label("Pistol", 48, GRAY, CLAY_TEXT_ALIGN_LEFT);
-                    ui_label("AR", 48, WHITE, CLAY_TEXT_ALIGN_LEFT);
-                    break;
-                }
-                }
-            }
             if (wave_is_done(&state->current_wave)) {
                 CENTERED_ELEMENT(
                     ui_label("Press enter to enter the intermission screen", 36, WHITE, CLAY_TEXT_ALIGN_CENTER));
+            }
+            CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_PERCENT(0.9)}}});
+            CLAY({
+                .layout =
+                    {
+                        .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                        .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                        .childGap = 16,
+                        .padding = {16, 16, 16, 16},
+                    },
+                /*.backgroundColor = {100, 100, 100, 255}*/
+            }) {
+                CLAY({
+                    .backgroundColor = {100, 0, 0, 255},
+                    .layout =
+                        {
+                            .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                        },
+                    .cornerRadius = {16, 16, 16, 16},
+                }) {
+                    CLAY({.backgroundColor = {255, 0, 0, 255},
+                          .cornerRadius = {16, 16, 16, 16},
+                          .layout = {.sizing = {
+                                         CLAY_SIZING_PERCENT(state->player.health.current / state->player.health.max),
+                                         CLAY_SIZING_GROW(0),
+                                     }}});
+                }
+                CLAY({.backgroundColor = {100, 100, 100, 255},
+                      .cornerRadius = {16, 16, 16, 16},
+                      .layout = {.sizing =
+                                     {
+                                         CLAY_SIZING_GROW(0),
+                                         CLAY_SIZING_GROW(0),
+                                     },
+                                 .childGap = 16,
+                                 .padding = {16, 16, 16, 16}}}) {
+                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "Pistol", "PistolLabel", NULL,
+                                   state->player.selected == WT_PISTOL);
+                    LABELED_BUTTON(CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0), "AR", "ARLabel", NULL,
+                                   state->player.selected == WT_AR);
+                }
+                CLAY({.backgroundColor = {100, 100, 100, 255},
+                      .cornerRadius = {16, 16, 16, 16},
+                      .layout = {.sizing =
+                                     {
+                                         CLAY_SIZING_PERCENT(0.3),
+                                         CLAY_SIZING_GROW(0),
+                                     },
+                                 .childGap = 16,
+                                 .padding = {16, 16, 16, 16},
+                                 .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+                    ui_label(TextFormat("Wave #%d", state->wave_number - 1), 36, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                    ui_label(TextFormat("Cash: %.2f", state->player.state.coins), 36, WHITE, CLAY_TEXT_ALIGN_CENTER);
+                }
             }
             break;
         }

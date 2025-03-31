@@ -32,7 +32,6 @@ typedef struct {
     double last_hit;
     double last_shot;
     double last_healed;
-    size_t health;
     bool dead;
     float reload_time; 
     float movement_speed;
@@ -43,6 +42,7 @@ typedef struct {
     TransformComp transform;
     PhysicsComp physics;
     PlayerStateComp state;
+    HealthComp health;
     SolidRectangleComp draw_conf;
     size_t selected;
     Weapon weapons[2];

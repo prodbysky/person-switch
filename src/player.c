@@ -15,7 +15,6 @@ ECSPlayer ecs_player_new() {
     return (ECSPlayer){.transform =
                            TRANSFORM((GetMonitorWidth(0) / 2.0) + 16, (GetMonitorHeight(0) / 2.0) + 48, 32, 96),
                        .state = {.current_class = PS_MOVE,
-                                 .health = 5,
                                  .last_hit = 0.0,
                                  .last_healed = 0.0,
                                  .dead = false,
@@ -26,7 +25,8 @@ ECSPlayer ecs_player_new() {
 
                        .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
                        .selected = 1,
-                       .weapons = {create_pistol(), create_ar()}};
+                       .weapons = {create_pistol(), create_ar()},
+                       .health = {10, 10}};
 }
 
 void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *wave, Bullets *bullets,
@@ -49,7 +49,7 @@ void ecs_player_update(ECSPlayer *player, const Stage *stage, const EnemyWave *w
     collision(&player->transform, &player->physics, stage, dt);
     player_enemy_interaction(player, wave, enemy_bullets, particles);
     player_pickup_interaction(player, pickups);
-    if (player->state.health <= 0) {
+    if (player->health.current <= 0) {
         player->state.dead = true;
     }
 }
@@ -64,7 +64,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
         if (CheckCollisionRecs(player->transform.rect, (*wave)[i].transform.rect) &&
             time_delta(player->state.last_hit) > INVULNERABILITY_TIME) {
             player->state.last_hit = GetTime();
-            player->state.health--;
+            player->health.current--;
 
             const Vector2 player_center = transform_center(&player->transform);
             const Vector2 enemy_center = transform_center(&(*wave)[i].transform);
@@ -91,7 +91,7 @@ void player_enemy_interaction(ECSPlayer *player, const EnemyWave *wave, Bullets 
         if (CheckCollisionRecs(player->transform.rect, b->transform.rect) &&
             time_delta(player->state.last_hit) > INVULNERABILITY_TIME) {
             player->state.last_hit = GetTime();
-            player->state.health--;
+            player->health.current--;
             Vector2 dir = Vector2Rotate(b->direction, PI);
             dir.y *= 2;
             dir.x *= 0.2;
@@ -144,7 +144,7 @@ void player_pickup_interaction(ECSPlayer *player, Pickups *pickups) {
                 const double T = GetTime();
                 switch (p->type) {
                 case PT_HEALTH: {
-                    player->state.health += p->health;
+                    player->health.current = Clamp(player->health.current + p->health, 0, player->health.max);
                     player->state.last_healed = T;
                     break;
                 }

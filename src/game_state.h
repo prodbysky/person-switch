@@ -160,7 +160,7 @@ void save_stages(Stage** stages, const char* index_file_name, const char* stage_
                      .sizing = {.width = w, .height = h},                                                              \
                  },                                                                                                    \
              .backgroundColor = button_color(highlight_condition),                                                     \
-             .cornerRadius = {10, 10, 10, 10},                                                                         \
+             .cornerRadius = {16, 16, 16, 16},                                                                         \
          }, ) {                                                                                                        \
         Clay_OnHover(callback, (intptr_t)state);                                                                       \
         CENTERED_ELEMENT(ui_label(text, 36, WHITE, CLAY_TEXT_ALIGN_CENTER));                                           \
