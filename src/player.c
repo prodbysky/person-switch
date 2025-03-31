@@ -19,10 +19,10 @@ ECSPlayer ecs_player_new() {
                                  .last_healed = 0.0,
                                  .dead = false,
                                  .movement_speed = 0.0,
+                                 .jump_power = 500.0,
                                  .coins = 10},
                        .physics = DEFAULT_PHYSICS(),
                        .draw_conf = {.color = WHITE},
-
                        .jump_sound = LoadSound("assets/sfx/player_jump.wav"),
                        .selected = 1,
                        .weapons = {create_pistol(), create_ar(), create_shotgun()},
@@ -126,7 +126,7 @@ void player_input(ECSPlayer *player, Bullets *bullets, const Camera2D *camera, P
     }
 
     if (player->physics.grounded && IsKeyPressed(KEY_SPACE)) {
-        player->physics.velocity.y = -500;
+        player->physics.velocity.y = -player->state.jump_power;
         PlaySound(player->jump_sound);
         player->physics.grounded = false;
         const Vector2 pos = transform_center(&player->transform);

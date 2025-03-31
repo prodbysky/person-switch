@@ -13,12 +13,6 @@
 
 #define SHOOT_DELAY 0.25
 
-// The player stats that are dependant on the selected class
-typedef struct {
-    uint16_t speed_x;
-    uint16_t jump_power;
-    uint16_t damage;
-} PlayerStat;
 
 typedef enum {
     PS_TANK = 0,
@@ -33,6 +27,7 @@ typedef struct {
     double last_shot;
     double last_healed;
     bool dead;
+    double jump_power;
     float reload_time; 
     float movement_speed;
     float coins;
@@ -48,6 +43,7 @@ typedef struct {
     Weapon weapons[WT_COUNT];
     Sound jump_sound;
 } ECSPlayer;
+
 
 ECSPlayer ecs_player_new();
 // Handles player input

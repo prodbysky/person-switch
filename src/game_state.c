@@ -670,6 +670,16 @@ void handle_begin_game_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t
         state->main_menu_type = MMT_CONFIGGAME;
     }
 }
+void handle_player_strong_jump_ability(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
+    (void)e_id;
+    GameState *state = (GameState *)ud;
+    if (pd.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (state->player.state.coins > 50 && state->player.state.jump_power != 1000) {
+            state->player.state.coins -= 50;
+            state->player.state.jump_power = 1000;
+        }
+    }
+}
 void handle_main_menu_button(Clay_ElementId e_id, Clay_PointerData pd, intptr_t ud) {
     (void)e_id;
     GameState *state = (GameState *)ud;
@@ -1114,9 +1124,9 @@ Clay_RenderCommandArray game_state_draw_ui(GameState *state) {
                 }
                 switch (state->screen_type) {
                 case IST_PLAYER_UPGRADE: {
-                    LABELED_BUTTON(CLAY_SIZING_PERCENT(0.2), CLAY_SIZING_GROW(0),
-                                   TextFormat("Speed [Cost: %.2f]", state->speed_cost), "SpeedUpgradeButton",
-                                   handle_speed_upgrade_button, false);
+                    LABELED_BUTTON(CLAY_SIZING_PERCENT(.5), CLAY_SIZING_PERCENT(0.2), "Strong jump [50 coins]",
+                                   "DashUpgradeButton", handle_player_strong_jump_ability,
+                                   !(state->player.state.jump_power == 1000));
                     break;
                 }
                 case IST_PLAYER_WEAPONS_UPGRADE: {
